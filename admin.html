@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Адмін — Монети Світу</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; max-width: 700px; }
+    input, select, button { padding: 10px; width: 100%; margin: 6px 0; box-sizing: border-box; }
+    button { cursor: pointer; }
+    .row { display:flex; gap:10px; }
+    .row button { width: 50%; }
+    .ok { background:#f0fff0; border:1px solid #b3ffb3; padding:10px; border-radius:10px; }
+    .bad { background:#fff0f0; border:1px solid #ffb3b3; padding:10px; border-radius:10px; }
+    .muted { color:#666; }
+  </style>
+</head>
+<body>
+
+<h1>Адмін — Монети Світу</h1>
+<p class="muted">Тут можна змінити статус замовлення і повернути монети при скасуванні.</p>
+
+<label>API URL (як в index.html)</label>
+<input id="api" placeholder="https://script.google.com/macros/s/.../exec" />
+
+<label>OrderID (наприклад MS-...)</label>
+<input id="orderId" placeholder="MS-..." />
+
+<div class="row">
+  <button onclick="setPaid()">✅ Позначити як Paid</button>
+  <button onclick="setCancelled()">❌ Cancel + Повернути монети</button>
+</div>
+
+<div id="msg"></div>
+
+<script>
+function showMsg(text, ok=true){
+  const el = document.getElementById('msg');
+  el.className = ok ? 'ok' : 'bad';
+  el.textContent = text;
+}
+
+async function callAdmin(action, payload){
+  const API_URL = document.getElementById('api').value.trim();
+  if(!API_URL) { showMsg("Встав API URL", false); return; }
+
+  const res = await fetch(API_URL + "?action=" + action, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+
+  const json = await res.json();
+  return json;
+}
+
+async function setPaid(){
+  const orderId = document.getElementById('orderId').value.trim();
+  if(!orderId) { showMsg("Вкажи OrderID", false); return; }
+
+  const r = await callAdmin("setOrderStatus", { orderId, status: "Paid" });
+  if(r && r.success) showMsg("Готово: " + orderId + " → Paid");
+  else showMsg("Помилка: " + JSON.stringify(r), false);
+}
+
+async function setCancelled(){
+  const orderId = document.getElementById('orderId').value.trim();
+  if(!orderId) { showMsg("Вкажи OrderID", false); return; }
+
+  const r = await callAdmin("cancelOrder", { orderId });
+  if(r && r.success) showMsg("Готово: " + orderId + " → Cancelled. Повернуто монет: " + r.returned);
+  else showMsg("Помилка: " + JSON.stringify(r), false);
+}
+</script>
+
+</body>
+</html>
