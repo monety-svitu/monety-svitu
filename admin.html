@@ -40,36 +40,43 @@ function showMsg(text, ok=true){
   el.textContent = text;
 }
 
-async function callAdmin(action, payload){
+function getAPI(){
   const API_URL = document.getElementById('api').value.trim();
-  if(!API_URL) { showMsg("Встав API URL", false); return; }
-
-  const res = await fetch(API_URL + "?action=" + action, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(payload)
-  });
-
-  const json = await res.json();
-  return json;
+  if(!API_URL) { showMsg("Встав API URL", false); return null; }
+  return API_URL;
 }
 
 async function setPaid(){
+  const API_URL = getAPI(); if(!API_URL) return;
   const orderId = document.getElementById('orderId').value.trim();
   if(!orderId) { showMsg("Вкажи OrderID", false); return; }
 
-  const r = await callAdmin("setOrderStatus", { orderId, status: "Paid" });
-  if(r && r.success) showMsg("Готово: " + orderId + " → Paid");
-  else showMsg("Помилка: " + JSON.stringify(r), false);
+  const url = API_URL
+    + "?action=setOrderStatus"
+    + "&orderId=" + encodeURIComponent(orderId)
+    + "&status=" + encodeURIComponent("Paid");
+
+  const res = await fetch(url);
+  const json = await res.json();
+
+  if(json && json.success) showMsg("OK: " + orderId + " → Paid");
+  else showMsg("Помилка: " + JSON.stringify(json), false);
 }
 
 async function setCancelled(){
+  const API_URL = getAPI(); if(!API_URL) return;
   const orderId = document.getElementById('orderId').value.trim();
   if(!orderId) { showMsg("Вкажи OrderID", false); return; }
 
-  const r = await callAdmin("cancelOrder", { orderId });
-  if(r && r.success) showMsg("Готово: " + orderId + " → Cancelled. Повернуто монет: " + r.returned);
-  else showMsg("Помилка: " + JSON.stringify(r), false);
+  const url = API_URL
+    + "?action=cancelOrder"
+    + "&orderId=" + encodeURIComponent(orderId);
+
+  const res = await fetch(url);
+  const json = await res.json();
+
+  if(json && json.success) showMsg("OK: " + orderId + " → Cancelled. Повернуто: " + json.returned);
+  else showMsg("Помилка: " + JSON.stringify(json), false);
 }
 </script>
 
