@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Монети Світу</title>
+<style>
+body { font-family: Arial; margin: 20px; }
+.coin { border:1px solid #ccc; padding:10px; margin-bottom:10px; }
+button { padding:5px 10px; }
+#cart { position:fixed; right:20px; top:20px; background:#f5f5f5; padding:10px; }
+</style>
+</head>
+<body>
+
+<h1>Монети Світу</h1>
+
+<div id="filters">
+<select id="countryFilter">
+<option value="">Всі країни</option>
+</select>
+</div>
+
+<div id="coins"></div>
+
+<div id="cart">
+<h3>Кошик</h3>
+<div id="cartItems"></div>
+<button onclick="checkout()">Оформити</button>
+</div>
+
+<script>
+
+const API_URL = https://script.google.com/macros/s/AKfycbxZxuhE_2zmwsm3t65LeJJ7Ids60iANH7srApsSFHCYHgncumPoeNbfyKkuc4VfMH1G/exec;
+
+let coins = [];
+let cart = [];
+
+async function loadCoins() {
+  const res = await fetch(API_URL + "?action=getCoins");
+  coins = await res.json();
+  renderCoins();
+  fillCountries();
+}
+
+function renderCoins() {
+  const container = document.getElementById("coins");
+  container.innerHTML = "";
+
+  coins.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "coin";
+    div.innerHTML = `
+      <h3>${c.TitleUA}</h3>
+      <p>Krause: ${c.KrauseNumber}</p>
+      <p>${c.PriceUAH} грн</p>
+      <button onclick="addToCart(${c.ID})">Додати</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function fillCountries() {
+  const select = document.getElementById("countryFilter");
+  const countries = [...new Set(coins.map(c => c.Country))];
+  countries.forEach(country => {
+    const option = document.createElement("option");
+    option.value = country;
+    option.textContent = country;
+    select.appendChild(option);
+  });
+}
+
+document.getElementById("countryFilter").addEventListener("change", async function() {
+  const country = this.value;
+  const res = await fetch(API_URL + "?action=getCoins&country=" + country);
+  coins = await res.json();
+  renderCoins();
+});
+
+function addToCart(id) {
+  const coin = coins.find(c => c.ID == id);
+  cart.push(coin);
+  renderCart();
+}
+
+function renderCart() {
+  const container = document.getElementById("cartItems");
+  container.innerHTML = "";
+  cart.forEach(c => {
+    container.innerHTML += `<div>${c.TitleUA} - ${c.PriceUAH} грн</div>`;
+  });
+}
+
+async function checkout() {
+
+  if(cart.length === 0) {
+    alert("Кошик пустий");
+    return;
+  }
+
+  const name = prompt("Ваше ім'я");
+  const phone = prompt("Телефон");
+  const city = prompt("Місто");
+
+  const total = cart.reduce((sum, c) => sum + Number(c.PriceUAH), 0);
+
+  await fetch(API_URL + "?action=createOrder", {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      phone,
+      email: "",
+      city,
+      deliveryService: "NovaPoshta",
+      deliveryDetails: "",
+      items: cart,
+      totalUAH: total,
+      paymentMethod: "Card"
+    })
+  });
+
+  alert("Замовлення створено!");
+  cart = [];
+  renderCart();
+  loadCoins();
+}
+
+loadCoins();
+
+</script>
+
+</body>
+</html>
