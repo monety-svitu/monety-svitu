@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/coins",
+      "destination": "https://script.google.com/macros/s/AKfycbzJ36NWONGMOd94OL7iziHolfa-rq-HvNs8LEUGaYyvA2LfMjqcObhkGQ72n4LcSmOZ/exec?action=getCoins"
+    }
+  ]
+}
