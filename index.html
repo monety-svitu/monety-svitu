@@ -36,10 +36,26 @@ let coins = [];
 let cart = [];
 
 async function loadCoins() {
-  const res = await fetch(API_URL + "?action=getCoins");
-  coins = await res.json();
-  renderCoins();
-  fillCountries();
+  try {
+    console.log("Loading coins from:", API_URL);
+
+    const res = await fetch(API_URL + "?action=getCoins");
+    const text = await res.text();
+
+    console.log("HTTP", res.status);
+    console.log("RAW RESPONSE:", text.slice(0, 300));
+
+    coins = JSON.parse(text);
+
+    console.log("Coins loaded:", Array.isArray(coins) ? coins.length : coins);
+
+    renderCoins();
+    fillCountries();
+
+  } catch (err) {
+    console.error("loadCoins error:", err);
+    alert("Помилка завантаження монет. Відкрий F12 → Console.");
+  }
 }
 
 function renderCoins() {
