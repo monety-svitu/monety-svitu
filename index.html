@@ -39,7 +39,7 @@ async function loadCoins() {
   try {
     console.log("Loading coins from:", API_URL);
 
-    const res = await fetch(API_URL + "?action=getCoins");
+    const res = await fetch(API_URL);
     const text = await res.text();
 
     console.log("HTTP", res.status);
