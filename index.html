@@ -74,13 +74,49 @@
 
   <div id="coins"></div>
 
-  <div id="cart">
-    <h3>Кошик</h3>
-    <div class="muted">1 монета = 1 шт</div>
-    <div id="cartItems"></div>
-    <div class="total">Разом: <span id="cartTotal">0</span> грн</div>
-    <button class="btnCheckout" id="checkoutBtn" onclick="checkout()" disabled>Оформити</button>
+<div id="cart">
+  <h3>Кошик</h3>
+
+  <div id="cartItems"></div>
+
+  <hr>
+
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <input id="cName" placeholder="Ваше ім'я" style="padding:6px;">
+    <input id="cPhone" placeholder="Телефон" style="padding:6px;">
+    <input id="cCity" placeholder="Місто" style="padding:6px;">
+
+    <label style="font-size:12px; margin-top:6px;">Доставка</label>
+    <select id="cDelivery" style="padding:6px;" onchange="syncDeliveryUI()">
+      <option value="NovaPoshta">Нова пошта</option>
+      <option value="UkrPoshta">Укрпошта</option>
+    </select>
+
+    <div id="npBlock" style="display:flex; flex-direction:column; gap:6px;">
+      <select id="npType" style="padding:6px;">
+        <option value="Branch">Відділення</option>
+        <option value="Postomat">Поштомат</option>
+      </select>
+      <input id="npNumber" placeholder="№ відділення / поштомата" style="padding:6px;">
+    </div>
+
+    <div id="upBlock" style="display:none; flex-direction:column; gap:6px;">
+      <input id="upAddress" placeholder="Адреса / відділення Укрпошти" style="padding:6px;">
+    </div>
+
+    <label style="font-size:12px; margin-top:6px;">Зв’язок</label>
+    <select id="cChannel" style="padding:6px;">
+      <option value="Viber">Viber</option>
+      <option value="Telegram">Telegram</option>
+    </select>
+
+    <textarea id="cComment" placeholder="Коментар (необов’язково)" rows="2" style="padding:6px;"></textarea>
+
+    <button onclick="checkout()" style="padding:8px 10px; margin-top:6px;">Оформити</button>
+
+    <div id="checkoutMsg" style="font-size:12px; margin-top:6px;"></div>
   </div>
+</div>
 
 <script>
   // ВАЖЛИВО:
@@ -262,55 +298,101 @@
     document.getElementById("checkoutBtn").disabled = cart.length === 0;
   }
 
-  async function checkout() {
-    if (!cart.length) return;
+  function syncDeliveryUI() {
+  const d = document.getElementById("cDelivery").value;
+  document.getElementById("npBlock").style.display = (d === "NovaPoshta") ? "flex" : "none";
+  document.getElementById("upBlock").style.display = (d === "UkrPoshta") ? "flex" : "none";
+}
 
-    const name = prompt("Ваше ім'я (ПІБ)");
-    if (!name) return;
+// Викличемо один раз при старті
+syncDeliveryUI();
 
-    const phone = prompt("Телефон");
-    if (!phone) return;
+async function checkout() {
+  const msg = document.getElementById("checkoutMsg");
+  msg.textContent = "";
 
-    const city = prompt("Місто / населений пункт");
-    if (!city) return;
+  if (cart.length === 0) {
+    alert("Кошик пустий");
+    return;
+  }
 
-    const total = cart.reduce((sum, c) => sum + money(c.PriceUAH), 0);
+  const name = document.getElementById("cName").value.trim();
+  const phone = document.getElementById("cPhone").value.trim();
+  const city = document.getElementById("cCity").value.trim();
 
-    // Мінімальний набір даних (потім розширимо до НП/УП/відділення/адреса/Telegram/Viber)
-    const payload = {
-      name,
-      phone,
-      email: "",
-      city,
-      deliveryService: "NovaPoshta",
-      deliveryDetails: "",
-      items: cart.map(c => ({ ID: c.ID, TitleUA: c.TitleUA, PriceUAH: money(c.PriceUAH) })),
-      totalUAH: money(total),
-      paymentMethod: "Card"
-    };
+  const deliveryService = document.getElementById("cDelivery").value;
+  const channel = document.getElementById("cChannel").value;
+  const comment = document.getElementById("cComment").value.trim();
 
-    try {
-      const res = await fetch(ORDER_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+  let deliveryDetails = "";
 
-      const text = await res.text();
-      // API може повернути JSON або текст — не ламаємось
-      console.log("Order response:", text);
+  if (deliveryService === "NovaPoshta") {
+    const npType = document.getElementById("npType").value; // Branch / Postomat
+    const npNumber = document.getElementById("npNumber").value.trim();
+    if (!npNumber) {
+      alert("Вкажи № відділення або поштомата Нової пошти");
+      return;
+    }
+    deliveryDetails = (npType === "Branch" ? "Відділення" : "Поштомат") + " №" + npNumber;
+  } else {
+    const upAddress = document.getElementById("upAddress").value.trim();
+    if (!upAddress) {
+      alert("Вкажи адресу або відділення Укрпошти");
+      return;
+    }
+    deliveryDetails = upAddress;
+  }
 
-      alert("Замовлення створено! Ми з вами зв'яжемось для уточнень.");
+  if (!name || !phone || !city) {
+    alert("Заповни: ім'я, телефон, місто");
+    return;
+  }
 
+  const total = cart.reduce((sum, c) => sum + Number(c.PriceUAH || 0), 0);
+
+  msg.textContent = "Відправляю замовлення...";
+
+  try {
+    const r = await fetch(API_URL + "?action=createOrder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        phone,
+        email: "",
+        city,
+        deliveryService,
+        deliveryDetails,
+        channel,
+        comment,
+        items: cart,
+        totalUAH: total,
+        paymentMethod: "Card"
+      })
+    });
+
+    const respText = await r.text();
+    let resp;
+    try { resp = JSON.parse(respText); } catch { resp = { raw: respText }; }
+
+    if (resp && resp.success) {
+      alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
       cart = [];
       renderCart();
-      await loadCoins(); // оновимо залишки
-
-    } catch (e) {
-      console.error("checkout error:", e);
-      alert("Помилка оформлення. Відкрий F12 → Console.");
+      loadCoins();
+      msg.textContent = "";
+    } else {
+      msg.textContent = "Помилка. Відкрий F12 → Console.";
+      console.log("createOrder response:", resp);
+      alert("Не вийшло створити замовлення. Спробуй ще раз.");
     }
+
+  } catch (e) {
+    console.log("checkout error:", e);
+    msg.textContent = "Помилка мережі. Відкрий F12 → Console.";
+    alert("Помилка мережі. Спробуй ще раз.");
   }
+}
 
   // події фільтрів
   document.getElementById("q").addEventListener("input", applyFilters);
