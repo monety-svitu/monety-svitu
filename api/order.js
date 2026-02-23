@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   try {
     // 🔴 ВАЖЛИВО: сюди встав свій Apps Script Web App URL (exec) БЕЗ ?action=...
     const GAS_WEBAPP =
-      "PASTE_YOUR_GAS_WEBAPP_EXEC_URL_HERE";
+      "https://script.google.com/macros/s/AKfycbxUON1PQ9rPVkZd5zPOpMnoTPy7eGobv6302yTT9EP6cswOB5moP1owRyjfn3wNm_6k/exec";
 
     // payload з сайту
     const payload = req.body || {};
