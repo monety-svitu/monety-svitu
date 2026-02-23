@@ -273,24 +273,53 @@
   }
 
   function renderCart() {
-    const container = document.getElementById("cartItems");
-    container.innerHTML = "";
+  // Безпечний пошук елементів (щоб не падало, якщо id не знайдено)
+  const el = (id) => document.getElementById(id);
 
-    if (!cart.length) {
-      container.innerHTML = `<div class="muted" style="margin-top:10px;">Кошик пустий</div>`;
-    } else {
-      cart.forEach((c, i) => {
-        const row = document.createElement("div");
-        row.className = "cartRow";
-        row.innerHTML = `
-          <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-            ${c.TitleUA || ""} <span class="muted">(${money(c.PriceUAH)} грн)</span>
-          </div>
-          <button title="Видалити" onclick="removeFromCart(${i})">✖</button>
-        `;
-        container.appendChild(row);
-      });
-    }
+  const cartItemsEl = el("cartItems") || el("cartList") || el("cart"); // запасні варіанти
+  const cartCountEl = el("cartCount");
+  const cartTotalEl = el("cartTotal");
+  const cartEmptyEl = el("cartEmpty") || el("cartEmptyText");
+
+  const total = cart.reduce((sum, c) => sum + Number(c.PriceUAH || 0), 0);
+
+  // 1) Кількість (якщо є куди показувати)
+  if (cartCountEl) cartCountEl.textContent = String(cart.length);
+
+  // 2) Сума (якщо є куди показувати)
+  if (cartTotalEl) cartTotalEl.textContent = String(total);
+
+  // 3) Текст "кошик пустий" (якщо є куди показувати)
+  if (cartEmptyEl) cartEmptyEl.style.display = cart.length ? "none" : "block";
+
+  // 4) Список товарів
+  if (!cartItemsEl) return; // нема контейнера — просто виходимо без падіння
+
+  // якщо це не конкретний контейнер під список — не чіпаємо його
+  // (щоб випадково не затерти весь блок кошика)
+  const listContainer = el("cartItems") || el("cartList");
+  if (!listContainer) return;
+
+  listContainer.innerHTML = "";
+
+  cart.forEach((c, i) => {
+    const row = document.createElement("div");
+    row.className = "cartRow";
+    row.style.display = "flex";
+    row.style.justifyContent = "space-between";
+    row.style.gap = "8px";
+    row.style.marginBottom = "6px";
+
+    row.innerHTML = `
+      <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+        ${c.TitleUA || "Монета"}
+      </div>
+      <div>${Number(c.PriceUAH || 0)} грн</div>
+      <button type="button" onclick="removeFromCart(${i})">✕</button>
+    `;
+    listContainer.appendChild(row);
+  });
+}
 
     const total = cart.reduce((sum, c) => sum + money(c.PriceUAH), 0);
     document.getElementById("cartTotal").textContent = money(total);
