@@ -1,29 +1,24 @@
 // /api/order.js
 export default async function handler(req, res) {
-  // ✅ CORS (щоб браузер не блокував)
+  // CORS можна лишити (не заважає)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // ✅ preflight
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  // Приймаємо тільки POST
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed. Use POST." });
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ success: false, error: "Method not allowed. Use POST." });
 
   try {
-    // 🔴 ВАЖЛИВО: сюди встав свій Apps Script Web App URL (exec) БЕЗ ?action=...
     const GAS_WEBAPP =
       "https://script.google.com/macros/s/AKfycbxUON1PQ9rPVkZd5zPOpMnoTPy7eGobv6302yTT9EP6cswOB5moP1owRyjfn3wNm_6k/exec";
 
-    // payload з сайту
     const payload = req.body || {};
 
-    // Відправляємо у GAS (action=createOrder)
+    // Мінімальна перевірка, щоб не летіло "порожнє"
+    if (!payload || !Array.isArray(payload.items) || payload.items.length === 0) {
+      return res.status(400).json({ success: false, error: "Empty cart/items" });
+    }
+
     const url = `${GAS_WEBAPP}?action=createOrder`;
 
     const r = await fetch(url, {
@@ -35,16 +30,20 @@ export default async function handler(req, res) {
 
     const text = await r.text();
 
-    // GAS інколи повертає текст — пробуємо зробити JSON
     let out;
     try {
       out = JSON.parse(text);
-    } catch (_) {
-      out = { raw: text };
+    } catch {
+      out = { success: false, error: "GAS returned non-JSON", raw: text?.slice?.(0, 500) || String(text) };
+    }
+
+    // Важливо: якщо GAS повернув success:false — віддаємо 400, щоб фронт бачив що це помилка
+    if (!out || out.success !== true) {
+      return res.status(400).json(out);
     }
 
     return res.status(200).json(out);
   } catch (e) {
-    return res.status(500).json({ error: String(e) });
+    return res.status(500).json({ success: false, error: String(e) });
   }
 }
