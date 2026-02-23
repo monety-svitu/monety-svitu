@@ -1,148 +1,252 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Монети Світу</title>
-<style>
-body { font-family: Arial; margin: 20px; }
-.coin { border:1px solid #ccc; padding:10px; margin-bottom:10px; }
-button { padding:5px 10px; }
-#cart { position:fixed; right:20px; top:20px; background:#f5f5f5; padding:10px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Монети Світу</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; padding-right: 260px; }
+    .coin { border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:8px; }
+    button { padding:6px 10px; cursor:pointer; }
+    #cart {
+      position:fixed; right:20px; top:20px; width:220px;
+      background:#f5f5f5; padding:12px; border-radius:10px;
+      border:1px solid #ddd;
+    }
+    #cartItems { margin: 10px 0; font-size: 14px; }
+    .cartRow { display:flex; justify-content:space-between; gap:8px; margin-bottom:6px; }
+    .muted { color:#777; font-size:12px; }
+    .total { font-weight:bold; margin-top:10px; }
+    select { padding:6px; }
+  </style>
 </head>
 <body>
 
 <h1>Монети Світу</h1>
 
 <div id="filters">
-<select id="countryFilter">
-<option value="">Всі країни</option>
-</select>
+  <select id="countryFilter">
+    <option value="">Всі країни</option>
+  </select>
 </div>
 
 <div id="coins"></div>
 
 <div id="cart">
-<h3>Кошик</h3>
-<div id="cartItems"></div>
-<button onclick="checkout()">Оформити</button>
+  <h3>Кошик</h3>
+  <div class="muted" id="cartHint">Додай монети кнопкою “Додати”.</div>
+  <div id="cartItems"></div>
+  <div class="total">Разом: <span id="cartTotal">0</span> грн</div>
+  <button style="margin-top:10px; width:100%;" onclick="checkout()">Оформити</button>
 </div>
 
 <script>
-const API_URL = "/api/coins";
+  // ✅ ВАЖЛИВО: тут НІЯКИХ Google Script URL не має бути
+  // Всі запити йдуть на Vercel endpoints
+  const API_COINS = "/api/coins";
+  const API_ORDER = "/api/order";
 
-let coins = [];
-let cart = [];
+  let allCoins = [];     // всі монети з API
+  let viewCoins = [];    // монети після фільтра
+  let cart = [];         // кошик
 
-async function loadCoins() {
-  try {
-    console.log("Loading coins from:", API_URL);
+  async function loadCoins() {
+    try {
+      console.log("Loading coins from:", API_COINS);
 
-    const res = await fetch(API_URL);
-    const text = await res.text();
+      const res = await fetch(API_COINS, { method: "GET" });
 
-    console.log("HTTP", res.status);
-    console.log("RAW RESPONSE:", text.slice(0, 300));
+      if (!res.ok) {
+        const t = await res.text();
+        console.log("HTTP", res.status, "RAW:", t.slice(0, 300));
+        throw new Error("Coins API HTTP " + res.status);
+      }
 
-    coins = JSON.parse(text);
+      const data = await res.json();
 
-    console.log("Coins loaded:", Array.isArray(coins) ? coins.length : coins);
+      if (!Array.isArray(data)) {
+        console.log("Coins API returned not array:", data);
+        throw new Error("Coins API returned not array");
+      }
+
+      allCoins = data;
+      applyFilter();      // сформує viewCoins
+      fillCountries();    // список країн
+
+      console.log("Coins loaded:", allCoins.length);
+
+    } catch (err) {
+      console.error("loadCoins error:", err);
+      alert("Помилка завантаження монет. Відкрий F12 → Console.");
+    }
+  }
+
+  function applyFilter() {
+    const country = document.getElementById("countryFilter").value;
+
+    viewCoins = allCoins.filter(c => {
+      if (country && c.Country !== country) return false;
+      // якщо хочеш показувати тільки наявні:
+      if (Number(c.Quantity || 0) <= 0) return false;
+      return true;
+    });
 
     renderCoins();
-    fillCountries();
-
-  } catch (err) {
-    console.error("loadCoins error:", err);
-    alert("Помилка завантаження монет. Відкрий F12 → Console.");
-  }
-}
-
-function renderCoins() {
-  const container = document.getElementById("coins");
-  container.innerHTML = "";
-
-  coins.forEach(c => {
-    const div = document.createElement("div");
-    div.className = "coin";
-    div.innerHTML = `
-      <h3>${c.TitleUA}</h3>
-      <p>Krause: ${c.KrauseNumber}</p>
-      <p>${c.PriceUAH} грн</p>
-      <button onclick="addToCart(${c.ID})">Додати</button>
-    `;
-    container.appendChild(div);
-  });
-}
-
-function fillCountries() {
-  const select = document.getElementById("countryFilter");
-  const countries = [...new Set(coins.map(c => c.Country))];
-  countries.forEach(country => {
-    const option = document.createElement("option");
-    option.value = country;
-    option.textContent = country;
-    select.appendChild(option);
-  });
-}
-
-document.getElementById("countryFilter").addEventListener("change", async function() {
-  const country = this.value;
-  const res = await fetch(API_URL + "?action=getCoins&country=" + country);
-  coins = await res.json();
-  renderCoins();
-});
-
-function addToCart(id) {
-  const coin = coins.find(c => c.ID == id);
-  cart.push(coin);
-  renderCart();
-}
-
-function renderCart() {
-  const container = document.getElementById("cartItems");
-  container.innerHTML = "";
-  cart.forEach(c => {
-    container.innerHTML += `<div>${c.TitleUA} - ${c.PriceUAH} грн</div>`;
-  });
-}
-
-async function checkout() {
-
-  if(cart.length === 0) {
-    alert("Кошик пустий");
-    return;
   }
 
-  const name = prompt("Ваше ім'я");
-  const phone = prompt("Телефон");
-  const city = prompt("Місто");
+  function renderCoins() {
+    const container = document.getElementById("coins");
+    container.innerHTML = "";
 
-  const total = cart.reduce((sum, c) => sum + Number(c.PriceUAH), 0);
+    if (viewCoins.length === 0) {
+      container.innerHTML = "<p class='muted'>Нічого не знайдено</p>";
+      return;
+    }
 
-  await fetch(API_URL + "?action=createOrder", {
-    method: "POST",
-    body: JSON.stringify({
+    viewCoins.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "coin";
+      div.innerHTML = `
+        <h3 style="margin:0 0 6px 0;">${escapeHtml(c.TitleUA || "")}</h3>
+        <p style="margin:0 0 4px 0;">Krause: ${escapeHtml(c.KrauseNumber || "")}</p>
+        <p style="margin:0 0 8px 0;">${Number(c.PriceUAH || 0)} грн</p>
+        <button onclick="addToCart(${Number(c.ID)})">Додати</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function fillCountries() {
+    const select = document.getElementById("countryFilter");
+
+    // ❗ щоб не дублювало список при повторному loadCoins()
+    select.innerHTML = `<option value="">Всі країни</option>`;
+
+    const countries = [...new Set(allCoins.map(c => c.Country).filter(Boolean))].sort();
+    countries.forEach(country => {
+      const option = document.createElement("option");
+      option.value = country;
+      option.textContent = country;
+      select.appendChild(option);
+    });
+  }
+
+  document.getElementById("countryFilter").addEventListener("change", applyFilter);
+
+  function addToCart(id) {
+    const coin = allCoins.find(c => Number(c.ID) === Number(id));
+    if (!coin) return;
+
+    // 1 монета = 1 шт; можна заборонити дубль:
+    // if (cart.some(x => x.ID === coin.ID)) return;
+
+    cart.push(coin);
+    renderCart();
+  }
+
+  function removeFromCart(index) {
+    cart.splice(index, 1);
+    renderCart();
+  }
+
+  function renderCart() {
+    const container = document.getElementById("cartItems");
+    const totalEl = document.getElementById("cartTotal");
+    const hint = document.getElementById("cartHint");
+
+    container.innerHTML = "";
+
+    if (cart.length === 0) {
+      hint.style.display = "block";
+      totalEl.textContent = "0";
+      return;
+    }
+
+    hint.style.display = "none";
+
+    cart.forEach((c, idx) => {
+      const row = document.createElement("div");
+      row.className = "cartRow";
+      row.innerHTML = `
+        <div style="flex:1;">
+          ${escapeHtml(c.TitleUA || "")}
+          <div class="muted">${Number(c.PriceUAH || 0)} грн</div>
+        </div>
+        <button onclick="removeFromCart(${idx})">✕</button>
+      `;
+      container.appendChild(row);
+    });
+
+    const total = cart.reduce((sum, c) => sum + Number(c.PriceUAH || 0), 0);
+    totalEl.textContent = String(total);
+  }
+
+  async function checkout() {
+    if (cart.length === 0) {
+      alert("Кошик пустий");
+      return;
+    }
+
+    const name = prompt("Ваше ім'я");
+    if (!name) return;
+
+    const phone = prompt("Телефон");
+    if (!phone) return;
+
+    const city = prompt("Місто");
+    if (!city) return;
+
+    const total = cart.reduce((sum, c) => sum + Number(c.PriceUAH || 0), 0);
+
+    const payload = {
       name,
       phone,
       email: "",
       city,
       deliveryService: "NovaPoshta",
       deliveryDetails: "",
-      items: cart,
+      items: cart,              // items містять ID монет
       totalUAH: total,
       paymentMethod: "Card"
-    })
-  });
+    };
 
-  alert("Замовлення створено!");
-  cart = [];
-  renderCart();
+    try {
+      const res = await fetch(API_ORDER, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+      console.log("Order HTTP", res.status, "RAW:", text);
+
+      if (!res.ok) {
+        alert("Помилка створення замовлення. Дивись Console (F12).");
+        return;
+      }
+
+      alert("Замовлення створено!");
+      cart = [];
+      renderCart();
+      await loadCoins(); // оновить залишки
+
+    } catch (err) {
+      console.error("checkout error:", err);
+      alert("Помилка мережі при створенні замовлення. Дивись Console (F12).");
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  // старт
   loadCoins();
-}
-
-loadCoins();
-
 </script>
 
 </body>
