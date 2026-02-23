@@ -298,13 +298,13 @@
     document.getElementById("checkoutBtn").disabled = cart.length === 0;
   }
 
-  function syncDeliveryUI() {
+function syncDeliveryUI() {
   const d = document.getElementById("cDelivery").value;
   document.getElementById("npBlock").style.display = (d === "NovaPoshta") ? "flex" : "none";
   document.getElementById("upBlock").style.display = (d === "UkrPoshta") ? "flex" : "none";
 }
 
-// Викличемо один раз при старті
+// Виклик після завантаження сторінки
 syncDeliveryUI();
 
 async function checkout() {
@@ -326,6 +326,11 @@ async function checkout() {
 
   let deliveryDetails = "";
 
+  if (!name || !phone || !city) {
+    alert("Заповни: ім'я, телефон, місто");
+    return;
+  }
+
   if (deliveryService === "NovaPoshta") {
     const npType = document.getElementById("npType").value; // Branch / Postomat
     const npNumber = document.getElementById("npNumber").value.trim();
@@ -343,53 +348,57 @@ async function checkout() {
     deliveryDetails = upAddress;
   }
 
-  if (!name || !phone || !city) {
-    alert("Заповни: ім'я, телефон, місто");
+  const total = cart.reduce((sum, c) => sum + Math.round(Number(c.PriceUAH || 0)), 0);
+
+  // ✅ ВАЖЛИВО: відправляємо на /api/order (а не на /api/coins)
+  // Переконайся, що вгорі файлу є:
+  // const API_ORDER = "/api/order";
+  if (typeof API_ORDER === "undefined") {
+    alert("Не знайдено API_ORDER. Додай: const API_ORDER = '/api/order';");
     return;
   }
 
-  const total = cart.reduce((sum, c) => sum + Number(c.PriceUAH || 0), 0);
-
   msg.textContent = "Відправляю замовлення...";
 
+  const payload = {
+    name,
+    phone,
+    email: "",
+    city,
+    deliveryService,     // NovaPoshta / UkrPoshta
+    deliveryDetails,     // Відділення/Поштомат №... або адреса
+    channel,             // Viber / Telegram
+    comment,
+    items: cart.map(c => ({ ID: c.ID, TitleUA: c.TitleUA, PriceUAH: Math.round(Number(c.PriceUAH || 0)) })),
+    totalUAH: total,
+    paymentMethod: "Card"
+  };
+
   try {
-    const r = await fetch(API_URL + "?action=createOrder", {
+    const r = await fetch(API_ORDER, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        phone,
-        email: "",
-        city,
-        deliveryService,
-        deliveryDetails,
-        channel,
-        comment,
-        items: cart,
-        totalUAH: total,
-        paymentMethod: "Card"
-      })
+      body: JSON.stringify(payload)
     });
 
-    const respText = await r.text();
+    const text = await r.text();
     let resp;
-    try { resp = JSON.parse(respText); } catch { resp = { raw: respText }; }
+    try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
 
-    if (resp && resp.success) {
+    if (r.ok && resp && (resp.success === true || resp.orderId || resp.id)) {
       alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
       cart = [];
       renderCart();
-      loadCoins();
+      await loadCoins();
       msg.textContent = "";
     } else {
-      msg.textContent = "Помилка. Відкрий F12 → Console.";
-      console.log("createOrder response:", resp);
+      console.log("Order not OK:", r.status, resp);
+      msg.textContent = "Помилка створення замовлення. Дивись F12 → Console.";
       alert("Не вийшло створити замовлення. Спробуй ще раз.");
     }
-
   } catch (e) {
     console.log("checkout error:", e);
-    msg.textContent = "Помилка мережі. Відкрий F12 → Console.";
+    msg.textContent = "Помилка мережі. Дивись F12 → Console.";
     alert("Помилка мережі. Спробуй ще раз.");
   }
 }
