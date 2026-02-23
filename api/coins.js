@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   try {
-    const GAS = "https://script.google.com/macros/s/AKfycbzJ36NWONGMOd94OL7iziHolfa-rq-HvNs8LEUGaYyvA2LfMjqcObhkGQ72n4LcSmOZ/exec";
+    const GAS = "https://script.google.com/macros/s/AKfycbxUON1PQ9rPVkZd5zPOpMnoTPy7eGobv6302yTT9EP6cswOB5moP1owRyjfn3wNm_6k/exec";
 
     const url = GAS + "?action=getCoins";
     const r = await fetch(url);
