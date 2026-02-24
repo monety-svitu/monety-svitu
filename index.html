@@ -548,12 +548,24 @@
 
   document.getElementById("btnOrder").addEventListener("click", checkout);
 
-  async function checkout() {
-    const msg = document.getElementById("checkoutMsg");
-    const err = document.getElementById("checkoutError");
-    msg.textContent = ""; err.textContent = "";
+async function checkout() {
+  const msg = document.getElementById("checkoutMsg");
+  const err = document.getElementById("checkoutError");
+  const btn = document.getElementById("btnOrder");
 
-    if (cartCount() === 0) { err.textContent = "Кошик пустий"; return; }
+  msg.textContent = "";
+  err.textContent = "";
+
+  // ✅ анти-двоклік
+  if (btn.dataset.locked === "1") return;
+  btn.dataset.locked = "1";
+  btn.disabled = true;
+
+  try {
+    if (cartCount() === 0) {
+      err.textContent = "Кошик пустий";
+      return;
+    }
 
     const lastName = document.getElementById("cLastName").value.trim();
     const firstName = document.getElementById("cFirstName").value.trim();
@@ -564,22 +576,34 @@
     const channel = document.getElementById("cChannel").value;
     const comment = document.getElementById("cComment").value.trim();
 
-    if (!lastName || !firstName || !phone) { err.textContent = "Заповни: прізвище, ім'я, телефон"; return; }
-    if (mode === "full" && !city) { err.textContent = "Заповни: місто"; return; }
+    if (!lastName || !firstName || !phone) {
+      err.textContent = "Заповни: прізвище, ім'я, телефон";
+      return;
+    }
+    if (mode === "full" && !city) {
+      err.textContent = "Заповни: місто";
+      return;
+    }
 
     let deliveryDetails = "";
     if (deliveryService === "NovaPoshta") {
       const npType = document.getElementById("npType").value;
       const npNumber = document.getElementById("npNumber").value.trim();
-      if (!npNumber) { err.textContent = "Вкажи № відділення або поштомата Нової пошти"; return; }
+      if (!npNumber) {
+        err.textContent = "Вкажи № відділення або поштомата Нової пошти";
+        return;
+      }
       deliveryDetails = (npType === "Branch" ? "Відділення" : "Поштомат") + " №" + npNumber;
     } else {
       const upAddress = document.getElementById("upAddress").value.trim();
-      if (!upAddress) { err.textContent = "Вкажи адресу або відділення Укрпошти"; return; }
+      if (!upAddress) {
+        err.textContent = "Вкажи адресу або відділення Укрпошти";
+        return;
+      }
       deliveryDetails = upAddress;
     }
 
-    const items = Object.values(cartMap).map(({coin, qty}) => ({
+    const items = Object.values(cartMap).map(({ coin, qty }) => ({
       ID: coin.ID,
       TitleUA: coin.TitleUA,
       PriceUAH: money(coin.PriceUAH),
@@ -592,8 +616,8 @@
     const payload = {
       customerLastName: lastName,
       customerFirstName: firstName,
-      name: (lastName + " " + firstName).trim(), // для сумісності зі старим GAS
-      phone: phone,
+      name: (lastName + " " + firstName).trim(), // сумісність зі старим GAS
+      phone,
       email: "",
       city: mode === "full" ? city : "",
       deliveryService,
@@ -603,36 +627,41 @@
       items,
       totalUAH: total,
       paymentMethod: "Card",
-
-      // якщо користувач залогінений — передамо його ID (на майбутнє для спецпропозицій)
-      userId: user ? user.id : ""
+      userId: (typeof user !== "undefined" && user) ? user.id : ""
     };
 
-    try {
-      const r = await fetch(API_ORDER, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const text = await r.text();
-      let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
+    const r = await fetch(API_ORDER, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-      if (r.ok && resp && (resp.success === true || resp.orderId || resp.id)) {
-        alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
-        cartMap = {};
-        renderCart();
-        closeDrawer();
-        await loadCoins();
-        msg.textContent = "";
-      } else {
-        console.log("Order not OK:", r.status, resp);
-        err.textContent = "Помилка створення замовлення. Дивись F12 → Console.";
-      }
-    } catch (e) {
-      console.log("checkout error:", e);
-      err.textContent = "Помилка мережі. Дивись F12 → Console.";
+    const text = await r.text();
+    let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
+
+    if (r.ok && resp && (resp.success === true || resp.orderId || resp.id)) {
+      alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
+      cartMap = {};
+      renderCart();
+      closeDrawer();
+      await loadCoins();
+      msg.textContent = "";
+    } else {
+      console.log("Order not OK:", r.status, resp);
+      err.textContent = "Помилка створення замовлення. Дивись F12 → Console.";
     }
+
+  } catch (e) {
+    console.log("checkout error:", e);
+    err.textContent = "Помилка мережі. Дивись F12 → Console.";
+  } finally {
+    // ✅ завжди розблокувати кнопку
+    btn.dataset.locked = "0";
+    // validateCheckout() якщо є — воно само виставить disabled правильно
+    if (typeof validateCheckout === "function") validateCheckout();
+    else btn.disabled = false;
   }
+}
 
   // ===== Auth UI =====
   const authModal = document.getElementById("authModal");
