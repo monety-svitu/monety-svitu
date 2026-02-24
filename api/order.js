@@ -1,4 +1,18 @@
-// /api/order.js
+// /api/order.js (Vercel)
+// Надійно читає JSON body (навіть якщо req.body пустий) і відправляє в GAS
+
+export const config = {
+  api: {
+    bodyParser: false, // ✅ важливо: читаємо raw body самі
+  },
+};
+
+async function readRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
@@ -11,29 +25,27 @@ export default async function handler(req, res) {
     const GAS_WEBAPP =
       "https://script.google.com/macros/s/AKfycbxUON1PQ9rPVkZd5zPOpMnoTPy7eGobv6302yTT9EP6cswOB5moP1owRyjfn3wNm_6k/exec";
 
-    // ✅ 1) Надійно читаємо body
-    let payload = req.body;
-
-    // Якщо req.body порожній — читаємо raw вручну
-    if (!payload || (typeof payload === "object" && Object.keys(payload).length === 0)) {
-      const chunks = [];
-      for await (const chunk of req) chunks.push(chunk);
-      const raw = Buffer.concat(chunks).toString("utf8");
+    // ✅ читаємо тіло запиту
+    const raw = await readRawBody(req);
+    let payload = {};
+    try {
       payload = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return res.status(400).json({ success: false, error: "Bad JSON", raw: raw?.slice?.(0, 300) || "" });
     }
 
-    // ✅ 2) Мінімальна перевірка
     if (!payload || !Array.isArray(payload.items) || payload.items.length === 0) {
       return res.status(400).json({ success: false, error: "Empty items" });
     }
 
-    // ✅ 3) Надсилаємо в GAS
+    // ✅ відправляємо в GAS
     const url = `${GAS_WEBAPP}?action=createOrder`;
 
     const r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      redirect: "follow",
     });
 
     const text = await r.text();
@@ -42,10 +54,10 @@ export default async function handler(req, res) {
     try {
       out = JSON.parse(text);
     } catch {
-      out = { success: false, error: "GAS returned non-JSON", raw: text?.slice?.(0, 300) || String(text) };
+      out = { success: false, error: "GAS returned non-JSON", raw: text?.slice?.(0, 400) || String(text) };
     }
 
-    // Якщо GAS каже success:false — віддаємо як помилку
+    // якщо GAS каже success:false — віддаємо 400 (щоб фронт бачив)
     if (!out || out.success !== true) {
       return res.status(400).json(out);
     }
