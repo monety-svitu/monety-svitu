@@ -381,7 +381,10 @@ const payload = {
   totalUAH: total,
   paymentMethod: "Card"
 };
-
+  
+console.log("SENDING PAYLOAD", payload);
+alert("payload дивись в Console (F12)");
+  
   try {
     const r = await fetch(API_ORDER, {
       method: "POST",
