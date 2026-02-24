@@ -9,6 +9,11 @@
     h1 { margin: 0 0 10px; }
     .muted { color:#777; font-size: 12px; }
 
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 10px; }
+    .topActions { display:flex; gap:8px; align-items:center; }
+    .btnSmall { padding:8px 10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; }
+    .btnSmall.primary { background:#111; color:#fff; border-color:#111; }
+
     #filters { display:flex; gap:10px; flex-wrap:wrap; margin: 10px 0 15px; }
     #filters input, #filters select, #filters button { padding: 6px 8px; font-size: 14px; }
     #filters button { cursor:pointer; }
@@ -23,7 +28,7 @@
     .btnAdd[disabled] { opacity:0.5; cursor:not-allowed; }
     .empty { padding: 20px; border: 1px dashed #ccc; border-radius: 10px; }
 
-    /* ===== Floating cart button ===== */
+    /* Floating cart button */
     #cartFab {
       position: fixed;
       right: 16px;
@@ -60,32 +65,33 @@
       border: 2px solid #111;
     }
 
-    /* ===== Cart drawer ===== */
-    #cartOverlay {
+    /* Overlay + Drawer */
+    #overlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.35);
       display: none;
       z-index: 1100;
     }
-    #cartDrawer {
+
+    .drawer {
       position: fixed;
       top: 0;
       right: 0;
       height: 100%;
-      width: min(420px, 92vw);
+      width: min(440px, 94vw);
       background: #fff;
       border-left: 1px solid #ddd;
-      transform: translateX(100%);
+      transform: translateX(110%);
       transition: transform 0.2s ease;
       z-index: 1200;
       display: flex;
       flex-direction: column;
     }
-    #cartDrawer.open { transform: translateX(0); }
+    .drawer.open { transform: translateX(0); }
 
     .drawerHeader {
-      padding: 14px 14px;
+      padding: 14px;
       border-bottom: 1px solid #eee;
       display:flex;
       align-items:center;
@@ -93,163 +99,103 @@
       gap: 10px;
     }
     .drawerHeader h3 { margin: 0; }
-    .closeBtn {
-      border: 0;
-      background: transparent;
-      font-size: 22px;
-      cursor: pointer;
-      line-height: 1;
-    }
+    .closeBtn { border: 0; background: transparent; font-size: 22px; cursor: pointer; line-height: 1; }
 
-    .drawerBody {
-      padding: 14px;
-      overflow: auto;
-      flex: 1;
-    }
+    .drawerBody { padding: 14px; overflow: auto; flex: 1; }
+    .drawerFooter { border-top: 1px solid #eee; padding: 14px; background: #fafafa; }
 
-    .cartItem {
-      border: 1px solid #eee;
-      border-radius: 10px;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    .cartItemTop {
-      display:flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: flex-start;
-    }
-    .cartItemTitle {
-      font-weight: 800;
-      font-size: 14px;
-      line-height: 1.2;
-    }
+    .cartItem { border: 1px solid #eee; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+    .cartItemTop { display:flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .cartItemTitle { font-weight: 800; font-size: 14px; line-height: 1.2; }
     .cartItemMeta { font-size: 12px; color:#666; margin-top: 4px; }
-    .qtyRow {
-      display:flex;
-      align-items:center;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .qtyBtn {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      background: #f7f7f7;
-      cursor: pointer;
-      font-size: 18px;
-    }
+    .qtyRow { display:flex; align-items:center; gap: 8px; margin-top: 10px; }
+    .qtyBtn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid #ddd; background: #f7f7f7; cursor: pointer; font-size: 18px; }
     .qtyNum { min-width: 28px; text-align:center; font-weight: 900; }
-    .removeBtn {
-      border: 0;
-      background: transparent;
-      cursor: pointer;
-      color: #b00020;
-      font-weight: 700;
-    }
+    .removeBtn { border: 0; background: transparent; cursor: pointer; color: #b00020; font-weight: 700; }
 
-    .drawerFooter {
-      border-top: 1px solid #eee;
-      padding: 14px;
-      background: #fafafa;
-    }
+    .totalRow { display:flex; justify-content: space-between; font-weight: 900; margin-bottom: 10px; }
 
-    .totalRow {
-      display:flex;
-      justify-content: space-between;
-      font-weight: 900;
-      margin-bottom: 10px;
-    }
-
-    .tabs {
-      display:flex; gap: 8px;
-      margin: 12px 0;
-    }
+    .tabs { display:flex; gap: 8px; margin: 12px 0; }
     .tabBtn {
-      flex: 1;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      background: #fff;
-      cursor: pointer;
-      font-weight: 900;
+      flex: 1; padding: 10px; border-radius: 10px;
+      border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: 900;
     }
-    .tabBtn.active {
-      background: #111;
-      color: #fff;
-      border-color: #111;
-    }
+    .tabBtn.active { background: #111; color: #fff; border-color: #111; }
 
-    .formGrid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
+    .formGrid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
     .formGrid input, .formGrid select, .formGrid textarea {
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      font-size: 14px;
+      padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px;
     }
 
-    .btnPrimary {
-      width: 100%;
-      padding: 12px;
-      border: 0;
-      border-radius: 12px;
-      background: #f0c040;
-      font-weight: 900;
-      cursor: pointer;
-    }
+    .btnPrimary { width: 100%; padding: 12px; border: 0; border-radius: 12px; background: #f0c040; font-weight: 900; cursor: pointer; }
     .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .hint { font-size: 12px; color:#666; margin-top: 6px; }
     .error { font-size: 12px; color:#b00020; margin-top: 6px; }
+
+    /* Auth modal */
+    #authModal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: min(420px, 92vw);
+      transform: translate(-50%, -50%);
+      background:#fff;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      z-index: 1300;
+      display: none;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+    }
+    .modalBody { padding: 14px; }
+    .modalTitle { font-weight: 900; margin: 0 0 6px; }
+    .modalSub { font-size: 12px; color:#666; margin-bottom: 10px; }
+    .row2 { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   </style>
 </head>
 <body>
 
-  <h1>Монети Світу</h1>
-  <div class="muted">Пошук працює по назві та Krause (KM#...).</div>
+  <div class="topbar">
+    <div>
+      <h1 style="margin:0;">Монети Світу</h1>
+      <div class="muted">Пошук по назві та Krause (KM#...).</div>
+    </div>
+    <div class="topActions">
+      <button class="btnSmall" id="btnProfile" style="display:none;"></button>
+      <button class="btnSmall primary" id="btnAuth">Реєстрація / Вхід</button>
+      <button class="btnSmall" id="btnLogout" style="display:none;">Вийти</button>
+    </div>
+  </div>
 
   <div id="filters">
     <input id="q" type="text" placeholder="Пошук: назва, KM#..." />
-
     <select id="fCountry"><option value="">Всі країни</option></select>
     <select id="fMetal"><option value="">Всі метали</option></select>
     <select id="fCondition"><option value="">Будь-який стан</option></select>
-
     <select id="sort">
       <option value="new">Нові (як у списку)</option>
       <option value="price_asc">Ціна ↑</option>
       <option value="price_desc">Ціна ↓</option>
       <option value="title_asc">Назва A→Я</option>
     </select>
-
     <label style="display:flex;align-items:center;gap:6px;">
       <input id="onlyInStock" type="checkbox" checked />
       Тільки в наявності
     </label>
-
     <button id="reset">Скинути</button>
   </div>
 
   <div id="coins"></div>
 
-  <!-- Floating cart button -->
-  <button id="cartFab" title="Кошик">
-    🛒
-    <span id="cartBadge">0</span>
-  </button>
+  <button id="cartFab" title="Кошик">🛒<span id="cartBadge">0</span></button>
 
-  <!-- Overlay + Drawer -->
-  <div id="cartOverlay"></div>
-  <div id="cartDrawer">
+  <div id="overlay"></div>
+
+  <!-- Cart drawer -->
+  <div class="drawer" id="cartDrawer">
     <div class="drawerHeader">
       <h3>Кошик</h3>
-      <button class="closeBtn" id="closeCart">✕</button>
+      <button class="closeBtn" id="closeDrawer">✕</button>
     </div>
 
     <div class="drawerBody">
@@ -263,15 +209,17 @@
       <div id="checkoutError" class="error"></div>
 
       <div class="formGrid">
-        <input id="cName" placeholder="Ваше ім'я *">
+        <input id="cLastName" placeholder="Прізвище *">
+        <input id="cFirstName" placeholder="Ім'я *">
         <input id="cPhone" placeholder="Телефон *">
 
         <div id="fullFields" style="display:none;">
           <input id="cCity" placeholder="Місто *">
+          <textarea id="cComment" placeholder="Коментар (необов’язково)" rows="3"></textarea>
         </div>
 
         <label class="muted" style="margin-top:6px;">Доставка *</label>
-        <select id="cDelivery" onchange="syncDeliveryUI()">
+        <select id="cDelivery">
           <option value="NovaPoshta">Нова пошта</option>
           <option value="UkrPoshta">Укрпошта</option>
         </select>
@@ -294,11 +242,7 @@
           <option value="Telegram">Telegram</option>
         </select>
 
-        <div id="fullComment" style="display:none;">
-          <textarea id="cComment" placeholder="Коментар (необов’язково)" rows="3"></textarea>
-        </div>
-
-        <button class="btnPrimary" id="btnOrder" onclick="checkout()" disabled>Замовити</button>
+        <button class="btnPrimary" id="btnOrder" disabled>Замовити</button>
         <div class="hint">* — обов’язкові поля. Кнопка активується, коли все заповнено.</div>
         <div id="checkoutMsg" class="hint"></div>
       </div>
@@ -312,15 +256,49 @@
     </div>
   </div>
 
+  <!-- Auth modal -->
+  <div id="authModal">
+    <div class="drawerHeader">
+      <div>
+        <div class="modalTitle" id="authTitle">Реєстрація</div>
+        <div class="modalSub" id="authSub">Реєстрація потрібна для спецпропозицій і знижок.</div>
+      </div>
+      <button class="closeBtn" id="closeAuth">✕</button>
+    </div>
+    <div class="modalBody">
+      <div class="tabs" style="margin-top:0;">
+        <button class="tabBtn active" id="tabRegister">Реєстрація</button>
+        <button class="tabBtn" id="tabLogin">Вхід</button>
+      </div>
+
+      <div id="authErr" class="error"></div>
+      <div class="formGrid">
+        <div class="row2" id="regNames">
+          <input id="rLastName" placeholder="Прізвище *">
+          <input id="rFirstName" placeholder="Ім'я *">
+        </div>
+        <input id="rPhone" placeholder="Телефон *">
+        <input id="rPass" type="password" placeholder="Пароль * (мінімум 6 символів)">
+
+        <button class="btnPrimary" id="btnAuthSubmit">Зареєструватися</button>
+        <div class="hint" id="authHint">Після входу ми зможемо показувати тобі спецпропозиції.</div>
+      </div>
+    </div>
+  </div>
+
 <script>
   const API_COINS = "/api/coins";
   const API_ORDER = "/api/order";
 
+  // ✅ Реєстрація/вхід через GAS (через Vercel прокладку /api/user)
+  const API_USER = "/api/user";
+
   let allCoins = [];
   let viewCoins = [];
+  let cartMap = {}; // ID -> { coin, qty }
 
-  // cartMap: ID -> { coin, qty }
-  let cartMap = {};
+  // auth state
+  let user = null; // { id, phone, firstName, lastName }
 
   function norm(v){ return String(v ?? "").toLowerCase().trim(); }
   function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b), "uk")); }
@@ -342,33 +320,41 @@
     validateCheckout();
   }
 
-  function openCart() {
-    document.getElementById("cartOverlay").style.display = "block";
+  function openDrawer() {
+    document.getElementById("overlay").style.display = "block";
     document.getElementById("cartDrawer").classList.add("open");
     renderCart();
   }
-  function closeCart() {
-    document.getElementById("cartOverlay").style.display = "none";
+  function closeDrawer() {
+    document.getElementById("overlay").style.display = "none";
     document.getElementById("cartDrawer").classList.remove("open");
+    closeAuth();
   }
 
-  document.getElementById("cartFab").addEventListener("click", openCart);
-  document.getElementById("closeCart").addEventListener("click", closeCart);
-  document.getElementById("cartOverlay").addEventListener("click", closeCart);
+  document.getElementById("cartFab").addEventListener("click", openDrawer);
+  document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
+  document.getElementById("overlay").addEventListener("click", closeDrawer);
 
-  // Tabs (fast / full)
+  // mode
   let mode = "fast";
   document.getElementById("tabFast").addEventListener("click", () => setMode("fast"));
   document.getElementById("tabFull").addEventListener("click", () => setMode("full"));
-
-  function setMode(m) {
+  function setMode(m){
     mode = m;
     document.getElementById("tabFast").classList.toggle("active", m==="fast");
     document.getElementById("tabFull").classList.toggle("active", m==="full");
     document.getElementById("fullFields").style.display = (m==="full") ? "block" : "none";
-    document.getElementById("fullComment").style.display = (m==="full") ? "block" : "none";
     validateCheckout();
   }
+
+  // delivery UI
+  function syncDeliveryUI() {
+    const d = document.getElementById("cDelivery").value;
+    document.getElementById("npBlock").style.display = (d === "NovaPoshta") ? "flex" : "none";
+    document.getElementById("upBlock").style.display = (d === "UkrPoshta") ? "flex" : "none";
+    validateCheckout();
+  }
+  document.getElementById("cDelivery").addEventListener("change", syncDeliveryUI);
 
   // ===== Coins =====
   async function loadCoins() {
@@ -393,20 +379,13 @@
     const country = document.getElementById("fCountry");
     const metal = document.getElementById("fMetal");
     const cond = document.getElementById("fCondition");
-
     country.innerHTML = `<option value="">Всі країни</option>`;
     metal.innerHTML = `<option value="">Всі метали</option>`;
     cond.innerHTML = `<option value="">Будь-який стан</option>`;
 
-    uniq(allCoins.map(c => c.Country)).forEach(v => {
-      const o = document.createElement("option"); o.value = v; o.textContent = v; country.appendChild(o);
-    });
-    uniq(allCoins.map(c => c.Metal)).forEach(v => {
-      const o = document.createElement("option"); o.value = v; o.textContent = v; metal.appendChild(o);
-    });
-    uniq(allCoins.map(c => c.Condition)).forEach(v => {
-      const o = document.createElement("option"); o.value = v; o.textContent = v; cond.appendChild(o);
-    });
+    uniq(allCoins.map(c => c.Country)).forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; country.appendChild(o); });
+    uniq(allCoins.map(c => c.Metal)).forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; metal.appendChild(o); });
+    uniq(allCoins.map(c => c.Condition)).forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; cond.appendChild(o); });
   }
 
   function applyFilters() {
@@ -422,7 +401,6 @@
       if (fCountry && c.Country !== fCountry) return false;
       if (fMetal && c.Metal !== fMetal) return false;
       if (fCondition && c.Condition !== fCondition) return false;
-
       if (q) {
         const hay = [c.TitleUA, c.TitleEN, c.KrauseNumber, c.Country, c.Metal, c.Theme, c.Condition].map(norm).join(" ");
         if (!hay.includes(q)) return false;
@@ -448,7 +426,6 @@
 
     viewCoins.forEach(c => {
       const inStock = Number(c.Quantity) > 0;
-
       const div = document.createElement("div");
       div.className = "coin";
       div.innerHTML = `
@@ -459,7 +436,6 @@
           ${c.Condition ? `<span class="pill">${c.Condition}</span>` : ""}
           ${c.KrauseNumber ? `<span class="pill">${c.KrauseNumber}</span>` : ""}
         </div>
-
         <div class="coinRow">
           <div class="price">${money(c.PriceUAH)} грн</div>
           <div class="muted">${inStock ? `В наявності: ${c.Quantity}` : `Немає в наявності`}</div>
@@ -473,32 +449,30 @@
   function addToCart(id) {
     const coin = allCoins.find(x => String(x.ID) === String(id));
     if (!coin) return;
+
     const key = String(coin.ID);
     if (!cartMap[key]) cartMap[key] = { coin, qty: 0 };
-    // Не даємо набрати більше, ніж є в наявності
+
     const maxQty = Number(coin.Quantity) || 0;
     if (cartMap[key].qty < maxQty) cartMap[key].qty += 1;
+
     updateCartBadge();
   }
 
   function incQty(id) {
-    const key = String(id);
-    const it = cartMap[key];
+    const it = cartMap[String(id)];
     if (!it) return;
     const maxQty = Number(it.coin.Quantity) || 0;
     if (it.qty < maxQty) it.qty += 1;
     renderCart();
   }
-
   function decQty(id) {
-    const key = String(id);
-    const it = cartMap[key];
+    const it = cartMap[String(id)];
     if (!it) return;
     it.qty -= 1;
-    if (it.qty <= 0) delete cartMap[key];
+    if (it.qty <= 0) delete cartMap[String(id)];
     renderCart();
   }
-
   function removeItem(id) {
     delete cartMap[String(id)];
     renderCart();
@@ -509,7 +483,6 @@
     list.innerHTML = "";
 
     const items = Object.values(cartMap);
-
     if (items.length === 0) {
       list.innerHTML = `<div class="muted">Кошик пустий</div>`;
       updateCartBadge();
@@ -540,15 +513,9 @@
     updateCartBadge();
   }
 
-  function syncDeliveryUI() {
-    const d = document.getElementById("cDelivery").value;
-    document.getElementById("npBlock").style.display = (d === "NovaPoshta") ? "flex" : "none";
-    document.getElementById("upBlock").style.display = (d === "UkrPoshta") ? "flex" : "none";
-    validateCheckout();
-  }
-
   // ===== Checkout validation =====
-  ["cName","cPhone","cCity","cDelivery","npType","npNumber","upAddress","cChannel","cComment"].forEach(id=>{
+  const checkoutInputs = ["cLastName","cFirstName","cPhone","cCity","cDelivery","npType","npNumber","upAddress","cChannel","cComment"];
+  checkoutInputs.forEach(id=>{
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener("input", validateCheckout);
@@ -560,40 +527,36 @@
     err.textContent = "";
 
     const hasItems = cartCount() > 0;
-    const name = document.getElementById("cName").value.trim();
+
+    const lastName = document.getElementById("cLastName").value.trim();
+    const firstName = document.getElementById("cFirstName").value.trim();
     const phone = document.getElementById("cPhone").value.trim();
     const city = document.getElementById("cCity").value.trim();
+
     const deliveryService = document.getElementById("cDelivery").value;
     const channel = document.getElementById("cChannel").value;
 
     let deliveryOk = false;
-    if (deliveryService === "NovaPoshta") {
-      deliveryOk = document.getElementById("npNumber").value.trim().length > 0;
-    } else {
-      deliveryOk = document.getElementById("upAddress").value.trim().length > 0;
-    }
+    if (deliveryService === "NovaPoshta") deliveryOk = document.getElementById("npNumber").value.trim().length > 0;
+    else deliveryOk = document.getElementById("upAddress").value.trim().length > 0;
 
-    // fast: name + phone + delivery + channel
-    // full: + city
-    let ok = hasItems && name && phone && deliveryOk && channel;
+    let ok = hasItems && lastName && firstName && phone && deliveryOk && channel;
     if (mode === "full") ok = ok && city;
 
     document.getElementById("btnOrder").disabled = !ok;
   }
 
-  // ===== Checkout =====
+  document.getElementById("btnOrder").addEventListener("click", checkout);
+
   async function checkout() {
     const msg = document.getElementById("checkoutMsg");
     const err = document.getElementById("checkoutError");
-    msg.textContent = "";
-    err.textContent = "";
+    msg.textContent = ""; err.textContent = "";
 
-    if (cartCount() === 0) {
-      err.textContent = "Кошик пустий";
-      return;
-    }
+    if (cartCount() === 0) { err.textContent = "Кошик пустий"; return; }
 
-    const name = document.getElementById("cName").value.trim();
+    const lastName = document.getElementById("cLastName").value.trim();
+    const firstName = document.getElementById("cFirstName").value.trim();
     const phone = document.getElementById("cPhone").value.trim();
     const city = document.getElementById("cCity").value.trim();
 
@@ -601,19 +564,12 @@
     const channel = document.getElementById("cChannel").value;
     const comment = document.getElementById("cComment").value.trim();
 
+    if (!lastName || !firstName || !phone) { err.textContent = "Заповни: прізвище, ім'я, телефон"; return; }
+    if (mode === "full" && !city) { err.textContent = "Заповни: місто"; return; }
+
     let deliveryDetails = "";
-
-    if (!name || !phone) {
-      err.textContent = "Заповни: ім'я і телефон";
-      return;
-    }
-    if (mode === "full" && !city) {
-      err.textContent = "Заповни: місто";
-      return;
-    }
-
     if (deliveryService === "NovaPoshta") {
-      const npType = document.getElementById("npType").value; // Branch / Postomat
+      const npType = document.getElementById("npType").value;
       const npNumber = document.getElementById("npNumber").value.trim();
       if (!npNumber) { err.textContent = "Вкажи № відділення або поштомата Нової пошти"; return; }
       deliveryDetails = (npType === "Branch" ? "Відділення" : "Поштомат") + " №" + npNumber;
@@ -631,12 +587,13 @@
     }));
 
     const total = cartTotal();
-
     msg.textContent = "Відправляю замовлення...";
 
     const payload = {
-      name,
-      phone,
+      customerLastName: lastName,
+      customerFirstName: firstName,
+      name: (lastName + " " + firstName).trim(), // для сумісності зі старим GAS
+      phone: phone,
       email: "",
       city: mode === "full" ? city : "",
       deliveryService,
@@ -645,7 +602,10 @@
       comment: mode === "full" ? comment : "",
       items,
       totalUAH: total,
-      paymentMethod: "Card"
+      paymentMethod: "Card",
+
+      // якщо користувач залогінений — передамо його ID (на майбутнє для спецпропозицій)
+      userId: user ? user.id : ""
     };
 
     try {
@@ -654,16 +614,14 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-
       const text = await r.text();
-      let resp;
-      try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
+      let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
 
       if (r.ok && resp && (resp.success === true || resp.orderId || resp.id)) {
         alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
         cartMap = {};
         renderCart();
-        closeCart();
+        closeDrawer();
         await loadCoins();
         msg.textContent = "";
       } else {
@@ -676,7 +634,130 @@
     }
   }
 
-  // filters events
+  // ===== Auth UI =====
+  const authModal = document.getElementById("authModal");
+  let authMode = "register";
+
+  document.getElementById("btnAuth").addEventListener("click", () => { openAuth(); });
+  document.getElementById("closeAuth").addEventListener("click", closeAuth);
+
+  document.getElementById("tabRegister").addEventListener("click", () => setAuthMode("register"));
+  document.getElementById("tabLogin").addEventListener("click", () => setAuthMode("login"));
+
+  document.getElementById("btnLogout").addEventListener("click", logout);
+  document.getElementById("btnAuthSubmit").addEventListener("click", authSubmit);
+
+  function openAuth() {
+    document.getElementById("overlay").style.display = "block";
+    authModal.style.display = "block";
+    setAuthMode(authMode);
+  }
+  function closeAuth() {
+    authModal.style.display = "none";
+    if (!document.getElementById("cartDrawer").classList.contains("open")) {
+      document.getElementById("overlay").style.display = "none";
+    }
+  }
+
+  function setAuthMode(m) {
+    authMode = m;
+    document.getElementById("tabRegister").classList.toggle("active", m==="register");
+    document.getElementById("tabLogin").classList.toggle("active", m==="login");
+    document.getElementById("regNames").style.display = (m==="register") ? "grid" : "none";
+    document.getElementById("btnAuthSubmit").textContent = (m==="register") ? "Зареєструватися" : "Увійти";
+    document.getElementById("authTitle").textContent = (m==="register") ? "Реєстрація" : "Вхід";
+    document.getElementById("authErr").textContent = "";
+  }
+
+  function saveUserLocal(u) {
+    user = u;
+    localStorage.setItem("ms_user", JSON.stringify(u));
+    renderAuthButtons();
+    // автозаповнення в кошику
+    if (u?.lastName) document.getElementById("cLastName").value = u.lastName;
+    if (u?.firstName) document.getElementById("cFirstName").value = u.firstName;
+    if (u?.phone) document.getElementById("cPhone").value = u.phone;
+    validateCheckout();
+  }
+
+  function loadUserLocal() {
+    try {
+      const raw = localStorage.getItem("ms_user");
+      if (raw) user = JSON.parse(raw);
+    } catch {}
+    renderAuthButtons();
+    if (user) saveUserLocal(user);
+  }
+
+  function renderAuthButtons() {
+    const btnAuth = document.getElementById("btnAuth");
+    const btnLogout = document.getElementById("btnLogout");
+    const btnProfile = document.getElementById("btnProfile");
+
+    if (user) {
+      btnAuth.style.display = "none";
+      btnLogout.style.display = "inline-block";
+      btnProfile.style.display = "inline-block";
+      btnProfile.textContent = (user.lastName || "") + " " + (user.firstName || "");
+    } else {
+      btnAuth.style.display = "inline-block";
+      btnLogout.style.display = "none";
+      btnProfile.style.display = "none";
+    }
+  }
+
+  function logout() {
+    user = null;
+    localStorage.removeItem("ms_user");
+    renderAuthButtons();
+    alert("Ви вийшли з аккаунта.");
+  }
+
+  async function authSubmit() {
+    const err = document.getElementById("authErr");
+    err.textContent = "";
+
+    const phone = document.getElementById("rPhone").value.trim();
+    const pass = document.getElementById("rPass").value;
+
+    const lastName = document.getElementById("rLastName").value.trim();
+    const firstName = document.getElementById("rFirstName").value.trim();
+
+    if (!phone) { err.textContent = "Вкажи телефон"; return; }
+    if (!pass || pass.length < 6) { err.textContent = "Пароль має бути мінімум 6 символів"; return; }
+
+    if (authMode === "register") {
+      if (!lastName || !firstName) { err.textContent = "Вкажи прізвище та ім'я"; return; }
+    }
+
+    const payload = (authMode === "register")
+      ? { action: "register", phone, pass, lastName, firstName }
+      : { action: "login", phone, pass };
+
+    try {
+      const r = await fetch(API_USER, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const text = await r.text();
+      let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
+
+      if (r.ok && resp && resp.success === true && resp.user) {
+        saveUserLocal(resp.user);
+        closeAuth();
+        alert(authMode === "register" ? "Реєстрація успішна!" : "Вхід успішний!");
+      } else {
+        err.textContent = resp?.error || "Не вийшло. Дивись F12 → Console.";
+        console.log("Auth error:", r.status, resp);
+      }
+    } catch (e) {
+      err.textContent = "Помилка мережі. Дивись F12 → Console.";
+      console.log("Auth network error:", e);
+    }
+  }
+
+  // ===== Filters events =====
   document.getElementById("q").addEventListener("input", applyFilters);
   document.getElementById("fCountry").addEventListener("change", applyFilters);
   document.getElementById("fMetal").addEventListener("change", applyFilters);
@@ -698,6 +779,7 @@
   syncDeliveryUI();
   updateCartBadge();
   loadCoins();
+  loadUserLocal();
 </script>
 </body>
 </html>
