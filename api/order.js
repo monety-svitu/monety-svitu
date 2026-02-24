@@ -1,31 +1,39 @@
 // /api/order.js
 export default async function handler(req, res) {
-  // CORS можна лишити (не заважає)
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ success: false, error: "Method not allowed. Use POST." });
+  if (req.method !== "POST") return res.status(405).json({ success: false, error: "Use POST" });
 
   try {
     const GAS_WEBAPP =
       "https://script.google.com/macros/s/AKfycbxUON1PQ9rPVkZd5zPOpMnoTPy7eGobv6302yTT9EP6cswOB5moP1owRyjfn3wNm_6k/exec";
 
-    const payload = req.body || {};
+    // ✅ 1) Надійно читаємо body
+    let payload = req.body;
 
-    // Мінімальна перевірка, щоб не летіло "порожнє"
-    if (!payload || !Array.isArray(payload.items) || payload.items.length === 0) {
-      return res.status(400).json({ success: false, error: "Empty cart/items" });
+    // Якщо req.body порожній — читаємо raw вручну
+    if (!payload || (typeof payload === "object" && Object.keys(payload).length === 0)) {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const raw = Buffer.concat(chunks).toString("utf8");
+      payload = raw ? JSON.parse(raw) : {};
     }
 
+    // ✅ 2) Мінімальна перевірка
+    if (!payload || !Array.isArray(payload.items) || payload.items.length === 0) {
+      return res.status(400).json({ success: false, error: "Empty items" });
+    }
+
+    // ✅ 3) Надсилаємо в GAS
     const url = `${GAS_WEBAPP}?action=createOrder`;
 
     const r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      redirect: "follow",
     });
 
     const text = await r.text();
@@ -34,10 +42,10 @@ export default async function handler(req, res) {
     try {
       out = JSON.parse(text);
     } catch {
-      out = { success: false, error: "GAS returned non-JSON", raw: text?.slice?.(0, 500) || String(text) };
+      out = { success: false, error: "GAS returned non-JSON", raw: text?.slice?.(0, 300) || String(text) };
     }
 
-    // Важливо: якщо GAS повернув success:false — віддаємо 400, щоб фронт бачив що це помилка
+    // Якщо GAS каже success:false — віддаємо як помилку
     if (!out || out.success !== true) {
       return res.status(400).json(out);
     }
