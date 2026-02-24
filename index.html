@@ -358,19 +358,29 @@ async function checkout() {
 
   msg.textContent = "Відправляю замовлення...";
 
-  const payload = {
-    name,
-    phone,
-    email: "",
-    city,
-    deliveryService,     // NovaPoshta / UkrPoshta
-    deliveryDetails,     // Відділення/Поштомат №... або адреса
-    channel,             // Viber / Telegram
-    comment,
-    items: cart.map(c => ({ ID: c.ID, TitleUA: c.TitleUA, PriceUAH: Math.round(Number(c.PriceUAH || 0)) })),
-    totalUAH: total,
-    paymentMethod: "Card"
-  };
+const payload = {
+  clientOrderId: (Date.now() + "-" + Math.random().toString(16).slice(2)),
+
+  name: name,
+  phone: phone,
+  email: "",
+  city: city,
+
+  deliveryService: deliveryService,
+  deliveryDetails: deliveryDetails,
+  channel: channel,
+
+  comment: comment,
+
+  items: cart.map(c => ({
+    ID: c.ID,
+    TitleUA: c.TitleUA,
+    PriceUAH: Math.round(Number(c.PriceUAH || 0))
+  })),
+
+  totalUAH: total,
+  paymentMethod: "Card"
+};
 
   try {
     const r = await fetch(API_ORDER, {
