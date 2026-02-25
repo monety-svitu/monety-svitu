@@ -10,6 +10,7 @@
     .muted { color:#777; font-size: 12px; }
 
     .topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 10px; }
+    .topActions { display:flex; gap:8px; align-items:center; }
 
     /* Welcome */
     #welcomeBox {
@@ -18,7 +19,7 @@
       border-radius: 12px;
       padding: 12px;
       margin: 10px 0 14px;
-      display: block; /* ✅ завжди видно */
+      display: none;
     }
     #welcomeText { white-space: pre-wrap; line-height: 1.35; }
 
@@ -123,15 +124,8 @@
 
     .totalRow { display:flex; justify-content: space-between; font-weight: 900; margin-bottom: 10px; }
 
-    .tabs { display:flex; gap: 8px; margin: 12px 0; }
-    .tabBtn {
-      flex: 1; padding: 10px; border-radius: 10px;
-      border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: 900;
-    }
-    .tabBtn.active { background: #111; color: #fff; border-color: #111; }
-
     .formGrid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
-    .formGrid input, .formGrid select, .formGrid textarea {
+    .formGrid input, .formGrid textarea {
       padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px;
     }
 
@@ -140,6 +134,17 @@
 
     .hint { font-size: 12px; color:#666; margin-top: 6px; }
     .error { font-size: 12px; color:#b00020; margin-top: 6px; }
+
+    .viberPill {
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background:#efeaff;
+      font-weight: 900;
+      font-size: 12px;
+      color:#3a2a8a;
+      border:1px solid #e2dcff;
+    }
   </style>
 </head>
 <body>
@@ -149,15 +154,14 @@
       <h1 style="margin:0;">Монети Світу</h1>
       <div class="muted">Пошук по назві та Krause (KM#...).</div>
     </div>
+    <div class="topActions">
+      <!-- ✅ Реєстрацію прибрано повністю -->
+    </div>
   </div>
 
-  <!-- ✅ Welcome/Intro (завжди видно) -->
+  <!-- ✅ Welcome/Intro -->
   <div id="welcomeBox">
-    <div id="welcomeText">
-Вітаю в моєму каталозі ! 👋
-Тут ви можете вибрати монети в наявності та оформити замовлення.
-Після замовлення я зв’яжусь з вами у Viber/Telegram для уточнення деталей.
-    </div>
+    <div id="welcomeText"></div>
   </div>
 
   <div id="filters">
@@ -184,6 +188,7 @@
 
   <div id="overlay"></div>
 
+  <!-- Cart drawer -->
   <div class="drawer" id="cartDrawer">
     <div class="drawerHeader">
       <h3>Кошик</h3>
@@ -193,54 +198,18 @@
     <div class="drawerBody">
       <div id="cartList"></div>
 
-      <div class="tabs">
-        <button class="tabBtn active" id="tabFast">Швидко</button>
-        <button class="tabBtn" id="tabFull">Повне</button>
-      </div>
-
-      <div class="error" id="checkoutError"></div>
+      <div id="checkoutError" class="error"></div>
 
       <div class="formGrid">
-        <!-- FAST -->
-        <input id="cFirstName" placeholder="Ім'я *">
+        <div class="viberPill">Зв’язок: тільки Viber</div>
+
+        <input id="cName" placeholder="Ім'я *">
         <input id="cPhone" placeholder="Телефон *">
-
-        <label class="muted" style="margin-top:6px;">Зв’язок *</label>
-        <select id="cChannel">
-          <option value="Viber">Viber</option>
-          <option value="Telegram">Telegram</option>
-        </select>
-
-        <!-- FULL -->
-        <div id="fullFields" style="display:none;">
-          <input id="cEmail" placeholder="Email (необов’язково)">
-          <input id="cLocality" placeholder="Місто / село *">
-          <input id="cDistrict" placeholder="Район *">
-          <input id="cRegion" placeholder="Область *">
-
-          <label class="muted" style="margin-top:6px;">Доставка *</label>
-          <select id="cDelivery">
-            <option value="NovaPoshta">Нова пошта</option>
-            <option value="UkrPoshta">Укрпошта</option>
-          </select>
-
-          <div id="npBlock" style="display:flex; flex-direction:column; gap:8px;">
-            <select id="npType">
-              <option value="Branch">Відділення</option>
-              <option value="Postomat">Поштомат</option>
-            </select>
-            <input id="npNumber" placeholder="№ відділення / поштомата *">
-          </div>
-
-          <div id="upBlock" style="display:none; flex-direction:column; gap:8px;">
-            <input id="upAddress" placeholder="Адреса / відділення Укрпошти *">
-          </div>
-
-          <textarea id="cComment" placeholder="Коментар (необов’язково)" rows="3"></textarea>
-        </div>
+        <input id="cEmail" placeholder="Email (необов’язково)">
+        <textarea id="cComment" placeholder="Коментар (необов’язково)" rows="3"></textarea>
 
         <button class="btnPrimary" id="btnOrder" disabled>Замовити</button>
-        <div class="hint">* — обов’язкові поля. Кнопка активується, коли все заповнено.</div>
+        <div class="hint">* — обов’язкові поля. Ми напишемо вам у Viber для уточнень.</div>
         <div id="checkoutMsg" class="hint"></div>
       </div>
     </div>
@@ -271,18 +240,18 @@
     return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
-  // ✅ Якщо /api/settings працює — підміняємо текст, якщо ні — лишається заглушка
+  // ✅ Welcome text from Settings
   async function loadWelcome() {
     try {
       const r = await fetch(API_SETTINGS);
       if (!r.ok) return;
       const t = await r.text();
       const s = JSON.parse(t);
-      const text = String(s?.welcome_text || "").trim();
+      const text = String((s && s.welcome_text) || "").trim();
       if (!text) return;
       document.getElementById("welcomeText").textContent = text;
+      document.getElementById("welcomeBox").style.display = "block";
     } catch (e) {
-      // мовчки, не ламаємо
       console.log("welcome load failed:", e);
     }
   }
@@ -316,32 +285,6 @@
   document.getElementById("cartFab").addEventListener("click", openDrawer);
   document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
   document.getElementById("overlay").addEventListener("click", closeDrawer);
-
-  // mode
-  let mode = "fast";
-  document.getElementById("tabFast").addEventListener("click", () => setMode("fast"));
-  document.getElementById("tabFull").addEventListener("click", () => setMode("full"));
-  function setMode(m){
-    mode = m;
-    document.getElementById("tabFast").classList.toggle("active", m==="fast");
-    document.getElementById("tabFull").classList.toggle("active", m==="full");
-    document.getElementById("fullFields").style.display = (m==="full") ? "block" : "none";
-    if (m === "full") syncDeliveryUI();
-    validateCheckout();
-  }
-
-  // delivery UI (тільки для FULL)
-  function syncDeliveryUI() {
-    const d = document.getElementById("cDelivery")?.value || "NovaPoshta";
-    const np = document.getElementById("npBlock");
-    const up = document.getElementById("upBlock");
-    if (!np || !up) return;
-    np.style.display = (d === "NovaPoshta") ? "flex" : "none";
-    up.style.display = (d === "UkrPoshta") ? "flex" : "none";
-    validateCheckout();
-  }
-  const cDeliveryEl = document.getElementById("cDelivery");
-  if (cDeliveryEl) cDeliveryEl.addEventListener("change", syncDeliveryUI);
 
   // ===== Coins =====
   async function loadCoins() {
@@ -425,6 +368,7 @@
         </div>
         <div class="coinRow">
           <div class="price">${money(c.PriceUAH)} грн</div>
+          <!-- ✅ кількість НЕ показуємо -->
           <button class="btn btnAdd" ${inStock ? "" : "disabled"} onclick="addToCart('${c.ID}')">Покласти в кошик</button>
         </div>
       `;
@@ -500,12 +444,7 @@
   }
 
   // ===== Checkout validation =====
-  const checkoutInputs = [
-    "cFirstName","cPhone","cChannel",
-    "cEmail","cLocality","cDistrict","cRegion","cComment",
-    "cDelivery","npType","npNumber","upAddress"
-  ];
-  checkoutInputs.forEach(id=>{
+  ["cName","cPhone","cEmail","cComment"].forEach(id=>{
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener("input", validateCheckout);
@@ -513,33 +452,10 @@
   });
 
   function validateCheckout() {
-    const err = document.getElementById("checkoutError");
-    err.textContent = "";
-
     const hasItems = cartCount() > 0;
-
-    const firstName = document.getElementById("cFirstName").value.trim();
+    const name = document.getElementById("cName").value.trim();
     const phone = document.getElementById("cPhone").value.trim();
-    const channel = document.getElementById("cChannel").value;
-
-    // FAST: тільки ім'я + телефон + канал
-    let ok = hasItems && firstName && phone && channel;
-
-    // FULL: + місто/село + район + область + доставка
-    if (mode === "full") {
-      const locality = document.getElementById("cLocality").value.trim();
-      const district = document.getElementById("cDistrict").value.trim();
-      const region = document.getElementById("cRegion").value.trim();
-
-      const deliveryService = document.getElementById("cDelivery").value;
-      let deliveryOk = false;
-      if (deliveryService === "NovaPoshta") deliveryOk = document.getElementById("npNumber").value.trim().length > 0;
-      else deliveryOk = document.getElementById("upAddress").value.trim().length > 0;
-
-      ok = ok && locality && district && region && deliveryOk;
-    }
-
-    document.getElementById("btnOrder").disabled = !ok;
+    document.getElementById("btnOrder").disabled = !(hasItems && name && phone);
   }
 
   document.getElementById("btnOrder").addEventListener("click", checkout);
@@ -557,81 +473,36 @@
     btn.disabled = true;
 
     try {
-      if (cartCount() === 0) {
-        err.textContent = "Кошик пустий";
-        return;
-      }
+      if (cartCount() === 0) { err.textContent = "Кошик пустий"; return; }
 
-      const firstName = document.getElementById("cFirstName").value.trim();
+      const name = document.getElementById("cName").value.trim();
       const phone = document.getElementById("cPhone").value.trim();
-      const channel = document.getElementById("cChannel").value;
+      const email = document.getElementById("cEmail").value.trim();
+      const comment = document.getElementById("cComment").value.trim();
 
-      if (!firstName || !phone) { err.textContent = "Заповни: ім'я та телефон"; return; }
-      if (!channel) { err.textContent = "Вибери: Viber або Telegram"; return; }
+      if (!name || !phone) { err.textContent = "Заповни: ім'я і телефон"; return; }
 
-      const email = (mode === "full") ? document.getElementById("cEmail").value.trim() : "";
-      const locality = (mode === "full") ? document.getElementById("cLocality").value.trim() : "";
-      const district = (mode === "full") ? document.getElementById("cDistrict").value.trim() : "";
-      const region = (mode === "full") ? document.getElementById("cRegion").value.trim() : "";
-      const comment = (mode === "full") ? document.getElementById("cComment").value.trim() : "";
-
-      if (mode === "full") {
-        if (!locality || !district || !region) {
-          err.textContent = "Заповни: місто/село, район, область";
-          return;
-        }
-      }
-
-      // items для GAS — список елементів по 1 штуці (ID повторюються)
+      // items для GAS: список елементів по 1 штуці (ID повторюються)
       const items = [];
       Object.values(cartMap).forEach(({ coin, qty }) => {
         for (let i=0; i<qty; i++) items.push({ ID: coin.ID });
       });
 
-      const total = cartTotal();
       msg.textContent = "Відправляю замовлення...";
 
-      // city: щоб GAS не падав (бо у тебе city required)
-      const cityFull = (mode === "full")
-        ? `${locality}, ${district} р-н, ${region} обл`
-        : "—";
-
-      // доставка у FAST не потрібна
-      let deliveryService = "";
-      let deliveryDetails = "";
-
-      if (mode === "full") {
-        deliveryService = document.getElementById("cDelivery").value;
-
-        if (deliveryService === "NovaPoshta") {
-          const npType = document.getElementById("npType").value;
-          const npNumber = document.getElementById("npNumber").value.trim();
-          if (!npNumber) { err.textContent = "Вкажи № відділення або поштомата Нової пошти"; return; }
-          deliveryDetails = (npType === "Branch" ? "Відділення" : "Поштомат") + " №" + npNumber;
-        } else {
-          const upAddress = document.getElementById("upAddress").value.trim();
-          if (!upAddress) { err.textContent = "Вкажи адресу або відділення Укрпошти"; return; }
-          deliveryDetails = upAddress;
-        }
-      }
-
       const payload = {
-        // щоб не ламати GAS (він просив surname) — даємо заглушку
-        surname: "-",
-        name: firstName,
+        name,
         phone,
         email: email || "",
-        city: cityFull,
-
-        deliveryService,
-        deliveryDetails,
-        channel,
         comment: comment || "",
 
-        items,
-        totalUAH: total,
-        paymentMethod: "Card",
+        // ✅ завжди тільки Viber
+        channel: "Viber",
 
+        items,
+        totalUAH: cartTotal(),
+
+        // ✅ антидубль
         clientOrderId: uuid_()
       };
 
@@ -645,7 +516,7 @@
       let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
 
       if (r.ok && resp && (resp.success === true || resp.orderId)) {
-        alert("Замовлення прийнято! Я напишу вам у " + channel + " для уточнення деталей.");
+        alert("Замовлення прийнято! Ми напишемо вам у Viber для уточнень.");
         cartMap = {};
         renderCart();
         closeDrawer();
@@ -653,7 +524,7 @@
         msg.textContent = "";
       } else {
         console.log("Order not OK:", r.status, resp);
-        err.textContent = resp?.error || "Помилка створення замовлення. Дивись F12 → Console.";
+        err.textContent = (resp && resp.error) ? resp.error : "Помилка створення замовлення. Дивись F12 → Console.";
       }
 
     } catch (e) {
