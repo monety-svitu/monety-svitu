@@ -14,6 +14,17 @@
     .btnSmall { padding:8px 10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; }
     .btnSmall.primary { background:#111; color:#fff; border-color:#111; }
 
+    /* Welcome */
+    #welcomeBox {
+      border: 1px solid #eee;
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 14px;
+      display: none;
+    }
+    #welcomeText { white-space: pre-wrap; line-height: 1.35; }
+
     #filters { display:flex; gap:10px; flex-wrap:wrap; margin: 10px 0 15px; }
     #filters input, #filters select, #filters button { padding: 6px 8px; font-size: 14px; }
     #filters button { cursor:pointer; }
@@ -167,6 +178,11 @@
     </div>
   </div>
 
+  <!-- ✅ Welcome/Intro -->
+  <div id="welcomeBox">
+    <div id="welcomeText"></div>
+  </div>
+
   <div id="filters">
     <input id="q" type="text" placeholder="Пошук: назва, KM#..." />
     <select id="fCountry"><option value="">Всі країни</option></select>
@@ -212,6 +228,7 @@
         <input id="cLastName" placeholder="Прізвище *">
         <input id="cFirstName" placeholder="Ім'я *">
         <input id="cPhone" placeholder="Телефон *">
+        <input id="cEmail" placeholder="Email (необов’язково)">
 
         <div id="fullFields" style="display:none;">
           <input id="cCity" placeholder="Місто *">
@@ -289,8 +306,7 @@
 <script>
   const API_COINS = "/api/coins";
   const API_ORDER = "/api/order";
-
-  // ✅ Реєстрація/вхід через GAS (через Vercel прокладку /api/user)
+  const API_SETTINGS = "/api/settings"; // ✅ новий проксі
   const API_USER = "/api/user";
 
   let allCoins = [];
@@ -303,6 +319,29 @@
   function norm(v){ return String(v ?? "").toLowerCase().trim(); }
   function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b), "uk")); }
   function money(n){ const x = Number(n) || 0; return Math.round(x); }
+
+  function uuid_() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+
+  // ✅ Welcome text from Settings
+  async function loadWelcome() {
+    try {
+      const r = await fetch(API_SETTINGS);
+      if (!r.ok) return;
+      const t = await r.text();
+      const s = JSON.parse(t);
+      const text = String(s?.welcome_text || "").trim();
+      if (!text) return;
+
+      document.getElementById("welcomeText").textContent = text;
+      document.getElementById("welcomeBox").style.display = "block";
+    } catch (e) {
+      // не ламаємо сайт, просто мовчки
+      console.log("welcome load failed:", e);
+    }
+  }
 
   function cartCount() {
     return Object.values(cartMap).reduce((s, it) => s + (it.qty || 0), 0);
@@ -438,7 +477,6 @@
         </div>
         <div class="coinRow">
           <div class="price">${money(c.PriceUAH)} грн</div>
-          <div class="muted">${inStock ? `В наявності: ${c.Quantity}` : `Немає в наявності`}</div>
           <button class="btn btnAdd" ${inStock ? "" : "disabled"} onclick="addToCart('${c.ID}')">Покласти в кошик</button>
         </div>
       `;
@@ -453,6 +491,7 @@
     const key = String(coin.ID);
     if (!cartMap[key]) cartMap[key] = { coin, qty: 0 };
 
+    // Ліміт по реальній кількості (але ми її НЕ показуємо в картці)
     const maxQty = Number(coin.Quantity) || 0;
     if (cartMap[key].qty < maxQty) cartMap[key].qty += 1;
 
@@ -514,7 +553,7 @@
   }
 
   // ===== Checkout validation =====
-  const checkoutInputs = ["cLastName","cFirstName","cPhone","cCity","cDelivery","npType","npNumber","upAddress","cChannel","cComment"];
+  const checkoutInputs = ["cLastName","cFirstName","cPhone","cEmail","cCity","cDelivery","npType","npNumber","upAddress","cChannel","cComment"];
   checkoutInputs.forEach(id=>{
     const el = document.getElementById(id);
     if (!el) return;
@@ -548,122 +587,131 @@
 
   document.getElementById("btnOrder").addEventListener("click", checkout);
 
-async function checkout() {
-  const msg = document.getElementById("checkoutMsg");
-  const err = document.getElementById("checkoutError");
-  const btn = document.getElementById("btnOrder");
+  async function checkout() {
+    const msg = document.getElementById("checkoutMsg");
+    const err = document.getElementById("checkoutError");
+    const btn = document.getElementById("btnOrder");
 
-  msg.textContent = "";
-  err.textContent = "";
+    msg.textContent = "";
+    err.textContent = "";
 
-  // ✅ анти-двоклік
-  if (btn.dataset.locked === "1") return;
-  btn.dataset.locked = "1";
-  btn.disabled = true;
+    // ✅ анти-двоклік
+    if (btn.dataset.locked === "1") return;
+    btn.dataset.locked = "1";
+    btn.disabled = true;
 
-  try {
-    if (cartCount() === 0) {
-      err.textContent = "Кошик пустий";
-      return;
-    }
-
-    const lastName = document.getElementById("cLastName").value.trim();
-    const firstName = document.getElementById("cFirstName").value.trim();
-    const phone = document.getElementById("cPhone").value.trim();
-    const city = document.getElementById("cCity").value.trim();
-
-    const deliveryService = document.getElementById("cDelivery").value;
-    const channel = document.getElementById("cChannel").value;
-    const comment = document.getElementById("cComment").value.trim();
-
-    if (!lastName || !firstName || !phone) {
-      err.textContent = "Заповни: прізвище, ім'я, телефон";
-      return;
-    }
-    if (mode === "full" && !city) {
-      err.textContent = "Заповни: місто";
-      return;
-    }
-
-    let deliveryDetails = "";
-    if (deliveryService === "NovaPoshta") {
-      const npType = document.getElementById("npType").value;
-      const npNumber = document.getElementById("npNumber").value.trim();
-      if (!npNumber) {
-        err.textContent = "Вкажи № відділення або поштомата Нової пошти";
+    try {
+      if (cartCount() === 0) {
+        err.textContent = "Кошик пустий";
         return;
       }
-      deliveryDetails = (npType === "Branch" ? "Відділення" : "Поштомат") + " №" + npNumber;
-    } else {
-      const upAddress = document.getElementById("upAddress").value.trim();
-      if (!upAddress) {
-        err.textContent = "Вкажи адресу або відділення Укрпошти";
+
+      const lastName = document.getElementById("cLastName").value.trim();
+      const firstName = document.getElementById("cFirstName").value.trim();
+      const phone = document.getElementById("cPhone").value.trim();
+      const email = document.getElementById("cEmail").value.trim();
+      const city = document.getElementById("cCity").value.trim();
+
+      const deliveryService = document.getElementById("cDelivery").value;
+      const channel = document.getElementById("cChannel").value;
+      const comment = document.getElementById("cComment").value.trim();
+
+      if (!lastName || !firstName || !phone) {
+        err.textContent = "Заповни: прізвище, ім'я, телефон";
         return;
       }
-      deliveryDetails = upAddress;
+      if (mode === "full" && !city) {
+        err.textContent = "Заповни: місто";
+        return;
+      }
+      if (!channel) {
+        err.textContent = "Вибери: Viber або Telegram";
+        return;
+      }
+
+      let deliveryDetails = "";
+      if (deliveryService === "NovaPoshta") {
+        const npType = document.getElementById("npType").value;
+        const npNumber = document.getElementById("npNumber").value.trim();
+        if (!npNumber) {
+          err.textContent = "Вкажи № відділення або поштомата Нової пошти";
+          return;
+        }
+        deliveryDetails = (npType === "Branch" ? "Відділення" : "Поштомат") + " №" + npNumber;
+      } else {
+        const upAddress = document.getElementById("upAddress").value.trim();
+        if (!upAddress) {
+          err.textContent = "Вкажи адресу або відділення Укрпошти";
+          return;
+        }
+        deliveryDetails = upAddress;
+      }
+
+      // важливо: items для GAS — список елементів по 1 штуці (ID повторюються)
+      const items = [];
+      Object.values(cartMap).forEach(({ coin, qty }) => {
+        for (let i=0; i<qty; i++) {
+          items.push({ ID: coin.ID });
+        }
+      });
+
+      const total = cartTotal();
+      msg.textContent = "Відправляю замовлення...";
+
+      const payload = {
+        // ✅ нова вимога (GAS): surname
+        surname: lastName,
+        name: firstName, // GAS візьме name + surname і збере повне ім'я
+        phone,
+        email: email || "",
+        city: mode === "full" ? city : "",
+
+        deliveryService,
+        deliveryDetails,
+        channel,
+        comment: mode === "full" ? comment : "",
+
+        items,
+        totalUAH: total,
+        paymentMethod: "Card",
+        userId: (typeof user !== "undefined" && user) ? user.id : "",
+
+        // ✅ антидубль
+        clientOrderId: uuid_()
+      };
+
+      const r = await fetch(API_ORDER, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await r.text();
+      let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
+
+      if (r.ok && resp && (resp.success === true || resp.orderId)) {
+        alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
+        cartMap = {};
+        renderCart();
+        closeDrawer();
+        await loadCoins();
+        msg.textContent = "";
+      } else {
+        console.log("Order not OK:", r.status, resp);
+        err.textContent = resp?.error || "Помилка створення замовлення. Дивись F12 → Console.";
+      }
+
+    } catch (e) {
+      console.log("checkout error:", e);
+      err.textContent = "Помилка мережі. Дивись F12 → Console.";
+    } finally {
+      btn.dataset.locked = "0";
+      if (typeof validateCheckout === "function") validateCheckout();
+      else btn.disabled = false;
     }
-
-    const items = Object.values(cartMap).map(({ coin, qty }) => ({
-      ID: coin.ID,
-      TitleUA: coin.TitleUA,
-      PriceUAH: money(coin.PriceUAH),
-      Qty: qty
-    }));
-
-    const total = cartTotal();
-    msg.textContent = "Відправляю замовлення...";
-
-    const payload = {
-      customerLastName: lastName,
-      customerFirstName: firstName,
-      name: (lastName + " " + firstName).trim(), // сумісність зі старим GAS
-      phone,
-      email: "",
-      city: mode === "full" ? city : "",
-      deliveryService,
-      deliveryDetails,
-      channel,
-      comment: mode === "full" ? comment : "",
-      items,
-      totalUAH: total,
-      paymentMethod: "Card",
-      userId: (typeof user !== "undefined" && user) ? user.id : ""
-    };
-
-    const r = await fetch(API_ORDER, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const text = await r.text();
-    let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
-
-    if (r.ok && resp && (resp.success === true || resp.orderId || resp.id)) {
-      alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
-      cartMap = {};
-      renderCart();
-      closeDrawer();
-      await loadCoins();
-      msg.textContent = "";
-    } else {
-      console.log("Order not OK:", r.status, resp);
-      err.textContent = "Помилка створення замовлення. Дивись F12 → Console.";
-    }
-
-  } catch (e) {
-    console.log("checkout error:", e);
-    err.textContent = "Помилка мережі. Дивись F12 → Console.";
-  } finally {
-    // ✅ завжди розблокувати кнопку
-    btn.dataset.locked = "0";
-    // validateCheckout() якщо є — воно само виставить disabled правильно
-    if (typeof validateCheckout === "function") validateCheckout();
-    else btn.disabled = false;
   }
-}
 
-  // ===== Auth UI =====
+  // ===== Auth UI (без змін) =====
   const authModal = document.getElementById("authModal");
   let authMode = "register";
 
@@ -702,7 +750,6 @@ async function checkout() {
     user = u;
     localStorage.setItem("ms_user", JSON.stringify(u));
     renderAuthButtons();
-    // автозаповнення в кошику
     if (u?.lastName) document.getElementById("cLastName").value = u.lastName;
     if (u?.firstName) document.getElementById("cFirstName").value = u.firstName;
     if (u?.phone) document.getElementById("cPhone").value = u.phone;
@@ -754,7 +801,6 @@ async function checkout() {
 
     if (!phone) { err.textContent = "Вкажи телефон"; return; }
     if (!pass || pass.length < 6) { err.textContent = "Пароль має бути мінімум 6 символів"; return; }
-
     if (authMode === "register") {
       if (!lastName || !firstName) { err.textContent = "Вкажи прізвище та ім'я"; return; }
     }
@@ -807,6 +853,7 @@ async function checkout() {
   // init
   syncDeliveryUI();
   updateCartBadge();
+  loadWelcome();
   loadCoins();
   loadUserLocal();
 </script>
