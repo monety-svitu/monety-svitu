@@ -10,9 +10,6 @@
     .muted { color:#777; font-size: 12px; }
 
     .topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 10px; }
-    .topActions { display:flex; gap:8px; align-items:center; }
-    .btnSmall { padding:8px 10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; }
-    .btnSmall.primary { background:#111; color:#fff; border-color:#111; }
 
     /* Welcome */
     #welcomeBox {
@@ -21,7 +18,7 @@
       border-radius: 12px;
       padding: 12px;
       margin: 10px 0 14px;
-      display: none;
+      display: block; /* ✅ завжди видно */
     }
     #welcomeText { white-space: pre-wrap; line-height: 1.35; }
 
@@ -143,25 +140,6 @@
 
     .hint { font-size: 12px; color:#666; margin-top: 6px; }
     .error { font-size: 12px; color:#b00020; margin-top: 6px; }
-
-    /* Auth modal */
-    #authModal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: min(420px, 92vw);
-      transform: translate(-50%, -50%);
-      background:#fff;
-      border: 1px solid #ddd;
-      border-radius: 14px;
-      z-index: 1300;
-      display: none;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.25);
-    }
-    .modalBody { padding: 14px; }
-    .modalTitle { font-weight: 900; margin: 0 0 6px; }
-    .modalSub { font-size: 12px; color:#666; margin-bottom: 10px; }
-    .row2 { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   </style>
 </head>
 <body>
@@ -171,15 +149,15 @@
       <h1 style="margin:0;">Монети Світу</h1>
       <div class="muted">Пошук по назві та Krause (KM#...).</div>
     </div>
-    <div class="topActions">
-      <button class="btnSmall" id="btnProfile" style="display:none;"></button>
-      <button class="btnSmall primary" id="btnAuth">Реєстрація / Вхід</button>
-      <button class="btnSmall" id="btnLogout" style="display:none;">Вийти</button>
-    </div>
   </div>
 
+  <!-- ✅ Welcome/Intro (завжди видно) -->
   <div id="welcomeBox">
-    <div id="welcomeText"></div>
+    <div id="welcomeText">
+Вітаю! 👋
+Тут ви можете вибрати монети в наявності та оформити замовлення.
+Після замовлення я зв’яжусь з вами у Viber/Telegram для уточнення деталей.
+    </div>
   </div>
 
   <div id="filters">
@@ -275,46 +253,14 @@
     </div>
   </div>
 
-  <!-- Auth modal -->
-  <div id="authModal">
-    <div class="drawerHeader">
-      <div>
-        <div class="modalTitle" id="authTitle">Реєстрація</div>
-        <div class="modalSub" id="authSub">Реєстрація потрібна для спецпропозицій і знижок.</div>
-      </div>
-      <button class="closeBtn" id="closeAuth">✕</button>
-    </div>
-    <div class="modalBody">
-      <div class="tabs" style="margin-top:0;">
-        <button class="tabBtn active" id="tabRegister">Реєстрація</button>
-        <button class="tabBtn" id="tabLogin">Вхід</button>
-      </div>
-
-      <div id="authErr" class="error"></div>
-      <div class="formGrid">
-        <div class="row2" id="regNames">
-          <input id="rLastName" placeholder="Прізвище *">
-          <input id="rFirstName" placeholder="Ім'я *">
-        </div>
-        <input id="rPhone" placeholder="Телефон *">
-        <input id="rPass" type="password" placeholder="Пароль * (мінімум 6 символів)">
-
-        <button class="btnPrimary" id="btnAuthSubmit">Зареєструватися</button>
-        <div class="hint" id="authHint">Після входу ми зможемо показувати тобі спецпропозиції.</div>
-      </div>
-    </div>
-  </div>
-
 <script>
   const API_COINS = "/api/coins";
   const API_ORDER = "/api/order";
   const API_SETTINGS = "/api/settings";
-  const API_USER = "/api/user";
 
   let allCoins = [];
   let viewCoins = [];
   let cartMap = {}; // ID -> { coin, qty }
-  let user = null; // { id, phone, firstName, lastName }
 
   function norm(v){ return String(v ?? "").toLowerCase().trim(); }
   function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b), "uk")); }
@@ -325,6 +271,7 @@
     return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
+  // ✅ Якщо /api/settings працює — підміняємо текст, якщо ні — лишається заглушка
   async function loadWelcome() {
     try {
       const r = await fetch(API_SETTINGS);
@@ -333,10 +280,9 @@
       const s = JSON.parse(t);
       const text = String(s?.welcome_text || "").trim();
       if (!text) return;
-
       document.getElementById("welcomeText").textContent = text;
-      document.getElementById("welcomeBox").style.display = "block";
     } catch (e) {
+      // мовчки, не ламаємо
       console.log("welcome load failed:", e);
     }
   }
@@ -365,7 +311,6 @@
   function closeDrawer() {
     document.getElementById("overlay").style.display = "none";
     document.getElementById("cartDrawer").classList.remove("open");
-    closeAuth();
   }
 
   document.getElementById("cartFab").addEventListener("click", openDrawer);
@@ -587,7 +532,6 @@
       const region = document.getElementById("cRegion").value.trim();
 
       const deliveryService = document.getElementById("cDelivery").value;
-
       let deliveryOk = false;
       if (deliveryService === "NovaPoshta") deliveryOk = document.getElementById("npNumber").value.trim().length > 0;
       else deliveryOk = document.getElementById("upAddress").value.trim().length > 0;
@@ -622,20 +566,15 @@
       const phone = document.getElementById("cPhone").value.trim();
       const channel = document.getElementById("cChannel").value;
 
+      if (!firstName || !phone) { err.textContent = "Заповни: ім'я та телефон"; return; }
+      if (!channel) { err.textContent = "Вибери: Viber або Telegram"; return; }
+
       const email = (mode === "full") ? document.getElementById("cEmail").value.trim() : "";
       const locality = (mode === "full") ? document.getElementById("cLocality").value.trim() : "";
       const district = (mode === "full") ? document.getElementById("cDistrict").value.trim() : "";
       const region = (mode === "full") ? document.getElementById("cRegion").value.trim() : "";
       const comment = (mode === "full") ? document.getElementById("cComment").value.trim() : "";
 
-      if (!firstName || !phone) {
-        err.textContent = "Заповни: ім'я та телефон";
-        return;
-      }
-      if (!channel) {
-        err.textContent = "Вибери: Viber або Telegram";
-        return;
-      }
       if (mode === "full") {
         if (!locality || !district || !region) {
           err.textContent = "Заповни: місто/село, район, область";
@@ -652,15 +591,12 @@
       const total = cartTotal();
       msg.textContent = "Відправляю замовлення...";
 
-      // surname: якщо залогінений — беремо з профілю, інакше заглушка
-      const surname = (user && user.lastName) ? String(user.lastName) : "-";
-
-      // city: щоб GAS не падав (в нього required city)
+      // city: щоб GAS не падав (бо у тебе city required)
       const cityFull = (mode === "full")
         ? `${locality}, ${district} р-н, ${region} обл`
         : "—";
 
-      // доставка: у FAST не відправляємо (порожнє)
+      // доставка у FAST не потрібна
       let deliveryService = "";
       let deliveryDetails = "";
 
@@ -680,7 +616,8 @@
       }
 
       const payload = {
-        surname: surname,
+        // щоб не ламати GAS (він просив surname) — даємо заглушку
+        surname: "-",
         name: firstName,
         phone,
         email: email || "",
@@ -694,7 +631,6 @@
         items,
         totalUAH: total,
         paymentMethod: "Card",
-        userId: (user) ? user.id : "",
 
         clientOrderId: uuid_()
       };
@@ -709,7 +645,7 @@
       let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
 
       if (r.ok && resp && (resp.success === true || resp.orderId)) {
-        alert("Замовлення прийнято! Ми зв'яжемось з вами для уточнень.");
+        alert("Замовлення прийнято! Я напишу вам у " + channel + " для уточнення деталей.");
         cartMap = {};
         renderCart();
         closeDrawer();
@@ -725,131 +661,7 @@
       err.textContent = "Помилка мережі. Дивись F12 → Console.";
     } finally {
       btn.dataset.locked = "0";
-      if (typeof validateCheckout === "function") validateCheckout();
-      else btn.disabled = false;
-    }
-  }
-
-  // ===== Auth UI =====
-  const authModal = document.getElementById("authModal");
-  let authMode = "register";
-
-  document.getElementById("btnAuth").addEventListener("click", () => { openAuth(); });
-  document.getElementById("closeAuth").addEventListener("click", closeAuth);
-
-  document.getElementById("tabRegister").addEventListener("click", () => setAuthMode("register"));
-  document.getElementById("tabLogin").addEventListener("click", () => setAuthMode("login"));
-
-  document.getElementById("btnLogout").addEventListener("click", logout);
-  document.getElementById("btnAuthSubmit").addEventListener("click", authSubmit);
-
-  function openAuth() {
-    document.getElementById("overlay").style.display = "block";
-    authModal.style.display = "block";
-    setAuthMode(authMode);
-  }
-  function closeAuth() {
-    authModal.style.display = "none";
-    if (!document.getElementById("cartDrawer").classList.contains("open")) {
-      document.getElementById("overlay").style.display = "none";
-    }
-  }
-
-  function setAuthMode(m) {
-    authMode = m;
-    document.getElementById("tabRegister").classList.toggle("active", m==="register");
-    document.getElementById("tabLogin").classList.toggle("active", m==="login");
-    document.getElementById("regNames").style.display = (m==="register") ? "grid" : "none";
-    document.getElementById("btnAuthSubmit").textContent = (m==="register") ? "Зареєструватися" : "Увійти";
-    document.getElementById("authTitle").textContent = (m==="register") ? "Реєстрація" : "Вхід";
-    document.getElementById("authErr").textContent = "";
-  }
-
-  function saveUserLocal(u) {
-    user = u;
-    localStorage.setItem("ms_user", JSON.stringify(u));
-    renderAuthButtons();
-
-    if (u?.firstName) document.getElementById("cFirstName").value = u.firstName;
-    if (u?.phone) document.getElementById("cPhone").value = u.phone;
-
-    validateCheckout();
-  }
-
-  function loadUserLocal() {
-    try {
-      const raw = localStorage.getItem("ms_user");
-      if (raw) user = JSON.parse(raw);
-    } catch {}
-    renderAuthButtons();
-    if (user) saveUserLocal(user);
-  }
-
-  function renderAuthButtons() {
-    const btnAuth = document.getElementById("btnAuth");
-    const btnLogout = document.getElementById("btnLogout");
-    const btnProfile = document.getElementById("btnProfile");
-
-    if (user) {
-      btnAuth.style.display = "none";
-      btnLogout.style.display = "inline-block";
-      btnProfile.style.display = "inline-block";
-      btnProfile.textContent = (user.lastName || "") + " " + (user.firstName || "");
-    } else {
-      btnAuth.style.display = "inline-block";
-      btnLogout.style.display = "none";
-      btnProfile.style.display = "none";
-    }
-  }
-
-  function logout() {
-    user = null;
-    localStorage.removeItem("ms_user");
-    renderAuthButtons();
-    alert("Ви вийшли з аккаунта.");
-  }
-
-  async function authSubmit() {
-    const err = document.getElementById("authErr");
-    err.textContent = "";
-
-    const phone = document.getElementById("rPhone").value.trim();
-    const pass = document.getElementById("rPass").value;
-
-    const lastName = document.getElementById("rLastName").value.trim();
-    const firstName = document.getElementById("rFirstName").value.trim();
-
-    if (!phone) { err.textContent = "Вкажи телефон"; return; }
-    if (!pass || pass.length < 6) { err.textContent = "Пароль має бути мінімум 6 символів"; return; }
-
-    if (authMode === "register") {
-      if (!lastName || !firstName) { err.textContent = "Вкажи прізвище та ім'я"; return; }
-    }
-
-    const payload = (authMode === "register")
-      ? { action: "register", phone, pass, lastName, firstName }
-      : { action: "login", phone, pass };
-
-    try {
-      const r = await fetch(API_USER, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const text = await r.text();
-      let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
-
-      if (r.ok && resp && resp.success === true && resp.user) {
-        saveUserLocal(resp.user);
-        closeAuth();
-        alert(authMode === "register" ? "Реєстрація успішна!" : "Вхід успішний!");
-      } else {
-        err.textContent = resp?.error || "Не вийшло. Дивись F12 → Console.";
-        console.log("Auth error:", r.status, resp);
-      }
-    } catch (e) {
-      err.textContent = "Помилка мережі. Дивись F12 → Console.";
-      console.log("Auth network error:", e);
+      validateCheckout();
     }
   }
 
@@ -875,7 +687,6 @@
   updateCartBadge();
   loadWelcome();
   loadCoins();
-  loadUserLocal();
 </script>
 </body>
 </html>
