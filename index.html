@@ -654,3 +654,60 @@
 </script>
 </body>
 </html>
+.coinGalleryTop {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.coinMoreBar {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.coinToggleBtn {
+  border: 1px solid #ddd;
+  background: #f7f7f7;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.coinExtraWrap {
+  margin-top: 8px;
+  display: none;
+}
+
+.coinExtraWrap.open {
+  display: block;
+}
+
+.coinExtraViewer {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: #fafafa;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coinExtraControls {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.coinNavBtn {
+  flex: 1;
+  border: 1px solid #ddd;
+  background: #f7f7f7;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
