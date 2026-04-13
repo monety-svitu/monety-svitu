@@ -9,17 +9,21 @@ export default async function handler(req, res) {
       });
     }
 
-    const url = new URL(gasUrl);
-    url.searchParams.set("action", "getCoins");
+    const slug = String(req.query.slug || "").trim();
+    const id = String(req.query.id || "").trim();
 
-    const allowedParams = ["country", "continent", "metal", "theme", "condition", "type"];
-
-    for (const key of allowedParams) {
-      const value = req.query[key];
-      if (value !== undefined && value !== null && String(value).trim() !== "") {
-        url.searchParams.set(key, String(value));
-      }
+    if (!slug && !id) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing slug or id"
+      });
     }
+
+    const url = new URL(gasUrl);
+    url.searchParams.set("action", "getCoin");
+
+    if (slug) url.searchParams.set("slug", slug);
+    if (id) url.searchParams.set("id", id);
 
     const response = await fetch(url.toString(), {
       method: "GET",
