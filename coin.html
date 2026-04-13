@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Монета</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #fff;
+      color: #111;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .backLink {
+      display: inline-block;
+      text-decoration: none;
+      color: #111;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 8px 12px;
+      background: #f7f7f7;
+      font-weight: 700;
+    }
+
+    .muted { color:#777; font-size: 12px; }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      background: #fff;
+      padding: 16px;
+    }
+
+    .coinLayout {
+      display: grid;
+      grid-template-columns: minmax(320px, 520px) 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .galleryTop {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .imgBox {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      background: #fafafa;
+      overflow: hidden;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .coinImage {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+      cursor: zoom-in;
+    }
+
+    .noImage {
+      color: #999;
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .moreBar {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .toggleBtn {
+      border: 1px solid #ddd;
+      background: #f7f7f7;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .extraWrap {
+      margin-top: 10px;
+      display: none;
+    }
+
+    .extraWrap.open {
+      display: block;
+    }
+
+    .extraViewer {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      background: #fafafa;
+      overflow: hidden;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .title {
+      font-size: 30px;
+      line-height: 1.15;
+      margin: 0 0 10px;
+      font-weight: 800;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f2f2f2;
+      font-size: 13px;
+    }
+
+    .priceBox {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .price {
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .btnAdd {
+      background: #111;
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btnAdd[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .section h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .specs {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 8px 12px;
+      font-size: 15px;
+    }
+
+    .specName {
+      color: #666;
+    }
+
+    .specValue {
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .emptyState {
+      padding: 24px;
+      border: 1px dashed #ccc;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    /* floating cart */
+    #cartFab {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 0;
+      background: #111;
+      color: #fff;
+      cursor: pointer;
+      font-size: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #cartBadge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #f0c040;
+      color: #111;
+      font-size: 12px;
+      font-weight: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #111;
+    }
+
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      z-index: 1100;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: min(440px, 94vw);
+      background: #fff;
+      border-left: 1px solid #ddd;
+      transform: translateX(110%);
+      transition: transform 0.2s ease;
+      z-index: 1200;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .drawer.open { transform: translateX(0); }
+
+    .drawerHeader {
+      padding: 14px;
+      border-bottom: 1px solid #eee;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .drawerHeader h3 { margin: 0; }
+
+    .closeBtn {
+      border: 0;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .drawerBody { padding: 14px; overflow: auto; flex: 1; }
+    .drawerFooter { border-top: 1px solid #eee; padding: 14px; background: #fafafa; }
+
+    .cartItem {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .cartItemTop {
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .cartItemTitle {
+      font-weight: 800;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .cartItemMeta {
+      font-size: 12px;
+      color:#666;
+      margin-top: 4px;
+    }
+
+    .qtyRow {
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .qtyBtn {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #f7f7f7;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .qtyNum {
+      min-width: 28px;
+      text-align:center;
+      font-weight: 900;
+    }
+
+    .removeBtn {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      color: #b00020;
+      font-weight: 700;
+    }
+
+    .totalRow {
+      display:flex;
+      justify-content: space-between;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .formGrid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .formGrid input,
+    .formGrid textarea {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    .btnPrimary {
+      width: 100%;
+      padding: 12px;
+      border: 0;
+      border-radius: 12px;
+      background: #f0c040;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .btnPrimary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .hint { font-size: 12px; color:#666; margin-top: 6px; }
+    .error { font-size: 12px; color:#b00020; margin-top: 6px; }
+
+    .viberPill {
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background:#efeaff;
+      font-weight: 900;
+      font-size: 12px;
+      color:#3a2a8a;
+      border:1px solid #e2dcff;
+    }
+
+    /* Lightbox */
+    #photoLightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 20px;
+    }
+
+    #photoLightbox.open {
+      display: flex;
+    }
+
+    .lightboxInner {
+      position: relative;
+      width: min(1100px, 96vw);
+      height: min(90vh, 900px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightboxImg {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #111;
+    }
+
+    .lightboxClose {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .lightboxNav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 46px;
+      height: 46px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .lightboxPrev { left: 10px; }
+    .lightboxNext { right: 10px; }
+
+    .lightboxCounter {
+      position: absolute;
+      left: 50%;
+      bottom: -6px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.92);
+      color: #111;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 820px) {
+      .coinLayout {
+        grid-template-columns: 1fr;
+      }
+
+      .title {
+        font-size: 24px;
+      }
+
+      .specs {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .lightboxNav {
+        width: 42px;
+        height: 42px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a class="backLink" href="/">← До каталогу</a>
+      <div class="muted" id="pageHint">Сторінка монети</div>
+    </div>
+
+    <div id="coinPage"></div>
+  </div>
+
+  <button id="cartFab" title="Кошик">🛒<span id="cartBadge">0</span></button>
+
+  <div id="overlay"></div>
+
+  <div class="drawer" id="cartDrawer">
+    <div class="drawerHeader">
+      <h3>Кошик</h3>
+      <button class="closeBtn" id="closeDrawer">✕</button>
+    </div>
+
+    <div class="drawerBody">
+      <div id="cartList"></div>
+
+      <div id="checkoutError" class="error"></div>
+
+      <div class="formGrid">
+        <div class="viberPill">Зв’язок: тільки Viber</div>
+        <input id="cName" placeholder="Ім'я *">
+        <input id="cPhone" placeholder="Телефон *">
+        <input id="cEmail" placeholder="Email (необов’язково)">
+        <textarea id="cComment" placeholder="Коментар (необов’язково)" rows="3"></textarea>
+        <button class="btnPrimary" id="btnOrder" disabled>Замовити</button>
+        <div class="hint">* — обов’язкові поля. Ми напишемо вам у Viber для уточнень.</div>
+        <div id="checkoutMsg" class="hint"></div>
+      </div>
+    </div>
+
+    <div class="drawerFooter">
+      <div class="totalRow">
+        <div>Разом</div>
+        <div id="cartTotal">0 грн</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="photoLightbox">
+    <div class="lightboxInner">
+      <button class="lightboxClose" onclick="closeLightbox()">✕</button>
+      <button class="lightboxNav lightboxPrev" onclick="prevLightboxPhoto()">‹</button>
+      <img id="lightboxImg" class="lightboxImg" src="" alt="Фото монети">
+      <button class="lightboxNav lightboxNext" onclick="nextLightboxPhoto()">›</button>
+      <div id="lightboxCounter" class="lightboxCounter"></div>
+    </div>
+  </div>
+
+<script>
+  const API_COINS = "/api/coins";
+  const API_ORDER = "/api/order";
+  const NO_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><rect width='100%25' height='100%25' fill='%23f7f7f7'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial' font-size='28'>Немає фото</text></svg>";
+
+  let allCoins = [];
+  let currentCoin = null;
+  let cartMap = {};
+  let lightboxPhotos = [];
+  let lightboxIndex = 0;
+
+  function norm(v){ return String(v ?? "").toLowerCase().trim(); }
+  function money(n){ const x = Number(n) || 0; return Math.round(x); }
+
+  function uuid_() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+
+  function escHtml(v) {
+    return String(v ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function getSlugFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return String(params.get("slug") || "").trim();
+  }
+
+  async function loadCoin() {
+    const slug = getSlugFromUrl();
+    const container = document.getElementById("coinPage");
+
+    if (!slug) {
+      container.innerHTML = `
+        <div class="emptyState">
+          <h2>Монету не знайдено</h2>
+          <p>У посиланні немає slug.</p>
+        </div>
+      `;
+      return;
+    }
+
+    try {
+      const res = await fetch(API_COINS);
+      const text = await res.text();
+
+      if (text.trim().startsWith("<")) {
+        container.innerHTML = `
+          <div class="emptyState">
+            <h2>Помилка</h2>
+            <p>/api/coins повернув не JSON.</p>
+          </div>
+        `;
+        return;
+      }
+
+      allCoins = JSON.parse(text);
+      currentCoin = allCoins.find(c => String(c.Slug || "").trim() === slug);
+
+      if (!currentCoin) {
+        container.innerHTML = `
+          <div class="emptyState">
+            <h2>Монету не знайдено</h2>
+            <p>Можливо, slug неправильний або монета прихована.</p>
+          </div>
+        `;
+        return;
+      }
+
+      renderCoinPage(currentCoin);
+      document.title = (currentCoin.TitleUA || "Монета") + " – Монети Світу";
+    } catch (e) {
+      console.log("loadCoin error:", e);
+      container.innerHTML = `
+        <div class="emptyState">
+          <h2>Помилка завантаження</h2>
+          <p>Не вдалося отримати дані монети.</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderCoinPage(c) {
+    const container = document.getElementById("coinPage");
+
+    const mainUrl = String(c.PhotoMainURL || "").trim();
+    const extra1Url = String(c.PhotoExtra1URL || "").trim();
+    const extra2Url = String(c.PhotoExtra2URL || "").trim();
+
+    const top1 = mainUrl || NO_IMAGE;
+    const top2 = extra1Url || NO_IMAGE;
+
+    const photos = [];
+    if (mainUrl) photos.push(mainUrl);
+    if (extra1Url) photos.push(extra1Url);
+    if (extra2Url) photos.push(extra2Url);
+
+    const photosJson = escHtml(JSON.stringify(photos));
+    const hasExtraThird = !!extra2Url;
+    const inStock = Number(c.Quantity) > 0;
+
+    container.innerHTML = `
+      <div class="card">
+        <div class="coinLayout">
+          <div>
+            <div class="galleryTop">
+              <div class="imgBox">
+                <img
+                  class="coinImage"
+                  src="${escHtml(top1)}"
+                  alt="${escHtml((c.TitleUA || "Монета") + " фото 1")}"
+                  loading="lazy"
+                  onclick="openLightboxFromData('${photosJson}', 0)"
+                  onerror="this.onerror=null;this.src='${NO_IMAGE}'"
+                />
+              </div>
+
+              <div class="imgBox">
+                <img
+                  class="coinImage"
+                  src="${escHtml(top2)}"
+                  alt="${escHtml((c.TitleUA || "Монета") + " фото 2")}"
+                  loading="lazy"
+                  onclick="openLightboxFromData('${photosJson}', 1)"
+                  onerror="this.onerror=null;this.src='${NO_IMAGE}'"
+                />
+              </div>
+            </div>
+
+            ${
+              hasExtraThird ? `
+                <div class="moreBar">
+                  <button class="toggleBtn" onclick="toggleExtraPhotos()">
+                    Показати ще фото
+                  </button>
+                </div>
+
+                <div class="extraWrap" id="extraWrap">
+                  <div class="extraViewer">
+                    <img
+                      class="coinImage"
+                      src="${escHtml(extra2Url)}"
+                      alt="${escHtml((c.TitleUA || "Монета") + " фото 3")}"
+                      loading="lazy"
+                      onclick="openLightboxFromData('${photosJson}', 2)"
+                      onerror="this.onerror=null;this.src='${NO_IMAGE}'"
+                    />
+                  </div>
+                </div>
+              ` : ``
+            }
+          </div>
+
+          <div>
+            <h1 class="title">${escHtml(c.TitleUA || "Монета")}</h1>
+
+            <div class="meta">
+              ${c.Country ? `<span class="pill">${escHtml(c.Country)}</span>` : ""}
+              ${c.Metal ? `<span class="pill">${escHtml(c.Metal)}</span>` : ""}
+              ${c.Condition ? `<span class="pill">${escHtml(c.Condition)}</span>` : ""}
+              ${c.KrauseNumber ? `<span class="pill">${escHtml(c.KrauseNumber)}</span>` : ""}
+            </div>
+
+            <div class="priceBox">
+              <div class="price">${money(c.PriceUAH)} грн</div>
+              <button class="btnAdd" ${inStock ? "" : "disabled"} onclick="addCurrentCoinToCart()">
+                Покласти в кошик
+              </button>
+            </div>
+
+            <div class="section">
+              <h2>Характеристики</h2>
+              <div class="specs">
+                <div class="specName">Країна</div>
+                <div class="specValue">${escHtml(c.Country || "")}</div>
+
+                <div class="specName">Континент</div>
+                <div class="specValue">${escHtml(c.Continent || "")}</div>
+
+                <div class="specName">Номінал / період</div>
+                <div class="specValue">${escHtml(c.NominalPeriod || "")}</div>
+
+                <div class="specName">Krause</div>
+                <div class="specValue">${escHtml(c.KrauseNumber || "")}</div>
+
+                <div class="specName">Метал</div>
+                <div class="specValue">${escHtml(c.Metal || "")}</div>
+
+                <div class="specName">Стан</div>
+                <div class="specValue">${escHtml(c.Condition || "")}</div>
+
+                <div class="specName">Тип</div>
+                <div class="specValue">${escHtml(c.Type || "")}</div>
+
+                <div class="specName">Коробка</div>
+                <div class="specValue">${escHtml(c.BoxNo || "")}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function toggleExtraPhotos() {
+    const wrap = document.getElementById("extraWrap");
+    if (!wrap) return;
+    wrap.classList.toggle("open");
+  }
+
+  function openLightboxFromData(photosJson, startIndex) {
+    try {
+      const arr = JSON.parse(photosJson || "[]").filter(Boolean);
+      if (!arr.length) return;
+
+      lightboxPhotos = arr;
+      lightboxIndex = Math.max(0, Math.min(Number(startIndex || 0), arr.length - 1));
+      updateLightbox();
+      document.getElementById("photoLightbox").classList.add("open");
+      document.body.style.overflow = "hidden";
+    } catch (e) {
+      console.log("openLightboxFromData error:", e);
+    }
+  }
+
+  function updateLightbox() {
+    const img = document.getElementById("lightboxImg");
+    const counter = document.getElementById("lightboxCounter");
+    if (!img || !counter || !lightboxPhotos.length) return;
+
+    img.src = lightboxPhotos[lightboxIndex] || NO_IMAGE;
+    counter.textContent = (lightboxIndex + 1) + " / " + lightboxPhotos.length;
+  }
+
+  function closeLightbox() {
+    document.getElementById("photoLightbox").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function prevLightboxPhoto() {
+    if (!lightboxPhotos.length) return;
+    lightboxIndex = (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+    updateLightbox();
+  }
+
+  function nextLightboxPhoto() {
+    if (!lightboxPhotos.length) return;
+    lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length;
+    updateLightbox();
+  }
+
+  function addCurrentCoinToCart() {
+    if (!currentCoin) return;
+    addToCart(currentCoin.ID);
+  }
+
+  function addToCart(id) {
+    const coin = allCoins.find(x => String(x.ID) === String(id));
+    if (!coin) return;
+
+    const key = String(coin.ID);
+    if (!cartMap[key]) cartMap[key] = { coin, qty: 0 };
+
+    const maxQty = Number(coin.Quantity) || 0;
+    if (cartMap[key].qty < maxQty) cartMap[key].qty += 1;
+
+    updateCartBadge();
+  }
+
+  function cartCount() {
+    return Object.values(cartMap).reduce((s, it) => s + (it.qty || 0), 0);
+  }
+
+  function cartTotal() {
+    return Object.values(cartMap).reduce((s, it) => s + money(it.coin.PriceUAH) * (it.qty || 0), 0);
+  }
+
+  function updateCartBadge() {
+    const n = cartCount();
+    const badge = document.getElementById("cartBadge");
+    badge.textContent = String(n);
+    badge.style.display = n > 0 ? "flex" : "none";
+    document.getElementById("cartTotal").textContent = cartTotal() + " грн";
+    validateCheckout();
+  }
+
+  function openDrawer() {
+    document.getElementById("overlay").style.display = "block";
+    document.getElementById("cartDrawer").classList.add("open");
+    renderCart();
+  }
+
+  function closeDrawer() {
+    document.getElementById("overlay").style.display = "none";
+    document.getElementById("cartDrawer").classList.remove("open");
+  }
+
+  document.getElementById("cartFab").addEventListener("click", openDrawer);
+  document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
+  document.getElementById("overlay").addEventListener("click", closeDrawer);
+
+  function incQty(id) {
+    const it = cartMap[String(id)];
+    if (!it) return;
+    const maxQty = Number(it.coin.Quantity) || 0;
+    if (it.qty < maxQty) it.qty += 1;
+    renderCart();
+  }
+
+  function decQty(id) {
+    const it = cartMap[String(id)];
+    if (!it) return;
+    it.qty -= 1;
+    if (it.qty <= 0) delete cartMap[String(id)];
+    renderCart();
+  }
+
+  function removeItem(id) {
+    delete cartMap[String(id)];
+    renderCart();
+  }
+
+  function renderCart() {
+    const list = document.getElementById("cartList");
+    list.innerHTML = "";
+
+    const items = Object.values(cartMap);
+    if (items.length === 0) {
+      list.innerHTML = `<div class="muted">Кошик пустий</div>`;
+      updateCartBadge();
+      return;
+    }
+
+    items.forEach(({coin, qty}) => {
+      const div = document.createElement("div");
+      div.className = "cartItem";
+      div.innerHTML = `
+        <div class="cartItemTop">
+          <div style="flex:1">
+            <div class="cartItemTitle">${escHtml(coin.TitleUA || "Монета")}</div>
+            <div class="cartItemMeta">${money(coin.PriceUAH)} грн за 1 шт</div>
+          </div>
+          <button class="removeBtn" onclick="removeItem('${escHtml(coin.ID)}')">Видалити</button>
+        </div>
+        <div class="qtyRow">
+          <button class="qtyBtn" onclick="decQty('${escHtml(coin.ID)}')">−</button>
+          <div class="qtyNum">${qty}</div>
+          <button class="qtyBtn" onclick="incQty('${escHtml(coin.ID)}')">+</button>
+          <div style="margin-left:auto;font-weight:900">${money(coin.PriceUAH) * qty} грн</div>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+
+    updateCartBadge();
+  }
+
+  ["cName","cPhone","cEmail","cComment"].forEach(id=>{
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", validateCheckout);
+    el.addEventListener("change", validateCheckout);
+  });
+
+  function validateCheckout() {
+    const hasItems = cartCount() > 0;
+    const name = document.getElementById("cName").value.trim();
+    const phone = document.getElementById("cPhone").value.trim();
+    document.getElementById("btnOrder").disabled = !(hasItems && name && phone);
+  }
+
+  document.getElementById("btnOrder").addEventListener("click", checkout);
+
+  async function checkout() {
+    const msg = document.getElementById("checkoutMsg");
+    const err = document.getElementById("checkoutError");
+    const btn = document.getElementById("btnOrder");
+
+    msg.textContent = "";
+    err.textContent = "";
+
+    if (btn.dataset.locked === "1") return;
+    btn.dataset.locked = "1";
+    btn.disabled = true;
+
+    try {
+      if (cartCount() === 0) { err.textContent = "Кошик пустий"; return; }
+
+      const name = document.getElementById("cName").value.trim();
+      const phone = document.getElementById("cPhone").value.trim();
+      const email = document.getElementById("cEmail").value.trim();
+      const comment = document.getElementById("cComment").value.trim();
+
+      if (!name || !phone) { err.textContent = "Заповни: ім'я і телефон"; return; }
+
+      const items = [];
+      Object.values(cartMap).forEach(({ coin, qty }) => {
+        for (let i = 0; i < qty; i++) items.push({ ID: coin.ID });
+      });
+
+      msg.textContent = "Відправляю замовлення...";
+
+      const payload = {
+        name,
+        phone,
+        email: email || "",
+        comment: comment || "",
+        channel: "Viber",
+        items,
+        totalUAH: cartTotal(),
+        clientOrderId: uuid_()
+      };
+
+      const r = await fetch(API_ORDER, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await r.text();
+      let resp; try { resp = JSON.parse(text); } catch { resp = { raw: text }; }
+
+      if (r.ok && resp && (resp.success === true || resp.orderId)) {
+        alert("Замовлення прийнято! Ми напишемо вам у Viber для уточнень.");
+        cartMap = {};
+        renderCart();
+        closeDrawer();
+        msg.textContent = "";
+      } else {
+        console.log("Order not OK:", r.status, resp);
+        err.textContent = (resp && resp.error) ? resp.error : "Помилка створення замовлення.";
+      }
+    } catch (e) {
+      console.log("checkout error:", e);
+      err.textContent = "Помилка мережі.";
+    } finally {
+      btn.dataset.locked = "0";
+      validateCheckout();
+    }
+  }
+
+  document.getElementById("photoLightbox").addEventListener("click", (e) => {
+    if (e.target.id === "photoLightbox") closeLightbox();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const isOpen = document.getElementById("photoLightbox").classList.contains("open");
+    if (!isOpen) return;
+
+    if (e.key === "Escape") closeLightbox();
+    if (e.key === "ArrowLeft") prevLightboxPhoto();
+    if (e.key === "ArrowRight") nextLightboxPhoto();
+  });
+
+  updateCartBadge();
+  loadCoin();
+</script>
+</body>
+</html>
