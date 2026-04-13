@@ -12,7 +12,6 @@
     .topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 10px; }
     .topActions { display:flex; gap:8px; align-items:center; }
 
-    /* Welcome */
     #welcomeBox {
       border: 1px solid #eee;
       background: #fafafa;
@@ -27,28 +26,41 @@
     #filters input, #filters select, #filters button { padding: 6px 8px; font-size: 14px; }
     #filters button { cursor:pointer; }
 
+    /* Grid */
+    #coins {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
     .coin {
       border:1px solid #ddd;
       padding:12px;
-      margin-bottom:10px;
       border-radius:10px;
-      display:grid;
-      grid-template-columns: 180px 1fr;
-      gap:14px;
-      align-items:start;
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height: 100%;
     }
 
     .coinMedia {
       width: 100%;
     }
 
-    .coinImageWrap {
-      width: 100%;
-      aspect-ratio: 1 / 1;
+    .coinGalleryTop {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .coinImgBox {
       border: 1px solid #eee;
       border-radius: 10px;
       background: #fafafa;
       overflow: hidden;
+      aspect-ratio: 1 / 1;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -69,20 +81,82 @@
       padding: 10px;
     }
 
-    .coinBody {
-      min-width: 0;
+    .coinMoreBar {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
     }
 
-    .coinTitle { font-weight: 800; font-size: 18px; margin: 0 0 6px; }
-    .coinRow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center; }
-    .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; background:#f2f2f2; font-size: 12px; }
-    .price { font-weight: 900; }
+    .coinToggleBtn {
+      border: 1px solid #ddd;
+      background: #f7f7f7;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .coinExtraWrap {
+      margin-top: 8px;
+      display: none;
+    }
+
+    .coinExtraWrap.open {
+      display: block;
+    }
+
+    .coinExtraViewer {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      background: #fafafa;
+      overflow: hidden;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .coinBody {
+      min-width: 0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .coinTitle {
+      font-weight: 800;
+      font-size: 18px;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .coinMeta {
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .coinRow {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .pill {
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background:#f2f2f2;
+      font-size: 12px;
+    }
+
+    .price { font-weight: 900; font-size: 18px; }
     .btn { padding: 6px 10px; cursor:pointer; }
     .btnAdd { background:#111; color:#fff; border:0; border-radius: 8px; }
     .btnAdd[disabled] { opacity:0.5; cursor:not-allowed; }
     .empty { padding: 20px; border: 1px dashed #ccc; border-radius: 10px; }
 
-    /* Floating cart button */
     #cartFab {
       position: fixed;
       right: 16px;
@@ -101,6 +175,7 @@
       justify-content: center;
       z-index: 1000;
     }
+
     #cartBadge {
       position: absolute;
       top: -6px;
@@ -119,7 +194,6 @@
       border: 2px solid #111;
     }
 
-    /* Overlay + Drawer */
     #overlay {
       position: fixed;
       inset: 0;
@@ -191,13 +265,9 @@
       border:1px solid #e2dcff;
     }
 
-    @media (max-width: 700px) {
-      .coin {
+    @media (max-width: 520px) {
+      #coins {
         grid-template-columns: 1fr;
-      }
-
-      .coinMedia {
-        max-width: 240px;
       }
     }
   </style>
@@ -206,11 +276,10 @@
 
   <div class="topbar">
     <div>
-     <h1 style="margin:0;">Монети Світу</h1>
+      <h1 style="margin:0;">Монети Світу</h1>
       <div class="muted">Пошук по назві та Krause (KM#...).</div>
     </div>
     <div class="topActions">
-      <!-- Реєстрацію прибрано -->
     </div>
   </div>
 
@@ -354,11 +423,13 @@
     try {
       const res = await fetch(API_COINS);
       const text = await res.text();
+
       if (text.trim().startsWith("<")) {
         console.error("Coins API returned HTML:", text.slice(0, 400));
         alert("Помилка: /api/coins повернув HTML (не JSON). Відкрий F12 → Console.");
         return;
       }
+
       allCoins = JSON.parse(text);
       fillFilterOptions();
       applyFilters();
@@ -414,9 +485,9 @@
       if (fCondition && c.Condition !== fCondition) return false;
 
       if (q) {
-        const hay = [
-          c.TitleUA, c.TitleEN, c.KrauseNumber, c.Country, c.Metal, c.Theme, c.Condition
-        ].map(norm).join(" ");
+        const hay = [c.TitleUA, c.TitleEN, c.KrauseNumber, c.Country, c.Metal, c.Theme, c.Condition]
+          .map(norm)
+          .join(" ");
         if (!hay.includes(q)) return false;
       }
 
@@ -441,39 +512,91 @@
 
     viewCoins.forEach(c => {
       const inStock = Number(c.Quantity) > 0;
-      const imageUrl = String(c.PhotoMainURL || "").trim() || NO_IMAGE;
+
+      const mainUrl = String(c.PhotoMainURL || "").trim();
+      const extra1Url = String(c.PhotoExtra1URL || "").trim();
+      const extra2Url = String(c.PhotoExtra2URL || "").trim();
+
+      const top1 = mainUrl || NO_IMAGE;
+      const top2 = extra1Url || NO_IMAGE;
+
+      const coinId = String(c.ID);
+      const hasExtraThird = !!extra2Url;
 
       const div = document.createElement("div");
       div.className = "coin";
       div.innerHTML = `
         <div class="coinMedia">
-          <div class="coinImageWrap">
-            <img
-              class="coinImage"
-              src="${escHtml(imageUrl)}"
-              alt="${escHtml(c.TitleUA || "Монета")}"
-              loading="lazy"
-              onerror="this.onerror=null;this.src='${NO_IMAGE}'"
-            />
+          <div class="coinGalleryTop">
+            <div class="coinImgBox">
+              <img
+                class="coinImage"
+                src="${escHtml(top1)}"
+                alt="${escHtml((c.TitleUA || "Монета") + " фото 1")}"
+                loading="lazy"
+                onerror="this.onerror=null;this.src='${NO_IMAGE}'"
+              />
+            </div>
+
+            <div class="coinImgBox">
+              <img
+                class="coinImage"
+                src="${escHtml(top2)}"
+                alt="${escHtml((c.TitleUA || "Монета") + " фото 2")}"
+                loading="lazy"
+                onerror="this.onerror=null;this.src='${NO_IMAGE}'"
+              />
+            </div>
           </div>
+
+          ${
+            hasExtraThird ? `
+              <div class="coinMoreBar">
+                <button class="coinToggleBtn" onclick="toggleExtraPhotos('${escHtml(coinId)}')">
+                  Показати ще фото
+                </button>
+              </div>
+
+              <div class="coinExtraWrap" id="extraWrap_${escHtml(coinId)}">
+                <div class="coinExtraViewer">
+                  <img
+                    class="coinImage"
+                    src="${escHtml(extra2Url)}"
+                    alt="${escHtml((c.TitleUA || "Монета") + " фото 3")}"
+                    loading="lazy"
+                    onerror="this.onerror=null;this.src='${NO_IMAGE}'"
+                  />
+                </div>
+              </div>
+            ` : ``
+          }
         </div>
 
         <div class="coinBody">
           <div class="coinTitle">${escHtml(c.TitleUA || "")}</div>
-          <div class="muted">
+
+          <div class="coinMeta">
             ${c.Country ? `<span class="pill">${escHtml(c.Country)}</span>` : ""}
             ${c.Metal ? `<span class="pill">${escHtml(c.Metal)}</span>` : ""}
             ${c.Condition ? `<span class="pill">${escHtml(c.Condition)}</span>` : ""}
             ${c.KrauseNumber ? `<span class="pill">${escHtml(c.KrauseNumber)}</span>` : ""}
           </div>
+
           <div class="coinRow">
             <div class="price">${money(c.PriceUAH)} грн</div>
-            <button class="btn btnAdd" ${inStock ? "" : "disabled"} onclick="addToCart('${escHtml(c.ID)}')">Покласти в кошик</button>
+            <button class="btn btnAdd" ${inStock ? "" : "disabled"} onclick="addToCart('${escHtml(coinId)}')">Покласти в кошик</button>
           </div>
         </div>
       `;
+
       container.appendChild(div);
     });
+  }
+
+  function toggleExtraPhotos(coinId) {
+    const wrap = document.getElementById("extraWrap_" + coinId);
+    if (!wrap) return;
+    wrap.classList.toggle("open");
   }
 
   function addToCart(id) {
@@ -654,60 +777,3 @@
 </script>
 </body>
 </html>
-.coinGalleryTop {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.coinMoreBar {
-  margin-top: 8px;
-  display: flex;
-  justify-content: center;
-}
-
-.coinToggleBtn {
-  border: 1px solid #ddd;
-  background: #f7f7f7;
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.coinExtraWrap {
-  margin-top: 8px;
-  display: none;
-}
-
-.coinExtraWrap.open {
-  display: block;
-}
-
-.coinExtraViewer {
-  border: 1px solid #eee;
-  border-radius: 10px;
-  background: #fafafa;
-  overflow: hidden;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.coinExtraControls {
-  margin-top: 8px;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.coinNavBtn {
-  flex: 1;
-  border: 1px solid #ddd;
-  background: #f7f7f7;
-  border-radius: 8px;
-  padding: 8px 10px;
-  cursor: pointer;
-  font-size: 13px;
-}
