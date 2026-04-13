@@ -80,7 +80,19 @@
       text-align:center;
       padding: 10px;
     }
+.coinImgBox {
+  position: relative;
+  overflow: hidden;
+}
 
+.coinImage {
+  transition: transform 0.25s ease;
+  cursor: zoom-in;
+}
+
+.coinImgBox:hover .coinImage {
+  transform: scale(1.8);
+}
     .coinMoreBar {
       margin-top: 8px;
       display: flex;
