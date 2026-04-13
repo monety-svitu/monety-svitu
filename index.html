@@ -26,7 +26,6 @@
     #filters input, #filters select, #filters button { padding: 6px 8px; font-size: 14px; }
     #filters button { cursor:pointer; }
 
-    /* Grid */
     #coins {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -64,6 +63,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      position: relative;
     }
 
     .coinImage {
@@ -72,6 +72,7 @@
       object-fit: contain;
       display:block;
       background:#fff;
+      cursor: zoom-in;
     }
 
     .coinNoImage {
@@ -80,19 +81,7 @@
       text-align:center;
       padding: 10px;
     }
-.coinImgBox {
-  position: relative;
-  overflow: hidden;
-}
 
-.coinImage {
-  transition: transform 0.25s ease;
-  cursor: zoom-in;
-}
-
-.coinImgBox:hover .coinImage {
-  transform: scale(1.8);
-}
     .coinMoreBar {
       margin-top: 8px;
       display: flex;
@@ -277,9 +266,92 @@
       border:1px solid #e2dcff;
     }
 
+    /* Lightbox */
+    #photoLightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 20px;
+    }
+
+    #photoLightbox.open {
+      display: flex;
+    }
+
+    .lightboxInner {
+      position: relative;
+      width: min(1100px, 96vw);
+      height: min(90vh, 900px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightboxImg {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #111;
+    }
+
+    .lightboxClose {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .lightboxNav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 46px;
+      height: 46px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .lightboxPrev { left: 10px; }
+    .lightboxNext { right: 10px; }
+
+    .lightboxCounter {
+      position: absolute;
+      left: 50%;
+      bottom: -6px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.92);
+      color: #111;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
     @media (max-width: 520px) {
       #coins {
         grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .lightboxNav {
+        width: 42px;
+        height: 42px;
       }
     }
   </style>
@@ -291,8 +363,7 @@
       <h1 style="margin:0;">Монети Світу</h1>
       <div class="muted">Пошук по назві та Krause (KM#...).</div>
     </div>
-    <div class="topActions">
-    </div>
+    <div class="topActions"></div>
   </div>
 
   <div id="welcomeBox">
@@ -336,12 +407,10 @@
 
       <div class="formGrid">
         <div class="viberPill">Зв’язок: тільки Viber</div>
-
         <input id="cName" placeholder="Ім'я *">
         <input id="cPhone" placeholder="Телефон *">
         <input id="cEmail" placeholder="Email (необов’язково)">
         <textarea id="cComment" placeholder="Коментар (необов’язково)" rows="3"></textarea>
-
         <button class="btnPrimary" id="btnOrder" disabled>Замовити</button>
         <div class="hint">* — обов’язкові поля. Ми напишемо вам у Viber для уточнень.</div>
         <div id="checkoutMsg" class="hint"></div>
@@ -356,6 +425,16 @@
     </div>
   </div>
 
+  <div id="photoLightbox">
+    <div class="lightboxInner">
+      <button class="lightboxClose" onclick="closeLightbox()">✕</button>
+      <button class="lightboxNav lightboxPrev" onclick="prevLightboxPhoto()">‹</button>
+      <img id="lightboxImg" class="lightboxImg" src="" alt="Фото монети">
+      <button class="lightboxNav lightboxNext" onclick="nextLightboxPhoto()">›</button>
+      <div id="lightboxCounter" class="lightboxCounter"></div>
+    </div>
+  </div>
+
 <script>
   const API_COINS = "/api/coins";
   const API_ORDER = "/api/order";
@@ -365,6 +444,8 @@
   let allCoins = [];
   let viewCoins = [];
   let cartMap = {};
+  let lightboxPhotos = [];
+  let lightboxIndex = 0;
 
   function norm(v){ return String(v ?? "").toLowerCase().trim(); }
   function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b), "uk")); }
@@ -532,6 +613,12 @@
       const top1 = mainUrl || NO_IMAGE;
       const top2 = extra1Url || NO_IMAGE;
 
+      const photos = [];
+      if (mainUrl) photos.push(mainUrl);
+      if (extra1Url) photos.push(extra1Url);
+      if (extra2Url) photos.push(extra2Url);
+
+      const photosJson = escHtml(JSON.stringify(photos));
       const coinId = String(c.ID);
       const hasExtraThird = !!extra2Url;
 
@@ -546,6 +633,7 @@
                 src="${escHtml(top1)}"
                 alt="${escHtml((c.TitleUA || "Монета") + " фото 1")}"
                 loading="lazy"
+                onclick="openLightboxFromData('${photosJson}', 0)"
                 onerror="this.onerror=null;this.src='${NO_IMAGE}'"
               />
             </div>
@@ -556,6 +644,7 @@
                 src="${escHtml(top2)}"
                 alt="${escHtml((c.TitleUA || "Монета") + " фото 2")}"
                 loading="lazy"
+                onclick="openLightboxFromData('${photosJson}', 1)"
                 onerror="this.onerror=null;this.src='${NO_IMAGE}'"
               />
             </div>
@@ -576,6 +665,7 @@
                     src="${escHtml(extra2Url)}"
                     alt="${escHtml((c.TitleUA || "Монета") + " фото 3")}"
                     loading="lazy"
+                    onclick="openLightboxFromData('${photosJson}', 2)"
                     onerror="this.onerror=null;this.src='${NO_IMAGE}'"
                   />
                 </div>
@@ -609,6 +699,47 @@
     const wrap = document.getElementById("extraWrap_" + coinId);
     if (!wrap) return;
     wrap.classList.toggle("open");
+  }
+
+  function openLightboxFromData(photosJson, startIndex) {
+    try {
+      const arr = JSON.parse(photosJson || "[]").filter(Boolean);
+      if (!arr.length) return;
+
+      lightboxPhotos = arr;
+      lightboxIndex = Math.max(0, Math.min(Number(startIndex || 0), arr.length - 1));
+      updateLightbox();
+      document.getElementById("photoLightbox").classList.add("open");
+      document.body.style.overflow = "hidden";
+    } catch (e) {
+      console.log("openLightboxFromData error:", e);
+    }
+  }
+
+  function updateLightbox() {
+    const img = document.getElementById("lightboxImg");
+    const counter = document.getElementById("lightboxCounter");
+    if (!img || !counter || !lightboxPhotos.length) return;
+
+    img.src = lightboxPhotos[lightboxIndex] || NO_IMAGE;
+    counter.textContent = (lightboxIndex + 1) + " / " + lightboxPhotos.length;
+  }
+
+  function closeLightbox() {
+    document.getElementById("photoLightbox").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function prevLightboxPhoto() {
+    if (!lightboxPhotos.length) return;
+    lightboxIndex = (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+    updateLightbox();
+  }
+
+  function nextLightboxPhoto() {
+    if (!lightboxPhotos.length) return;
+    lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length;
+    updateLightbox();
   }
 
   function addToCart(id) {
@@ -765,6 +896,19 @@
       validateCheckout();
     }
   }
+
+  document.getElementById("photoLightbox").addEventListener("click", (e) => {
+    if (e.target.id === "photoLightbox") closeLightbox();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const isOpen = document.getElementById("photoLightbox").classList.contains("open");
+    if (!isOpen) return;
+
+    if (e.key === "Escape") closeLightbox();
+    if (e.key === "ArrowLeft") prevLightboxPhoto();
+    if (e.key === "ArrowRight") nextLightboxPhoto();
+  });
 
   document.getElementById("q").addEventListener("input", applyFilters);
   document.getElementById("fCountry").addEventListener("change", applyFilters);
