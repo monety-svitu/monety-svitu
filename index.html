@@ -27,7 +27,52 @@
     #filters input, #filters select, #filters button { padding: 6px 8px; font-size: 14px; }
     #filters button { cursor:pointer; }
 
-    .coin { border:1px solid #ddd; padding:12px; margin-bottom:10px; border-radius:10px; }
+    .coin {
+      border:1px solid #ddd;
+      padding:12px;
+      margin-bottom:10px;
+      border-radius:10px;
+      display:grid;
+      grid-template-columns: 180px 1fr;
+      gap:14px;
+      align-items:start;
+    }
+
+    .coinMedia {
+      width: 100%;
+    }
+
+    .coinImageWrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      background: #fafafa;
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .coinImage {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display:block;
+      background:#fff;
+    }
+
+    .coinNoImage {
+      color:#999;
+      font-size:12px;
+      text-align:center;
+      padding: 10px;
+    }
+
+    .coinBody {
+      min-width: 0;
+    }
+
     .coinTitle { font-weight: 800; font-size: 18px; margin: 0 0 6px; }
     .coinRow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center; }
     .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; background:#f2f2f2; font-size: 12px; }
@@ -145,6 +190,16 @@
       color:#3a2a8a;
       border:1px solid #e2dcff;
     }
+
+    @media (max-width: 700px) {
+      .coin {
+        grid-template-columns: 1fr;
+      }
+
+      .coinMedia {
+        max-width: 240px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -155,11 +210,10 @@
       <div class="muted">Пошук по назві та Krause (KM#...).</div>
     </div>
     <div class="topActions">
-      <!-- ✅ Реєстрацію прибрано повністю -->
+      <!-- Реєстрацію прибрано -->
     </div>
   </div>
 
-  <!-- ✅ Welcome/Intro -->
   <div id="welcomeBox">
     <div id="welcomeText"></div>
   </div>
@@ -188,7 +242,6 @@
 
   <div id="overlay"></div>
 
-  <!-- Cart drawer -->
   <div class="drawer" id="cartDrawer">
     <div class="drawerHeader">
       <h3>Кошик</h3>
@@ -226,10 +279,11 @@
   const API_COINS = "/api/coins";
   const API_ORDER = "/api/order";
   const API_SETTINGS = "/api/settings";
+  const NO_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><rect width='100%25' height='100%25' fill='%23f7f7f7'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial' font-size='28'>Немає фото</text></svg>";
 
   let allCoins = [];
   let viewCoins = [];
-  let cartMap = {}; // ID -> { coin, qty }
+  let cartMap = {};
 
   function norm(v){ return String(v ?? "").toLowerCase().trim(); }
   function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b), "uk")); }
@@ -240,7 +294,15 @@
     return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
-  // ✅ Welcome text from Settings
+  function escHtml(v) {
+    return String(v ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
   async function loadWelcome() {
     try {
       const r = await fetch(API_SETTINGS);
@@ -259,6 +321,7 @@
   function cartCount() {
     return Object.values(cartMap).reduce((s, it) => s + (it.qty || 0), 0);
   }
+
   function cartTotal() {
     return Object.values(cartMap).reduce((s, it) => s + money(it.coin.PriceUAH) * (it.qty || 0), 0);
   }
@@ -277,6 +340,7 @@
     document.getElementById("cartDrawer").classList.add("open");
     renderCart();
   }
+
   function closeDrawer() {
     document.getElementById("overlay").style.display = "none";
     document.getElementById("cartDrawer").classList.remove("open");
@@ -286,7 +350,6 @@
   document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
   document.getElementById("overlay").addEventListener("click", closeDrawer);
 
-  // ===== Coins =====
   async function loadCoins() {
     try {
       const res = await fetch(API_COINS);
@@ -309,13 +372,31 @@
     const country = document.getElementById("fCountry");
     const metal = document.getElementById("fMetal");
     const cond = document.getElementById("fCondition");
+
     country.innerHTML = `<option value="">Всі країни</option>`;
     metal.innerHTML = `<option value="">Всі метали</option>`;
     cond.innerHTML = `<option value="">Будь-який стан</option>`;
 
-    uniq(allCoins.map(c => c.Country)).forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; country.appendChild(o); });
-    uniq(allCoins.map(c => c.Metal)).forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; metal.appendChild(o); });
-    uniq(allCoins.map(c => c.Condition)).forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; cond.appendChild(o); });
+    uniq(allCoins.map(c => c.Country)).forEach(v => {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      country.appendChild(o);
+    });
+
+    uniq(allCoins.map(c => c.Metal)).forEach(v => {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      metal.appendChild(o);
+    });
+
+    uniq(allCoins.map(c => c.Condition)).forEach(v => {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      cond.appendChild(o);
+    });
   }
 
   function applyFilters() {
@@ -331,10 +412,14 @@
       if (fCountry && c.Country !== fCountry) return false;
       if (fMetal && c.Metal !== fMetal) return false;
       if (fCondition && c.Condition !== fCondition) return false;
+
       if (q) {
-        const hay = [c.TitleUA, c.TitleEN, c.KrauseNumber, c.Country, c.Metal, c.Theme, c.Condition].map(norm).join(" ");
+        const hay = [
+          c.TitleUA, c.TitleEN, c.KrauseNumber, c.Country, c.Metal, c.Theme, c.Condition
+        ].map(norm).join(" ");
         if (!hay.includes(q)) return false;
       }
+
       return true;
     });
 
@@ -356,20 +441,35 @@
 
     viewCoins.forEach(c => {
       const inStock = Number(c.Quantity) > 0;
+      const imageUrl = String(c.PhotoMainURL || "").trim() || NO_IMAGE;
+
       const div = document.createElement("div");
       div.className = "coin";
       div.innerHTML = `
-        <div class="coinTitle">${c.TitleUA || ""}</div>
-        <div class="muted">
-          ${c.Country ? `<span class="pill">${c.Country}</span>` : ""}
-          ${c.Metal ? `<span class="pill">${c.Metal}</span>` : ""}
-          ${c.Condition ? `<span class="pill">${c.Condition}</span>` : ""}
-          ${c.KrauseNumber ? `<span class="pill">${c.KrauseNumber}</span>` : ""}
+        <div class="coinMedia">
+          <div class="coinImageWrap">
+            <img
+              class="coinImage"
+              src="${escHtml(imageUrl)}"
+              alt="${escHtml(c.TitleUA || "Монета")}"
+              loading="lazy"
+              onerror="this.onerror=null;this.src='${NO_IMAGE}'"
+            />
+          </div>
         </div>
-        <div class="coinRow">
-          <div class="price">${money(c.PriceUAH)} грн</div>
-          <!-- ✅ кількість НЕ показуємо -->
-          <button class="btn btnAdd" ${inStock ? "" : "disabled"} onclick="addToCart('${c.ID}')">Покласти в кошик</button>
+
+        <div class="coinBody">
+          <div class="coinTitle">${escHtml(c.TitleUA || "")}</div>
+          <div class="muted">
+            ${c.Country ? `<span class="pill">${escHtml(c.Country)}</span>` : ""}
+            ${c.Metal ? `<span class="pill">${escHtml(c.Metal)}</span>` : ""}
+            ${c.Condition ? `<span class="pill">${escHtml(c.Condition)}</span>` : ""}
+            ${c.KrauseNumber ? `<span class="pill">${escHtml(c.KrauseNumber)}</span>` : ""}
+          </div>
+          <div class="coinRow">
+            <div class="price">${money(c.PriceUAH)} грн</div>
+            <button class="btn btnAdd" ${inStock ? "" : "disabled"} onclick="addToCart('${escHtml(c.ID)}')">Покласти в кошик</button>
+          </div>
         </div>
       `;
       container.appendChild(div);
@@ -396,6 +496,7 @@
     if (it.qty < maxQty) it.qty += 1;
     renderCart();
   }
+
   function decQty(id) {
     const it = cartMap[String(id)];
     if (!it) return;
@@ -403,6 +504,7 @@
     if (it.qty <= 0) delete cartMap[String(id)];
     renderCart();
   }
+
   function removeItem(id) {
     delete cartMap[String(id)];
     renderCart();
@@ -425,15 +527,15 @@
       div.innerHTML = `
         <div class="cartItemTop">
           <div style="flex:1">
-            <div class="cartItemTitle">${coin.TitleUA || "Монета"}</div>
+            <div class="cartItemTitle">${escHtml(coin.TitleUA || "Монета")}</div>
             <div class="cartItemMeta">${money(coin.PriceUAH)} грн за 1 шт</div>
           </div>
-          <button class="removeBtn" onclick="removeItem('${coin.ID}')">Видалити</button>
+          <button class="removeBtn" onclick="removeItem('${escHtml(coin.ID)}')">Видалити</button>
         </div>
         <div class="qtyRow">
-          <button class="qtyBtn" onclick="decQty('${coin.ID}')">−</button>
+          <button class="qtyBtn" onclick="decQty('${escHtml(coin.ID)}')">−</button>
           <div class="qtyNum">${qty}</div>
-          <button class="qtyBtn" onclick="incQty('${coin.ID}')">+</button>
+          <button class="qtyBtn" onclick="incQty('${escHtml(coin.ID)}')">+</button>
           <div style="margin-left:auto;font-weight:900">${money(coin.PriceUAH) * qty} грн</div>
         </div>
       `;
@@ -443,7 +545,6 @@
     updateCartBadge();
   }
 
-  // ===== Checkout validation =====
   ["cName","cPhone","cEmail","cComment"].forEach(id=>{
     const el = document.getElementById(id);
     if (!el) return;
@@ -482,7 +583,6 @@
 
       if (!name || !phone) { err.textContent = "Заповни: ім'я і телефон"; return; }
 
-      // items для GAS: список елементів по 1 штуці (ID повторюються)
       const items = [];
       Object.values(cartMap).forEach(({ coin, qty }) => {
         for (let i=0; i<qty; i++) items.push({ ID: coin.ID });
@@ -495,14 +595,9 @@
         phone,
         email: email || "",
         comment: comment || "",
-
-        // ✅ завжди тільки Viber
         channel: "Viber",
-
         items,
         totalUAH: cartTotal(),
-
-        // ✅ антидубль
         clientOrderId: uuid_()
       };
 
@@ -536,7 +631,6 @@
     }
   }
 
-  // ===== Filters events =====
   document.getElementById("q").addEventListener("input", applyFilters);
   document.getElementById("fCountry").addEventListener("change", applyFilters);
   document.getElementById("fMetal").addEventListener("change", applyFilters);
@@ -554,7 +648,6 @@
     applyFilters();
   });
 
-  // init
   updateCartBadge();
   loadWelcome();
   loadCoins();
