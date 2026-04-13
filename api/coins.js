@@ -12,14 +12,7 @@ export default async function handler(req, res) {
     const url = new URL(gasUrl);
     url.searchParams.set("action", "getCoins");
 
-    const allowedParams = [
-      "country",
-      "continent",
-      "metal",
-      "theme",
-      "condition",
-      "type"
-    ];
+    const allowedParams = ["country", "continent", "metal", "theme", "condition", "type"];
 
     for (const key of allowedParams) {
       const value = req.query[key];
@@ -30,9 +23,7 @@ export default async function handler(req, res) {
 
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: {
-        "Accept": "application/json"
-      },
+      headers: { Accept: "application/json" },
       cache: "no-store"
     });
 
