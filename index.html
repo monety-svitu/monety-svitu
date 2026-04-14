@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Монети Світу — Каталог</title>
+  <meta name="description" content="Каталог монет світу. Фото, ціни, вибір монет для замовлення." />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #ddd;
+      padding: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .search-box {
+      flex: 1 1 280px;
+      max-width: 420px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .stats {
+      color: #555;
+      font-size: 14px;
+    }
+
+    .message {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      color: #555;
+    }
+
+    .coins-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .coin-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .coin-photo-wrap {
+      display: block;
+      background: #fff;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-bottom: 1px solid #eee;
+    }
+
+    .coin-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+
+    .coin-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .coin-country {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .coin-title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.3;
+      min-height: 42px;
+    }
+
+    .coin-meta {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .coin-price {
+      margin-top: auto;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .coin-actions {
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      background: #1f6feb;
+      color: #fff;
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .btn:hover {
+      background: #1859be;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrap">
+      <h1>Монети Світу</h1>
+      <div class="subtitle">Каталог монет</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="topbar">
+      <div class="search-box">
+        <input id="searchInput" type="text" placeholder="Пошук: країна, назва, KM..." />
+      </div>
+      <div class="stats" id="statsText">Завантаження...</div>
+    </div>
+
+    <div id="messageBox" class="message">Завантаження монет...</div>
+    <div id="coinsGrid" class="coins-grid hidden"></div>
+  </main>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ6s945_XAMz5nBFT7ZIhMTYZpZtoEIdv4huYZ_ganAGWCDxTiFe1EnyUj4TE_enj5/exec";
+
+    const state = {
+      items: [],
+      filtered: []
+    };
+
+    const searchInput = document.getElementById("searchInput");
+    const statsText = document.getElementById("statsText");
+    const messageBox = document.getElementById("messageBox");
+    const coinsGrid = document.getElementById("coinsGrid");
+
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function buildCoinLink(item) {
+      const slug = String(item.Slug || "").trim();
+      const id = String(item.ID || "").trim();
+
+      if (slug) return "coin.html?slug=" + encodeURIComponent(slug);
+      if (id) return "coin.html?id=" + encodeURIComponent(id);
+      return "#";
+    }
+
+    function coinSearchText(item) {
+      return [
+        item.Country,
+        item.TitleUA,
+        item.TitleEN,
+        item.NominalPeriod,
+        item.KrauseNumber,
+        item.Continent,
+        item.Type,
+        item.Metal,
+        item.Theme,
+        item.Condition,
+        item.ID,
+        item.Slug
+      ].join(" ").toLowerCase();
+    }
+
+    function renderCoins(items) {
+      if (!items.length) {
+        coinsGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Монет не знайдено.";
+        statsText.textContent = "0 монет";
+        return;
+      }
+
+      const html = items.map(item => {
+        const title = item.TitleUA || item.TitleEN || "Без назви";
+        const country = item.Country || "";
+        const price = Number(item.PriceUAH || 0);
+        const link = buildCoinLink(item);
+        const photo = item.PhotoMainURL || "";
+        const nominal = item.NominalPeriod || "";
+        const km = item.KrauseNumber || "";
+        const condition = item.Condition || "";
+
+        return `
+          <article class="coin-card">
+            <a class="coin-photo-wrap" href="${esc(link)}">
+              <img
+                class="coin-photo"
+                src="${esc(photo || "https://via.placeholder.com/600x600?text=No+Photo")}"
+                alt="${esc(title)}"
+                loading="lazy"
+              />
+            </a>
+
+            <div class="coin-body">
+              <div class="coin-country">${esc(country)}</div>
+              <div class="coin-title">${esc(title)}</div>
+
+              <div class="coin-meta">
+                ${nominal ? `<div>${esc(nominal)}</div>` : ""}
+                ${km ? `<div>${esc(km)}</div>` : ""}
+                ${condition ? `<div>Стан: ${esc(condition)}</div>` : ""}
+              </div>
+
+              <div class="coin-price">${esc(price)} грн</div>
+
+              <div class="coin-actions">
+                <a class="btn" href="${esc(link)}">Детальніше</a>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      coinsGrid.innerHTML = html;
+      coinsGrid.classList.remove("hidden");
+      messageBox.classList.add("hidden");
+      statsText.textContent = "Монет: " + items.length;
+    }
+
+    function applySearch() {
+      const q = searchInput.value.trim().toLowerCase();
+
+      if (!q) {
+        state.filtered = [...state.items];
+        renderCoins(state.filtered);
+        return;
+      }
+
+      state.filtered = state.items.filter(item => coinSearchText(item).includes(q));
+      renderCoins(state.filtered);
+    }
+
+    async function loadCoins() {
+      try {
+        messageBox.classList.remove("hidden");
+        coinsGrid.classList.add("hidden");
+        messageBox.textContent = "Завантаження монет...";
+        statsText.textContent = "Завантаження...";
+
+        const url = GAS_URL + "?action=getCoins";
+        const response = await fetch(url, { method: "GET", cache: "no-store" });
+        const data = await response.json();
+
+        if (!data || !data.success || !Array.isArray(data.items)) {
+          throw new Error((data && data.error) || "Не вдалося завантажити монети");
+        }
+
+        state.items = data.items;
+        state.filtered = [...state.items];
+        renderCoins(state.filtered);
+
+      } catch (error) {
+        console.error(error);
+        coinsGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Помилка завантаження монет.";
+        statsText.textContent = "Помилка";
+      }
+    }
+
+    searchInput.addEventListener("input", applySearch);
+
+    loadCoins();
+  </script>
+</body>
+</html>
