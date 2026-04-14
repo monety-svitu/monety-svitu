@@ -21,11 +21,11 @@
       padding: 16px;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
     }
 
     .header-wrap {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
     }
 
@@ -40,9 +40,90 @@
     }
 
     main {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
       padding: 20px 16px 40px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .filters {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      padding: 16px;
+      position: sticky;
+      top: 92px;
+    }
+
+    .filters-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .filter-group {
+      margin-bottom: 14px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .filters-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-small {
+      flex: 1;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-reset {
+      background: #eee;
+      color: #222;
+    }
+
+    .btn-reset:hover {
+      background: #e2e2e2;
+    }
+
+    .content {
+      min-width: 0;
     }
 
     .topbar {
@@ -51,21 +132,7 @@
       gap: 12px;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .search-box {
-      flex: 1 1 280px;
-      max-width: 420px;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      font-size: 16px;
-      background: #fff;
+      margin-bottom: 18px;
     }
 
     .stats {
@@ -89,6 +156,7 @@
     }
 
     .coin-card {
+      position: relative;
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 16px;
@@ -97,6 +165,25 @@
       flex-direction: column;
       min-height: 100%;
       box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      transition: opacity 0.2s ease;
+    }
+
+    .coin-card.is-sold {
+      opacity: 0.58;
+    }
+
+    .sold-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 3;
+      background: #c62828;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
     }
 
     .coin-photo-wrap {
@@ -160,6 +247,13 @@
       font-weight: 700;
     }
 
+    .coin-status-text {
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #c62828;
+    }
+
     .coin-actions {
       margin-top: 10px;
     }
@@ -186,6 +280,16 @@
     .hidden {
       display: none !important;
     }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .filters {
+        position: static;
+      }
+    }
   </style>
 </head>
 <body>
@@ -197,15 +301,62 @@
   </header>
 
   <main>
-    <div class="topbar">
-      <div class="search-box">
-        <input id="searchInput" type="text" placeholder="Пошук: країна, назва, KM..." />
-      </div>
-      <div class="stats" id="statsText">Завантаження...</div>
-    </div>
+    <div class="layout">
+      <aside class="filters">
+        <div class="filters-title">Фільтри</div>
 
-    <div id="messageBox" class="message">Завантаження монет...</div>
-    <div id="coinsGrid" class="coins-grid hidden"></div>
+        <div class="filter-group">
+          <label for="searchInput">Пошук</label>
+          <input id="searchInput" type="text" placeholder="країна, назва, KM..." />
+        </div>
+
+        <div class="filter-group">
+          <label for="continentSelect">Регіон</label>
+          <select id="continentSelect">
+            <option value="">Усі</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="countrySelect">Країна</label>
+          <select id="countrySelect">
+            <option value="">Усі</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="metalSelect">Метал</label>
+          <select id="metalSelect">
+            <option value="">Усі</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="conditionSelect">Стан</label>
+          <select id="conditionSelect">
+            <option value="">Усі</option>
+          </select>
+        </div>
+
+        <div class="check-row">
+          <input id="inStockOnly" type="checkbox" checked />
+          <label for="inStockOnly" style="margin:0;font-weight:400;">Тільки в наявності</label>
+        </div>
+
+        <div class="filters-actions">
+          <button class="btn-small btn-reset" id="resetFiltersBtn" type="button">Скинути</button>
+        </div>
+      </aside>
+
+      <section class="content">
+        <div class="topbar">
+          <div class="stats" id="statsText">Завантаження...</div>
+        </div>
+
+        <div id="messageBox" class="message">Завантаження монет...</div>
+        <div id="coinsGrid" class="coins-grid hidden"></div>
+      </section>
+    </div>
   </main>
 
   <script>
@@ -217,6 +368,12 @@
     };
 
     const searchInput = document.getElementById("searchInput");
+    const continentSelect = document.getElementById("continentSelect");
+    const countrySelect = document.getElementById("countrySelect");
+    const metalSelect = document.getElementById("metalSelect");
+    const conditionSelect = document.getElementById("conditionSelect");
+    const inStockOnly = document.getElementById("inStockOnly");
+    const resetFiltersBtn = document.getElementById("resetFiltersBtn");
     const statsText = document.getElementById("statsText");
     const messageBox = document.getElementById("messageBox");
     const coinsGrid = document.getElementById("coinsGrid");
@@ -227,6 +384,26 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function uniqueSortedValues(items, fieldName) {
+      const set = new Set();
+
+      items.forEach(item => {
+        const value = String(item[fieldName] || "").trim();
+        if (value) set.add(value);
+      });
+
+      return Array.from(set).sort((a, b) => a.localeCompare(b, "uk"));
+    }
+
+    function fillSelect(selectEl, values, keepValue = "") {
+      const currentValue = keepValue || "";
+
+      selectEl.innerHTML = `<option value="">Усі</option>` +
+        values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+
+      selectEl.value = currentValue;
     }
 
     function buildCoinLink(item) {
@@ -259,6 +436,10 @@
       return String(item.PhotoMainURL || "").trim();
     }
 
+    function isSold(item) {
+      return Number(item.Quantity || 0) <= 0;
+    }
+
     function renderCoins(items) {
       if (!items.length) {
         coinsGrid.classList.add("hidden");
@@ -277,6 +458,7 @@
         const nominal = item.NominalPeriod || "";
         const km = item.KrauseNumber || "";
         const condition = item.Condition || "";
+        const sold = isSold(item);
 
         const photoBlock = photo
           ? `<img class="coin-photo"
@@ -289,7 +471,9 @@
           : `<div class="no-photo">Немає фото</div>`;
 
         return `
-          <article class="coin-card">
+          <article class="coin-card ${sold ? "is-sold" : ""}">
+            ${sold ? `<div class="sold-badge">ПРОДАНО</div>` : ""}
+
             <a class="coin-photo-wrap" href="${esc(link)}">
               ${photoBlock}
             </a>
@@ -305,6 +489,7 @@
               </div>
 
               <div class="coin-price">${esc(price)} грн</div>
+              ${sold ? `<div class="coin-status-text">Немає в наявності</div>` : ""}
 
               <div class="coin-actions">
                 <a class="btn" href="${esc(link)}">Детальніше</a>
@@ -320,17 +505,63 @@
       statsText.textContent = "Монет: " + items.length;
     }
 
-    function applySearch() {
+    function applyFilters() {
       const q = searchInput.value.trim().toLowerCase();
+      const continent = continentSelect.value.trim();
+      const country = countrySelect.value.trim();
+      const metal = metalSelect.value.trim();
+      const condition = conditionSelect.value.trim();
+      const onlyStock = inStockOnly.checked;
 
-      if (!q) {
-        state.filtered = [...state.items];
-        renderCoins(state.filtered);
-        return;
+      state.filtered = state.items.filter(item => {
+        if (q && !coinSearchText(item).includes(q)) return false;
+        if (continent && String(item.Continent || "").trim() !== continent) return false;
+        if (country && String(item.Country || "").trim() !== country) return false;
+        if (metal && String(item.Metal || "").trim() !== metal) return false;
+        if (condition && String(item.Condition || "").trim() !== condition) return false;
+        if (onlyStock && Number(item.Quantity || 0) <= 0) return false;
+        return true;
+      });
+
+      renderCoins(state.filtered);
+      refreshCountryOptions();
+    }
+
+    function refreshCountryOptions() {
+      const selectedContinent = continentSelect.value.trim();
+      const currentCountry = countrySelect.value.trim();
+
+      let source = state.items;
+
+      if (selectedContinent) {
+        source = source.filter(item => String(item.Continent || "").trim() === selectedContinent);
       }
 
-      state.filtered = state.items.filter(item => coinSearchText(item).includes(q));
-      renderCoins(state.filtered);
+      const countries = uniqueSortedValues(source, "Country");
+      fillSelect(countrySelect, countries, currentCountry);
+
+      if (currentCountry && !countries.includes(currentCountry)) {
+        countrySelect.value = "";
+        applyFilters();
+      }
+    }
+
+    function fillAllFilters() {
+      fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"));
+      fillSelect(countrySelect, uniqueSortedValues(state.items, "Country"));
+      fillSelect(metalSelect, uniqueSortedValues(state.items, "Metal"));
+      fillSelect(conditionSelect, uniqueSortedValues(state.items, "Condition"));
+    }
+
+    function resetFilters() {
+      searchInput.value = "";
+      continentSelect.value = "";
+      countrySelect.value = "";
+      metalSelect.value = "";
+      conditionSelect.value = "";
+      inStockOnly.checked = true;
+      refreshCountryOptions();
+      applyFilters();
     }
 
     async function loadCoins() {
@@ -349,6 +580,7 @@
         }
 
         state.items = data.items;
+        fillAllFilters();
         state.filtered = [...state.items];
         renderCoins(state.filtered);
 
@@ -361,7 +593,16 @@
       }
     }
 
-    searchInput.addEventListener("input", applySearch);
+    searchInput.addEventListener("input", applyFilters);
+    continentSelect.addEventListener("change", () => {
+      refreshCountryOptions();
+      applyFilters();
+    });
+    countrySelect.addEventListener("change", applyFilters);
+    metalSelect.addEventListener("change", applyFilters);
+    conditionSelect.addEventListener("change", applyFilters);
+    inStockOnly.addEventListener("change", applyFilters);
+    resetFiltersBtn.addEventListener("click", resetFilters);
 
     loadCoins();
   </script>
