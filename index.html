@@ -65,6 +65,7 @@
       border: 1px solid #ccc;
       border-radius: 10px;
       font-size: 16px;
+      background: #fff;
     }
 
     .stats {
@@ -150,12 +151,12 @@
     .coin-meta {
       font-size: 13px;
       color: #666;
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
     .coin-price {
       margin-top: auto;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
     }
 
@@ -255,9 +256,7 @@
     }
 
     function getPhotoUrl(item) {
-      const id = String(item.ID || "").trim();
-      if (!id) return "";
-      return GAS_URL + "?action=getPhoto&id=" + encodeURIComponent(id) + "&n=1";
+      return String(item.PhotoMainURL || "").trim();
     }
 
     function renderCoins(items) {
