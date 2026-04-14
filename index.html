@@ -325,6 +325,20 @@
         </div>
 
         <div class="filter-group">
+          <label for="typeSelect">Тип</label>
+          <select id="typeSelect">
+            <option value="">Усі</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="periodSelect">Період</label>
+          <select id="periodSelect">
+            <option value="">Усі</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
           <label for="metalSelect">Метал</label>
           <select id="metalSelect">
             <option value="">Усі</option>
@@ -370,6 +384,8 @@
     const searchInput = document.getElementById("searchInput");
     const continentSelect = document.getElementById("continentSelect");
     const countrySelect = document.getElementById("countrySelect");
+    const typeSelect = document.getElementById("typeSelect");
+    const periodSelect = document.getElementById("periodSelect");
     const metalSelect = document.getElementById("metalSelect");
     const conditionSelect = document.getElementById("conditionSelect");
     const inStockOnly = document.getElementById("inStockOnly");
@@ -509,6 +525,8 @@
       const q = searchInput.value.trim().toLowerCase();
       const continent = continentSelect.value.trim();
       const country = countrySelect.value.trim();
+      const type = typeSelect.value.trim();
+      const period = periodSelect.value.trim();
       const metal = metalSelect.value.trim();
       const condition = conditionSelect.value.trim();
       const onlyStock = inStockOnly.checked;
@@ -517,6 +535,8 @@
         if (q && !coinSearchText(item).includes(q)) return false;
         if (continent && String(item.Continent || "").trim() !== continent) return false;
         if (country && String(item.Country || "").trim() !== country) return false;
+        if (type && String(item.Type || "").trim() !== type) return false;
+        if (period && String(item.NominalPeriod || "").trim() !== period) return false;
         if (metal && String(item.Metal || "").trim() !== metal) return false;
         if (condition && String(item.Condition || "").trim() !== condition) return false;
         if (onlyStock && Number(item.Quantity || 0) <= 0) return false;
@@ -549,6 +569,8 @@
     function fillAllFilters() {
       fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"));
       fillSelect(countrySelect, uniqueSortedValues(state.items, "Country"));
+      fillSelect(typeSelect, uniqueSortedValues(state.items, "Type"));
+      fillSelect(periodSelect, uniqueSortedValues(state.items, "NominalPeriod"));
       fillSelect(metalSelect, uniqueSortedValues(state.items, "Metal"));
       fillSelect(conditionSelect, uniqueSortedValues(state.items, "Condition"));
     }
@@ -557,6 +579,8 @@
       searchInput.value = "";
       continentSelect.value = "";
       countrySelect.value = "";
+      typeSelect.value = "";
+      periodSelect.value = "";
       metalSelect.value = "";
       conditionSelect.value = "";
       inStockOnly.checked = true;
@@ -599,6 +623,8 @@
       applyFilters();
     });
     countrySelect.addEventListener("change", applyFilters);
+    typeSelect.addEventListener("change", applyFilters);
+    periodSelect.addEventListener("change", applyFilters);
     metalSelect.addEventListener("change", applyFilters);
     conditionSelect.addEventListener("change", applyFilters);
     inStockOnly.addEventListener("change", applyFilters);
