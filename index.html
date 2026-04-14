@@ -83,19 +83,19 @@
 
     .coins-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
     }
 
     .coin-card {
       background: #fff;
       border: 1px solid #ddd;
-      border-radius: 14px;
+      border-radius: 16px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       min-height: 100%;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
     }
 
     .coin-photo-wrap {
@@ -104,6 +104,7 @@
       aspect-ratio: 1 / 1;
       overflow: hidden;
       border-bottom: 1px solid #eee;
+      text-decoration: none;
     }
 
     .coin-photo {
@@ -114,8 +115,20 @@
       background: #fff;
     }
 
-    .coin-body {
+    .no-photo {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 14px;
+      text-align: center;
       padding: 12px;
+    }
+
+    .coin-body {
+      padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -128,10 +141,10 @@
     }
 
     .coin-title {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 700;
       line-height: 1.3;
-      min-height: 42px;
+      min-height: 44px;
     }
 
     .coin-meta {
@@ -171,18 +184,6 @@
 
     .hidden {
       display: none !important;
-    }
-
-    .no-photo {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #888;
-      font-size: 14px;
-      text-align: center;
-      padding: 12px;
     }
   </style>
 </head>
@@ -254,7 +255,9 @@
     }
 
     function getPhotoUrl(item) {
-      return String(item.PhotoMainURL || "").trim();
+      const id = String(item.ID || "").trim();
+      if (!id) return "";
+      return GAS_URL + "?action=getPhoto&id=" + encodeURIComponent(id) + "&n=1";
     }
 
     function renderCoins(items) {
@@ -277,8 +280,12 @@
         const condition = item.Condition || "";
 
         const photoBlock = photo
-          ? `<img class="coin-photo" src="${esc(photo)}" alt="${esc(title)}" loading="lazy" referrerpolicy="no-referrer"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          ? `<img class="coin-photo"
+                  src="${esc(photo)}"
+                  alt="${esc(title)}"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
              <div class="no-photo" style="display:none;">Фото недоступне</div>`
           : `<div class="no-photo">Немає фото</div>`;
 
