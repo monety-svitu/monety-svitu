@@ -29,7 +29,6 @@
       margin: 0 auto;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 12px;
     }
 
@@ -48,11 +47,43 @@
       color: #666;
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
     .back-link {
       text-decoration: none;
       color: #1f6feb;
       font-weight: 700;
       white-space: nowrap;
+    }
+
+    .cart-top-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      background: #1f6feb;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(31, 111, 235, 0.25);
+    }
+
+    .cart-top-link:hover {
+      background: #1859be;
+    }
+
+    .cart-top-icon {
+      font-size: 18px;
+      line-height: 1;
     }
 
     main {
@@ -386,20 +417,35 @@
         margin-top: 8px;
       }
     }
+
+    @media (max-width: 640px) {
+      .header-wrap {
+        flex-wrap: wrap;
+      }
+
+      .header-right {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
-   <div class="header-wrap">
-  <a class="brand" href="index.html">
-    <h1>Монети Світу</h1>
-    <div class="subtitle">Сторінка монети</div>
-  </a>
+    <div class="header-wrap">
+      <a class="brand" href="index.html">
+        <h1>Монети Світу</h1>
+        <div class="subtitle">Сторінка монети</div>
+      </a>
 
-  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-    <a class="back-link" href="index.html">← Назад до каталогу</a>
-    <a href="cart.html" style="text-decoration:none;color:#222;font-weight:700;">Кошик</a>
-  </div>
+      <div class="header-right">
+        <a class="back-link" href="index.html">← Назад до каталогу</a>
+        <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
+          <span class="cart-top-icon">🛒</span>
+          <span>Кошик</span>
+        </a>
+      </div>
+    </div>
   </header>
 
   <main>
@@ -590,6 +636,53 @@
       });
     }
 
+    function getCart() {
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function addCurrentCoinToCart() {
+      if (!currentCoin || isSold(currentCoin)) return;
+
+      const cart = getCart();
+      const slug = String(currentCoin.Slug || "").trim();
+      const id = String(currentCoin.ID || "").trim();
+
+      const existing = cart.find(item =>
+        (slug && item.slug === slug) || (!slug && id && item.id === id)
+      );
+
+      if (existing) {
+        existing.qty = 1;
+      } else {
+        cart.push({
+          id: id,
+          slug: slug,
+          qty: 1,
+          title: currentCoin.TitleUA || currentCoin.TitleEN || "",
+          priceUAH: Number(currentCoin.PriceUAH || 0),
+          photo: String(currentCoin.PhotoMainURL || "").trim()
+        });
+      }
+
+      saveCart(cart);
+      addToCartBtn.textContent = "Додано в кошик";
+      setTimeout(() => {
+        if (!isSold(currentCoin)) {
+          addToCartBtn.textContent = "Додати в кошик";
+        }
+      }, 1200);
+    }
+
     function renderCoin(item) {
       currentCoin = item;
       gallery = collectGallery(item);
@@ -649,64 +742,6 @@
       coinPage.classList.remove("hidden");
     }
 
-    function openLightbox() {
-      if (!gallery.length || !gallery[currentPhotoIndex]) return;
-      lightboxImg.src = gallery[currentPhotoIndex];
-      lightbox.classList.add("open");
-    }
-
-    function closeLightbox() {
-      lightbox.classList.remove("open");
-      lightboxImg.removeAttribute("src");
-    }
-
-    function getCart() {
-      try {
-        const raw = localStorage.getItem(CART_KEY);
-        const parsed = JSON.parse(raw || "[]");
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveCart(cart) {
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    }
-
-    function addCurrentCoinToCart() {
-      if (!currentCoin || isSold(currentCoin)) return;
-
-      const cart = getCart();
-      const slug = String(currentCoin.Slug || "").trim();
-      const id = String(currentCoin.ID || "").trim();
-
-      const existing = cart.find(item =>
-        (slug && item.slug === slug) || (!slug && id && item.id === id)
-      );
-
-      if (existing) {
-        existing.qty = 1;
-      } else {
-        cart.push({
-          id: id,
-          slug: slug,
-          qty: 1,
-          title: currentCoin.TitleUA || currentCoin.TitleEN || "",
-          priceUAH: Number(currentCoin.PriceUAH || 0),
-          photo: String(currentCoin.PhotoMainURL || "").trim()
-        });
-      }
-
-      saveCart(cart);
-      addToCartBtn.textContent = "Додано в кошик";
-      setTimeout(() => {
-        if (!isSold(currentCoin)) {
-          addToCartBtn.textContent = "Додати в кошик";
-        }
-      }, 1200);
-    }
-
     async function loadCoin() {
       try {
         const url = getCoinUrl();
@@ -734,6 +769,17 @@
         messageBox.classList.remove("hidden");
         messageBox.textContent = "Помилка завантаження монети.";
       }
+    }
+
+    function openLightbox() {
+      if (!gallery.length || !gallery[currentPhotoIndex]) return;
+      lightboxImg.src = gallery[currentPhotoIndex];
+      lightbox.classList.add("open");
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("open");
+      lightboxImg.removeAttribute("src");
     }
 
     mainPhotoWrap.addEventListener("click", () => {
