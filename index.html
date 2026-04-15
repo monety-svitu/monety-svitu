@@ -223,7 +223,7 @@
       flex: 1;
     }
 
-    .coin-country {
+    .coin-type {
       font-size: 13px;
       color: #666;
     }
@@ -367,7 +367,7 @@
           <div class="stats" id="statsText">Завантаження...</div>
         </div>
 
-        <div id="messageBox" class="message">Завантаження монет...</div>
+        <div id="messageBox" class="message">Завантаження товарів...</div>
         <div id="coinsGrid" class="coins-grid hidden"></div>
       </section>
     </div>
@@ -460,14 +460,14 @@
       if (!items.length) {
         coinsGrid.classList.add("hidden");
         messageBox.classList.remove("hidden");
-        messageBox.textContent = "Монет не знайдено.";
-        statsText.textContent = "0 монет";
+        messageBox.textContent = "Товарів не знайдено.";
+        statsText.textContent = "Товарів: 0";
         return;
       }
 
       const html = items.map(item => {
         const title = item.TitleUA || item.TitleEN || "Без назви";
-        const country = item.Country || "";
+        const type = item.Type || "";
         const price = Number(item.PriceUAH || 0);
         const link = buildCoinLink(item);
         const photo = getPhotoUrl(item);
@@ -495,7 +495,7 @@
             </a>
 
             <div class="coin-body">
-              <div class="coin-country">${esc(country)}</div>
+              <div class="coin-type">${esc(type)}</div>
               <div class="coin-title">${esc(title)}</div>
 
               <div class="coin-meta">
@@ -518,7 +518,7 @@
       coinsGrid.innerHTML = html;
       coinsGrid.classList.remove("hidden");
       messageBox.classList.add("hidden");
-      statsText.textContent = "Монет: " + items.length;
+      statsText.textContent = "Товарів: " + items.length;
     }
 
     function applyFilters() {
@@ -592,7 +592,7 @@
       try {
         messageBox.classList.remove("hidden");
         coinsGrid.classList.add("hidden");
-        messageBox.textContent = "Завантаження монет...";
+        messageBox.textContent = "Завантаження товарів...";
         statsText.textContent = "Завантаження...";
 
         const url = GAS_URL + "?action=getCoins&_ts=" + Date.now();
@@ -600,7 +600,7 @@
         const data = await response.json();
 
         if (!data || !data.success || !Array.isArray(data.items)) {
-          throw new Error((data && data.error) || "Не вдалося завантажити монети");
+          throw new Error((data && data.error) || "Не вдалося завантажити товари");
         }
 
         state.items = data.items;
@@ -612,7 +612,7 @@
         console.error(error);
         coinsGrid.classList.add("hidden");
         messageBox.classList.remove("hidden");
-        messageBox.textContent = "Помилка завантаження монет.";
+        messageBox.textContent = "Помилка завантаження товарів.";
         statsText.textContent = "Помилка";
       }
     }
