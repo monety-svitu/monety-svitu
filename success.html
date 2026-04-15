@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Замовлення оформлено — Монети Світу</title>
+  <meta name="description" content="Підтвердження успішного оформлення замовлення." />
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .header-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand {
+      text-decoration: none;
+      color: #222;
+    }
+
+    .brand h1 {
+      margin: 0 0 4px;
+      font-size: 26px;
+    }
+
+    .brand .subtitle {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: #1f6feb;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .cart-top-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      background: #1f6feb;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(31, 111, 235, 0.25);
+    }
+
+    .cart-top-link:hover {
+      background: #1859be;
+    }
+
+    .cart-top-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .cart-count-badge {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #fff;
+      color: #1f6feb;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 16px 48px;
+    }
+
+    .success-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 22px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .success-inner {
+      padding: 28px 22px;
+    }
+
+    .success-badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      background: #e9f9ee;
+      color: #1b5e20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      margin-bottom: 16px;
+    }
+
+    .success-title {
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .success-text {
+      font-size: 16px;
+      color: #444;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    .order-box {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .order-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .order-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111;
+      word-break: break-word;
+    }
+
+    .info-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #444;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      display: inline-block;
+      text-align: center;
+      text-decoration: none;
+      background: #1f6feb;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .btn:hover {
+      background: #1859be;
+    }
+
+    .btn-secondary {
+      background: #eee;
+      color: #222;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e2e2;
+    }
+
+    .note {
+      margin-top: 18px;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      .header-wrap {
+        flex-wrap: wrap;
+      }
+
+      .header-right {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .success-title {
+        font-size: 24px;
+      }
+
+      .order-number {
+        font-size: 20px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrap">
+      <a class="brand" href="index.html">
+        <h1>Монети Світу</h1>
+        <div class="subtitle">Підтвердження замовлення</div>
+      </a>
+
+      <div class="header-right">
+        <a class="back-link" href="index.html">← Назад до каталогу</a>
+        <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
+          <span class="cart-top-icon">🛒</span>
+          <span>Кошик</span>
+          <span id="cartCountBadge" class="cart-count-badge">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="success-card">
+      <div class="success-inner">
+        <div class="success-badge">✓</div>
+
+        <div class="success-title">Замовлення успішно оформлено</div>
+
+        <div class="success-text">
+          Дякуємо за замовлення. Ваші монети зарезервовано, і найближчим часом ми зв’яжемося з вами для уточнення деталей.
+        </div>
+
+        <div class="order-box">
+          <div class="order-label">Номер замовлення</div>
+          <div id="orderNumber" class="order-number">—</div>
+        </div>
+
+        <ul class="info-list">
+          <li>На фото в каталозі показані реальні лоти.</li>
+          <li>Після підтвердження замовлення монети резервуються.</li>
+          <li>Зв’язок відбуватиметься за вказаним номером телефону / Viber.</li>
+        </ul>
+
+        <div class="actions">
+          <a class="btn" href="index.html">Повернутися в каталог</a>
+          <a class="btn btn-secondary" href="cart.html">Перейти в кошик</a>
+        </div>
+
+        <div class="note">
+          Збережіть номер замовлення на випадок уточнень.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const CART_KEY = "monety_svitu_cart";
+
+    const cartCountBadge = document.getElementById("cartCountBadge");
+    const orderNumberEl = document.getElementById("orderNumber");
+
+    function getCart() {
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function updateCartBadge() {
+      const cart = getCart();
+      const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      cartCountBadge.textContent = String(count);
+    }
+
+    function getOrderNumber() {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get("order") || "").trim();
+    }
+
+    function renderOrderNumber() {
+      const orderNumber = getOrderNumber();
+      orderNumberEl.textContent = orderNumber || "Номер не передано";
+    }
+
+    updateCartBadge();
+    renderOrderNumber();
+  </script>
+</body>
+</html>
