@@ -350,10 +350,23 @@
       line-height: 1.45;
     }
 
+    .coin-description {
+      font-size: 13px;
+      color: #444;
+      line-height: 1.5;
+      margin-top: 2px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 58px;
+    }
+
     .coin-price {
       margin-top: auto;
       font-size: 22px;
       font-weight: 700;
+      padding-top: 4px;
     }
 
     .coin-status-text {
@@ -623,7 +636,7 @@
       return [
         item.Country, item.TitleUA, item.TitleEN, item.NominalPeriod,
         item.KrauseNumber, item.Continent, item.Type, item.Metal,
-        item.Theme, item.Condition, item.ID, item.Slug
+        item.Theme, item.Condition, item.ID, item.Slug, item.DescriptionUA
       ].join(" ").toLowerCase();
     }
 
@@ -686,7 +699,6 @@
 
     function sortItems(items) {
       const mode = sortSelect.value;
-
       const arr = [...items];
 
       arr.sort((a, b) => {
@@ -719,6 +731,10 @@
       return arr;
     }
 
+    function shortDescription(text) {
+      return String(text || "").trim();
+    }
+
     function renderCoins(items) {
       if (!items.length) {
         coinsGrid.classList.add("hidden");
@@ -739,6 +755,7 @@
         const nominal = item.NominalPeriod || "";
         const km = item.KrauseNumber || "";
         const condition = item.Condition || "";
+        const description = shortDescription(item.DescriptionUA);
         const sold = isSold(item);
 
         const photoBlock = photo
@@ -764,6 +781,8 @@
                 ${km ? `<div>${esc(km)}</div>` : ""}
                 ${condition ? `<div>Стан: ${esc(condition)}</div>` : ""}
               </div>
+
+              ${description ? `<div class="coin-description">${esc(description)}</div>` : ""}
 
               <div class="coin-price">${esc(price)} грн</div>
               ${sold ? `<div class="coin-status-text">Немає в наявності</div>` : ""}
