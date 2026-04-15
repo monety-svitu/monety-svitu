@@ -283,11 +283,13 @@
 
     .coin-actions {
       margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
     }
 
     .btn {
       display: inline-block;
-      width: 100%;
       text-align: center;
       text-decoration: none;
       background: #1f6feb;
@@ -302,6 +304,26 @@
 
     .btn:hover {
       background: #1859be;
+    }
+
+    .btn-details {
+      flex: 1;
+    }
+
+    .btn-cart {
+      width: 48px;
+      min-width: 48px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .btn-cart.disabled {
+      background: #bdbdbd;
+      cursor: not-allowed;
     }
 
     .hidden {
@@ -412,6 +434,7 @@
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
+    const CART_KEY = "monety_svitu_cart";
 
     const state = {
       items: [],
@@ -493,6 +516,48 @@
       return Number(item.Quantity || 0) <= 0;
     }
 
+    function getCart() {
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function addToCart(item) {
+      if (isSold(item)) return;
+
+      const cart = getCart();
+      const slug = String(item.Slug || "").trim();
+      const id = String(item.ID || "").trim();
+
+      const existing = cart.find(cartItem =>
+        (slug && cartItem.slug === slug) || (!slug && id && cartItem.id === id)
+      );
+
+      if (existing) {
+        existing.qty = 1;
+      } else {
+        cart.push({
+          id: id,
+          slug: slug,
+          qty: 1,
+          title: item.TitleUA || item.TitleEN || "",
+          priceUAH: Number(item.PriceUAH || 0),
+          photo: String(item.PhotoMainURL || "").trim()
+        });
+      }
+
+      saveCart(cart);
+      alert("Додано в кошик");
+    }
+
     function renderCoins(items) {
       if (!items.length) {
         coinsGrid.classList.add("hidden");
@@ -502,7 +567,7 @@
         return;
       }
 
-      const html = items.map(item => {
+      const html = items.map((item, index) => {
         const title = item.TitleUA || item.TitleEN || "Без назви";
         const type = item.Type || "";
         const price = Number(item.PriceUAH || 0);
@@ -545,7 +610,14 @@
               ${sold ? `<div class="coin-status-text">Немає в наявності</div>` : ""}
 
               <div class="coin-actions">
-                <a class="btn" href="${esc(link)}">Детальніше</a>
+                <a class="btn btn-details" href="${esc(link)}">Детальніше</a>
+                <button
+                  class="btn btn-cart ${sold ? "disabled" : ""}"
+                  type="button"
+                  ${sold ? "disabled" : ""}
+                  data-index="${index}"
+                  title="Додати в кошик"
+                >🛒</button>
               </div>
             </div>
           </article>
@@ -556,6 +628,15 @@
       coinsGrid.classList.remove("hidden");
       messageBox.classList.add("hidden");
       statsText.textContent = "Товарів: " + items.length;
+
+      coinsGrid.querySelectorAll(".btn-cart").forEach(btn => {
+        if (btn.disabled) return;
+        btn.addEventListener("click", () => {
+          const index = Number(btn.dataset.index || 0);
+          const item = items[index];
+          if (item) addToCart(item);
+        });
+      });
     }
 
     function applyFilters() {
