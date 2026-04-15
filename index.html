@@ -216,9 +216,37 @@
       margin-bottom: 18px;
     }
 
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
     .stats {
       color: #555;
       font-size: 14px;
+    }
+
+    .sort-wrap {
+      min-width: 240px;
+    }
+
+    .sort-wrap label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .sort-wrap select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
     }
 
     .message {
@@ -403,6 +431,21 @@
         width: 100%;
         justify-content: flex-end;
       }
+
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .topbar-right {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .sort-wrap {
+        min-width: 0;
+      }
     }
   </style>
 </head>
@@ -499,6 +542,19 @@
       <section class="content">
         <div class="topbar">
           <div class="stats" id="statsText">Завантаження...</div>
+
+          <div class="topbar-right">
+            <div class="sort-wrap">
+              <label for="sortSelect">Сортування</label>
+              <select id="sortSelect">
+                <option value="stock_first">Спочатку в наявності</option>
+                <option value="price_asc">Ціна: дешевші спочатку</option>
+                <option value="price_desc">Ціна: дорожчі спочатку</option>
+                <option value="title_asc">Назва: А-Я</option>
+                <option value="title_desc">Назва: Я-А</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div id="messageBox" class="message">Завантаження товарів...</div>
@@ -525,6 +581,7 @@
     const conditionSelect = document.getElementById("conditionSelect");
     const inStockOnly = document.getElementById("inStockOnly");
     const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+    const sortSelect = document.getElementById("sortSelect");
     const statsText = document.getElementById("statsText");
     const messageBox = document.getElementById("messageBox");
     const coinsGrid = document.getElementById("coinsGrid");
@@ -627,6 +684,41 @@
       alert("Додано в кошик");
     }
 
+    function sortItems(items) {
+      const mode = sortSelect.value;
+
+      const arr = [...items];
+
+      arr.sort((a, b) => {
+        if (mode === "stock_first") {
+          const aSold = isSold(a) ? 1 : 0;
+          const bSold = isSold(b) ? 1 : 0;
+          if (aSold !== bSold) return aSold - bSold;
+          return String(a.TitleUA || a.TitleEN || "").localeCompare(String(b.TitleUA || b.TitleEN || ""), "uk");
+        }
+
+        if (mode === "price_asc") {
+          return Number(a.PriceUAH || 0) - Number(b.PriceUAH || 0);
+        }
+
+        if (mode === "price_desc") {
+          return Number(b.PriceUAH || 0) - Number(a.PriceUAH || 0);
+        }
+
+        if (mode === "title_asc") {
+          return String(a.TitleUA || a.TitleEN || "").localeCompare(String(b.TitleUA || b.TitleEN || ""), "uk");
+        }
+
+        if (mode === "title_desc") {
+          return String(b.TitleUA || b.TitleEN || "").localeCompare(String(a.TitleUA || a.TitleEN || ""), "uk");
+        }
+
+        return 0;
+      });
+
+      return arr;
+    }
+
     function renderCoins(items) {
       if (!items.length) {
         coinsGrid.classList.add("hidden");
@@ -636,7 +728,9 @@
         return;
       }
 
-      const html = items.map((item, index) => {
+      const sortedItems = sortItems(items);
+
+      const html = sortedItems.map((item, index) => {
         const title = item.TitleUA || item.TitleEN || "Без назви";
         const type = item.Type || "";
         const price = Number(item.PriceUAH || 0);
@@ -687,13 +781,13 @@
       coinsGrid.innerHTML = html;
       coinsGrid.classList.remove("hidden");
       messageBox.classList.add("hidden");
-      statsText.textContent = "Товарів: " + items.length;
+      statsText.textContent = "Товарів: " + sortedItems.length;
 
       coinsGrid.querySelectorAll(".btn-cart").forEach(btn => {
         if (btn.disabled) return;
         btn.addEventListener("click", () => {
           const index = Number(btn.dataset.index || 0);
-          const item = items[index];
+          const item = sortedItems[index];
           if (item) addToCart(item);
         });
       });
@@ -761,6 +855,7 @@
       metalSelect.value = "";
       conditionSelect.value = "";
       inStockOnly.checked = true;
+      sortSelect.value = "stock_first";
       refreshCountryOptions();
       applyFilters();
     }
@@ -805,6 +900,7 @@
     metalSelect.addEventListener("change", applyFilters);
     conditionSelect.addEventListener("change", applyFilters);
     inStockOnly.addEventListener("change", applyFilters);
+    sortSelect.addEventListener("change", applyFilters);
     resetFiltersBtn.addEventListener("click", resetFilters);
 
     updateCartBadge();
