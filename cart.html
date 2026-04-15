@@ -29,7 +29,6 @@
       margin: 0 auto;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 12px;
     }
 
@@ -48,10 +47,11 @@
       color: #666;
     }
 
-    .header-links {
+    .header-right {
       display: flex;
       align-items: center;
       gap: 14px;
+      margin-left: auto;
       flex-wrap: wrap;
     }
 
@@ -62,11 +62,43 @@
       white-space: nowrap;
     }
 
-    .cart-link {
+    .cart-top-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       text-decoration: none;
-      color: #222;
+      background: #1f6feb;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
       font-weight: 700;
+      font-size: 14px;
       white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(31, 111, 235, 0.25);
+    }
+
+    .cart-top-link:hover {
+      background: #1859be;
+    }
+
+    .cart-top-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .cart-count-badge {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #fff;
+      color: #1f6feb;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
     }
 
     main {
@@ -399,6 +431,15 @@
       .cart-item-body {
         padding: 12px;
       }
+
+      .header-wrap {
+        flex-wrap: wrap;
+      }
+
+      .header-right {
+        width: 100%;
+        justify-content: flex-end;
+      }
     }
   </style>
 </head>
@@ -410,9 +451,13 @@
         <div class="subtitle">Кошик покупця</div>
       </a>
 
-      <div class="header-links">
+      <div class="header-right">
         <a class="back-link" href="index.html">← Назад до каталогу</a>
-        <a class="cart-link" href="cart.html">Кошик</a>
+        <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
+          <span class="cart-top-icon">🛒</span>
+          <span>Кошик</span>
+          <span id="cartCountBadge" class="cart-count-badge">0</span>
+        </a>
       </div>
     </div>
   </header>
@@ -501,6 +546,7 @@
     const checkoutBlock = document.getElementById("checkoutBlock");
     const successBox = document.getElementById("successBox");
     const errorBox = document.getElementById("errorBox");
+    const cartCountBadge = document.getElementById("cartCountBadge");
 
     const customerNameInput = document.getElementById("customerName");
     const phoneInput = document.getElementById("phone");
@@ -528,6 +574,12 @@
 
     function saveCart(cart) {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function updateCartBadge() {
+      const cart = getCart();
+      const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      cartCountBadge.textContent = String(count);
     }
 
     function buildCoinLink(item) {
@@ -562,6 +614,7 @@
 
       successBox.classList.add("hidden");
       errorBox.classList.add("hidden");
+      updateCartBadge();
 
       if (!cart.length) {
         cartList.innerHTML = "";
@@ -748,6 +801,7 @@
       } finally {
         submitOrderBtn.disabled = false;
         submitOrderBtn.textContent = "Підтвердити замовлення";
+        updateCartBadge();
       }
     }
 
