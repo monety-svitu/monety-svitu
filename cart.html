@@ -387,16 +387,6 @@
       line-height: 1.6;
     }
 
-    .success-box {
-      background: #f2fff5;
-      border: 1px solid #b7e4c7;
-      color: #1b5e20;
-      border-radius: 14px;
-      padding: 16px;
-      line-height: 1.6;
-      margin-top: 18px;
-    }
-
     .error-box {
       background: #fff5f5;
       border: 1px solid #f0b4b4;
@@ -475,7 +465,6 @@
           </div>
 
           <div id="cartList" class="cart-list"></div>
-          <div id="successBox" class="success-box hidden"></div>
         </div>
       </section>
 
@@ -544,7 +533,6 @@
     const totalPrice = document.getElementById("totalPrice");
     const clearCartBtn = document.getElementById("clearCartBtn");
     const checkoutBlock = document.getElementById("checkoutBlock");
-    const successBox = document.getElementById("successBox");
     const errorBox = document.getElementById("errorBox");
     const cartCountBadge = document.getElementById("cartCountBadge");
 
@@ -612,7 +600,6 @@
     function renderCart() {
       const cart = getCart();
 
-      successBox.classList.add("hidden");
       errorBox.classList.add("hidden");
       updateCartBadge();
 
@@ -780,20 +767,10 @@
         }
 
         saveCart([]);
-        renderCart();
+        updateCartBadge();
 
-        checkoutBlock.classList.add("hidden");
-        successBox.innerHTML = `
-          <strong>Замовлення успішно оформлено.</strong><br />
-          Номер замовлення: <strong>${esc(data.order.OrderID || "")}</strong><br />
-          Монети зарезервовано. Найближчим часом з вами зв’яжуться.
-        `;
-        successBox.classList.remove("hidden");
-
-        customerNameInput.value = "";
-        phoneInput.value = "";
-        emailInput.value = "";
-        commentInput.value = "";
+        const orderId = String(data.order.OrderID || "").trim();
+        window.location.href = "success.html?order=" + encodeURIComponent(orderId);
 
       } catch (error) {
         errorBox.textContent = error.message || "Сталася помилка під час оформлення замовлення.";
@@ -801,7 +778,6 @@
       } finally {
         submitOrderBtn.disabled = false;
         submitOrderBtn.textContent = "Підтвердити замовлення";
-        updateCartBadge();
       }
     }
 
