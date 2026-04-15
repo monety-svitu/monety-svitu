@@ -78,6 +78,21 @@
       line-height: 1;
     }
 
+    .cart-count-badge {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #fff;
+      color: #1f6feb;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
     main {
       max-width: 1280px;
       margin: 0 auto;
@@ -403,6 +418,7 @@
         <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
           <span class="cart-top-icon">🛒</span>
           <span>Кошик</span>
+          <span id="cartCountBadge" class="cart-count-badge">0</span>
         </a>
       </div>
     </div>
@@ -512,6 +528,7 @@
     const statsText = document.getElementById("statsText");
     const messageBox = document.getElementById("messageBox");
     const coinsGrid = document.getElementById("coinsGrid");
+    const cartCountBadge = document.getElementById("cartCountBadge");
 
     function esc(value) {
       return String(value ?? "")
@@ -523,28 +540,23 @@
 
     function uniqueSortedValues(items, fieldName) {
       const set = new Set();
-
       items.forEach(item => {
         const value = String(item[fieldName] || "").trim();
         if (value) set.add(value);
       });
-
       return Array.from(set).sort((a, b) => a.localeCompare(b, "uk"));
     }
 
     function fillSelect(selectEl, values, keepValue = "") {
       const currentValue = keepValue || "";
-
       selectEl.innerHTML = `<option value="">Усі</option>` +
         values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
-
       selectEl.value = currentValue;
     }
 
     function buildCoinLink(item) {
       const slug = String(item.Slug || "").trim();
       const id = String(item.ID || "").trim();
-
       if (slug) return "coin.html?slug=" + encodeURIComponent(slug);
       if (id) return "coin.html?id=" + encodeURIComponent(id);
       return "#";
@@ -552,18 +564,9 @@
 
     function coinSearchText(item) {
       return [
-        item.Country,
-        item.TitleUA,
-        item.TitleEN,
-        item.NominalPeriod,
-        item.KrauseNumber,
-        item.Continent,
-        item.Type,
-        item.Metal,
-        item.Theme,
-        item.Condition,
-        item.ID,
-        item.Slug
+        item.Country, item.TitleUA, item.TitleEN, item.NominalPeriod,
+        item.KrauseNumber, item.Continent, item.Type, item.Metal,
+        item.Theme, item.Condition, item.ID, item.Slug
       ].join(" ").toLowerCase();
     }
 
@@ -589,6 +592,12 @@
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
     }
 
+    function updateCartBadge() {
+      const cart = getCart();
+      const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      cartCountBadge.textContent = String(count);
+    }
+
     function addToCart(item) {
       if (isSold(item)) return;
 
@@ -601,7 +610,7 @@
       );
 
       if (existing) {
-        existing.qty = 1;
+        existing.qty = Number(existing.qty || 1) + 1;
       } else {
         cart.push({
           id: id,
@@ -614,6 +623,7 @@
       }
 
       saveCart(cart);
+      updateCartBadge();
       alert("Додано в кошик");
     }
 
@@ -638,12 +648,8 @@
         const sold = isSold(item);
 
         const photoBlock = photo
-          ? `<img class="coin-photo"
-                  src="${esc(photo)}"
-                  alt="${esc(title)}"
-                  loading="lazy"
-                  referrerpolicy="no-referrer"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          ? `<img class="coin-photo" src="${esc(photo)}" alt="${esc(title)}" loading="lazy" referrerpolicy="no-referrer"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
              <div class="no-photo" style="display:none;">Фото недоступне</div>`
           : `<div class="no-photo">Немає фото</div>`;
 
@@ -670,13 +676,8 @@
 
               <div class="coin-actions">
                 <a class="btn btn-details" href="${esc(link)}">Детальніше</a>
-                <button
-                  class="btn btn-cart ${sold ? "disabled" : ""}"
-                  type="button"
-                  ${sold ? "disabled" : ""}
-                  data-index="${index}"
-                  title="Додати в кошик"
-                >🛒</button>
+                <button class="btn btn-cart ${sold ? "disabled" : ""}" type="button"
+                  ${sold ? "disabled" : ""} data-index="${index}" title="Додати в кошик">🛒</button>
               </div>
             </div>
           </article>
@@ -727,7 +728,6 @@
     function refreshCountryOptions() {
       const selectedContinent = continentSelect.value.trim();
       const currentCountry = countrySelect.value.trim();
-
       let source = state.items;
 
       if (selectedContinent) {
@@ -807,6 +807,7 @@
     inStockOnly.addEventListener("change", applyFilters);
     resetFiltersBtn.addEventListener("click", resetFilters);
 
+    updateCartBadge();
     loadCoins();
   </script>
 </body>
