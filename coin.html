@@ -174,6 +174,16 @@
       margin-bottom: 12px;
     }
 
+    .coin-id-top {
+      display: inline-block;
+      font-size: 13px;
+      color: #666;
+      background: #f1f3f5;
+      border-radius: 999px;
+      padding: 6px 10px;
+      margin-bottom: 12px;
+    }
+
     .coin-country {
       font-size: 14px;
       color: #666;
@@ -225,6 +235,28 @@
     .details-value {
       color: #222;
       word-break: break-word;
+    }
+
+    .description-block {
+      margin-top: 6px;
+      margin-bottom: 22px;
+      padding: 14px;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 14px;
+    }
+
+    .description-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .description-text {
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      color: #222;
     }
 
     .actions {
@@ -370,6 +402,7 @@
 
       <section class="info-card">
         <div class="info-inner">
+          <div id="coinIdTop" class="coin-id-top hidden"></div>
           <div id="statusBadge" class="status-badge hidden">ПРОДАНО</div>
 
           <div id="coinCountry" class="coin-country"></div>
@@ -401,12 +434,11 @@
 
             <div class="details-label">Тема</div>
             <div id="detailTheme" class="details-value">—</div>
+          </div>
 
-            <div class="details-label">BoxNo</div>
-            <div id="detailBoxNo" class="details-value">—</div>
-
-            <div class="details-label">ID</div>
-            <div id="detailID" class="details-value">—</div>
+          <div id="descriptionBlock" class="description-block hidden">
+            <div class="description-title">Опис</div>
+            <div id="descriptionText" class="description-text"></div>
           </div>
 
           <div class="actions">
@@ -437,6 +469,7 @@
     const mainPhotoFallback = document.getElementById("mainPhotoFallback");
     const thumbs = document.getElementById("thumbs");
 
+    const coinIdTop = document.getElementById("coinIdTop");
     const statusBadge = document.getElementById("statusBadge");
     const coinCountry = document.getElementById("coinCountry");
     const coinTitle = document.getElementById("coinTitle");
@@ -451,8 +484,9 @@
     const detailMetal = document.getElementById("detailMetal");
     const detailCondition = document.getElementById("detailCondition");
     const detailTheme = document.getElementById("detailTheme");
-    const detailBoxNo = document.getElementById("detailBoxNo");
-    const detailID = document.getElementById("detailID");
+
+    const descriptionBlock = document.getElementById("descriptionBlock");
+    const descriptionText = document.getElementById("descriptionText");
 
     const addToCartBtn = document.getElementById("addToCartBtn");
 
@@ -463,14 +497,6 @@
     let currentCoin = null;
     let gallery = [];
     let currentPhotoIndex = 0;
-
-    function esc(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
 
     function getQueryParam(name) {
       const params = new URLSearchParams(window.location.search);
@@ -491,13 +517,11 @@
     }
 
     function collectGallery(item) {
-      const arr = [
+      return [
         String(item.PhotoMainURL || "").trim(),
         String(item.PhotoExtra1URL || "").trim(),
         String(item.PhotoExtra2URL || "").trim()
       ].filter(Boolean);
-
-      return arr;
     }
 
     function setMainPhoto(index) {
@@ -520,13 +544,7 @@
     }
 
     function renderThumbs() {
-      if (!gallery.length) {
-        thumbs.classList.add("hidden");
-        thumbs.innerHTML = "";
-        return;
-      }
-
-      if (gallery.length === 1) {
+      if (gallery.length <= 1) {
         thumbs.classList.add("hidden");
         thumbs.innerHTML = "";
         return;
@@ -534,7 +552,7 @@
 
       thumbs.innerHTML = gallery.map((url, index) => `
         <button class="thumb-btn ${index === currentPhotoIndex ? "active" : ""}" type="button" data-index="${index}">
-          <img src="${esc(url)}" alt="Прев’ю ${index + 1}" loading="lazy"
+          <img src="${url}" alt="Прев’ю ${index + 1}" loading="lazy"
                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
           <div class="thumb-no-photo" style="display:none;">Немає фото</div>
         </button>
@@ -561,6 +579,13 @@
 
       document.title = title + " — Монети Світу";
 
+      if (item.ID) {
+        coinIdTop.textContent = "ID: " + item.ID;
+        coinIdTop.classList.remove("hidden");
+      } else {
+        coinIdTop.classList.add("hidden");
+      }
+
       coinCountry.textContent = item.Country || "";
       coinTitle.textContent = title;
       coinPrice.textContent = price + " грн";
@@ -578,8 +603,13 @@
       detailMetal.textContent = item.Metal || "—";
       detailCondition.textContent = item.Condition || "—";
       detailTheme.textContent = item.Theme || "—";
-      detailBoxNo.textContent = item.BoxNo || "—";
-      detailID.textContent = item.ID || "—";
+
+      if (item.DescriptionUA) {
+        descriptionText.textContent = item.DescriptionUA;
+        descriptionBlock.classList.remove("hidden");
+      } else {
+        descriptionBlock.classList.add("hidden");
+      }
 
       if (sold) {
         addToCartBtn.textContent = "Немає в наявності";
@@ -686,23 +716,17 @@
     }
 
     mainPhotoWrap.addEventListener("click", () => {
-      if (!mainPhoto.classList.contains("hidden")) {
-        openLightbox();
-      }
+      if (!mainPhoto.classList.contains("hidden")) openLightbox();
     });
 
     lightboxClose.addEventListener("click", closeLightbox);
 
     lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) {
-        closeLightbox();
-      }
+      if (e.target === lightbox) closeLightbox();
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeLightbox();
-      }
+      if (e.key === "Escape") closeLightbox();
     });
 
     addToCartBtn.addEventListener("click", addCurrentCoinToCart);
