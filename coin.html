@@ -70,6 +70,27 @@
       color: #555;
     }
 
+    .trust-box {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+
+    .trust-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .trust-text {
+      font-size: 14px;
+      line-height: 1.55;
+      color: #444;
+    }
+
     .coin-layout {
       display: grid;
       grid-template-columns: 1.05fr 0.95fr;
@@ -380,6 +401,13 @@
   </header>
 
   <main>
+    <section class="trust-box">
+      <div class="trust-title">Ви переглядаєте реальний лот із каталогу «Монети Світу»</div>
+      <div class="trust-text">
+        На фото показана саме ця монета. Додаткові фото доступні в галереї нижче. Якщо лот у наявності, його можна додати в кошик і перейти до оформлення замовлення.
+      </div>
+    </section>
+
     <div id="messageBox" class="message">Завантаження монети...</div>
 
     <div id="coinPage" class="coin-layout hidden">
