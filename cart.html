@@ -48,9 +48,23 @@
       color: #666;
     }
 
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
     .back-link {
       text-decoration: none;
       color: #1f6feb;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .cart-link {
+      text-decoration: none;
+      color: #222;
       font-weight: 700;
       white-space: nowrap;
     }
@@ -69,8 +83,7 @@
     }
 
     .cart-card,
-    .summary-card,
-    .message-card {
+    .summary-card {
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 18px;
@@ -78,8 +91,7 @@
     }
 
     .cart-inner,
-    .summary-inner,
-    .message-inner {
+    .summary-inner {
       padding: 18px;
     }
 
@@ -398,7 +410,10 @@
         <div class="subtitle">Кошик покупця</div>
       </a>
 
-      <a class="back-link" href="index.html">← Назад до каталогу</a>
+      <div class="header-links">
+        <a class="back-link" href="index.html">← Назад до каталогу</a>
+        <a class="cart-link" href="cart.html">Кошик</a>
+      </div>
     </div>
   </header>
 
@@ -415,7 +430,6 @@
           </div>
 
           <div id="cartList" class="cart-list"></div>
-
           <div id="successBox" class="success-box hidden"></div>
         </div>
       </section>
@@ -452,18 +466,13 @@
             </div>
 
             <div class="form-group">
-              <label for="phone">Телефон</label>
+              <label for="phone">Телефон / Viber</label>
               <input id="phone" type="text" placeholder="+380..." />
             </div>
 
             <div class="form-group">
               <label for="email">Email (необов’язково)</label>
               <input id="email" type="email" placeholder="example@email.com" />
-            </div>
-
-            <div class="form-group">
-              <label for="messenger">Viber</label>
-              <input id="messenger" type="text" placeholder="Номер для зв’язку у Viber" />
             </div>
 
             <div class="form-group">
@@ -496,7 +505,6 @@
     const customerNameInput = document.getElementById("customerName");
     const phoneInput = document.getElementById("phone");
     const emailInput = document.getElementById("email");
-    const messengerInput = document.getElementById("messenger");
     const commentInput = document.getElementById("comment");
     const submitOrderBtn = document.getElementById("submitOrderBtn");
 
@@ -662,11 +670,9 @@
     function validateForm() {
       const name = customerNameInput.value.trim();
       const phone = phoneInput.value.trim();
-      const messenger = messengerInput.value.trim();
 
       if (!name) return "Вкажіть ім’я.";
-      if (!phone) return "Вкажіть телефон.";
-      if (!messenger) return "Вкажіть номер для Viber.";
+      if (!phone) return "Вкажіть телефон / Viber.";
 
       return "";
     }
@@ -697,7 +703,7 @@
           customerName: customerNameInput.value.trim(),
           phone: phoneInput.value.trim(),
           email: emailInput.value.trim(),
-          messenger: messengerInput.value.trim(),
+          messenger: phoneInput.value.trim(),
           comment: commentInput.value.trim(),
           items: cart.map(item => ({
             id: String(item.id || "").trim(),
@@ -734,7 +740,6 @@
         customerNameInput.value = "";
         phoneInput.value = "";
         emailInput.value = "";
-        messengerInput.value = "";
         commentInput.value = "";
 
       } catch (error) {
