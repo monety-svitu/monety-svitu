@@ -184,12 +184,6 @@
       margin-bottom: 12px;
     }
 
-    .coin-country {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 6px;
-    }
-
     .coin-title {
       font-size: 30px;
       font-weight: 700;
@@ -405,7 +399,6 @@
           <div id="coinIdTop" class="coin-id-top hidden"></div>
           <div id="statusBadge" class="status-badge hidden">ПРОДАНО</div>
 
-          <div id="coinCountry" class="coin-country"></div>
           <div id="coinTitle" class="coin-title">—</div>
           <div id="coinPrice" class="coin-price">—</div>
           <div id="stockText" class="stock-text">—</div>
@@ -471,7 +464,6 @@
 
     const coinIdTop = document.getElementById("coinIdTop");
     const statusBadge = document.getElementById("statusBadge");
-    const coinCountry = document.getElementById("coinCountry");
     const coinTitle = document.getElementById("coinTitle");
     const coinPrice = document.getElementById("coinPrice");
     const stockText = document.getElementById("stockText");
@@ -586,7 +578,6 @@
         coinIdTop.classList.add("hidden");
       }
 
-      coinCountry.textContent = item.Country || "";
       coinTitle.textContent = title;
       coinPrice.textContent = price + " грн";
 
