@@ -591,6 +591,30 @@
       return "";
     }
 
+    async function trackCoinView() {
+      try {
+        const slug = getQueryParam("slug");
+        const id = getQueryParam("id");
+
+        if (!slug && !id) return;
+
+        let url = GAS_URL + "?action=trackCoinView&_ts=" + Date.now();
+
+        if (slug) {
+          url += "&slug=" + encodeURIComponent(slug);
+        } else if (id) {
+          url += "&id=" + encodeURIComponent(id);
+        }
+
+        await fetch(url, {
+          method: "GET",
+          cache: "no-store"
+        });
+      } catch (error) {
+        console.error("trackCoinView error:", error);
+      }
+    }
+
     function isSold(item) {
       return Number(item.Quantity || 0) <= 0;
     }
@@ -817,6 +841,7 @@
 
     updateCartBadge();
     loadCoin();
+    trackCoinView();
   </script>
 </body>
 </html>
