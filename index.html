@@ -127,6 +127,12 @@
       color: #555;
     }
 
+    .site-stats {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #666;
+    }
+
     .layout {
       display: grid;
       grid-template-columns: 260px 1fr;
@@ -490,6 +496,7 @@
       <div class="welcome-note">
         На фото показані саме ті монети, які виставлені в каталозі. Продані лоти залишаються на сайті для зручності перегляду та пошуку.
       </div>
+      <div id="siteStatsText" class="site-stats">Переглядів сайту: —</div>
     </section>
 
     <div class="layout">
@@ -597,6 +604,7 @@
     const resetFiltersBtn = document.getElementById("resetFiltersBtn");
     const sortSelect = document.getElementById("sortSelect");
     const statsText = document.getElementById("statsText");
+    const siteStatsText = document.getElementById("siteStatsText");
     const messageBox = document.getElementById("messageBox");
     const coinsGrid = document.getElementById("coinsGrid");
     const cartCountBadge = document.getElementById("cartCountBadge");
@@ -880,6 +888,22 @@
       applyFilters();
     }
 
+    async function trackSiteView() {
+      try {
+        const response = await fetch(GAS_URL + "?action=trackSiteView&_ts=" + Date.now(), {
+          method: "GET",
+          cache: "no-store"
+        });
+        const data = await response.json();
+
+        if (data && data.success) {
+          siteStatsText.textContent = "Переглядів сайту: " + Number(data.value || 0);
+        }
+      } catch (error) {
+        console.error("trackSiteView error:", error);
+      }
+    }
+
     async function loadCoins() {
       try {
         messageBox.classList.remove("hidden");
@@ -925,6 +949,7 @@
 
     updateCartBadge();
     loadCoins();
+    trackSiteView();
   </script>
 </body>
 </html>
