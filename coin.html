@@ -268,7 +268,7 @@
     .stock-text {
       font-size: 14px;
       font-weight: 700;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
     }
 
     .stock-text.in-stock {
@@ -277,6 +277,14 @@
 
     .stock-text.sold {
       color: #c62828;
+    }
+
+    .stock-qty {
+      font-size: 14px;
+      color: #444;
+      margin-top: 0;
+      margin-bottom: 18px;
+      font-weight: 700;
     }
 
     .details {
@@ -495,6 +503,7 @@
           <div id="coinTitle" class="coin-title">—</div>
           <div id="coinPrice" class="coin-price">—</div>
           <div id="stockText" class="stock-text">—</div>
+          <div id="stockQty" class="stock-qty">—</div>
 
           <div class="details">
             <div class="details-label">Регіон</div>
@@ -558,6 +567,7 @@
     const coinTitle = document.getElementById("coinTitle");
     const coinPrice = document.getElementById("coinPrice");
     const stockText = document.getElementById("stockText");
+    const stockQty = document.getElementById("stockQty");
     const detailContinent = document.getElementById("detailContinent");
     const detailCountry = document.getElementById("detailCountry");
     const detailType = document.getElementById("detailType");
@@ -599,33 +609,15 @@
         if (!slug && !id) return;
 
         let url = GAS_URL + "?action=trackCoinView&_ts=" + Date.now();
-
-        if (slug) {
-          url += "&slug=" + encodeURIComponent(slug);
-        } else if (id) {
-          url += "&id=" + encodeURIComponent(id);
-        }
+        if (slug) url += "&slug=" + encodeURIComponent(slug);
+        if (id) url += "&id=" + encodeURIComponent(id);
 
         await fetch(url, {
           method: "GET",
           cache: "no-store"
         });
-      } catch (error) {
-        console.error("trackCoinView error:", error);
+      } catch (err) {
       }
-    }
-
-    function isSold(item) {
-      return Number(item.Quantity || 0) <= 0;
-    }
-
-    function collectGallery(item) {
-      return [
-        String(item.PhotoMainURL || "").trim(),
-        String(item.PhotoExtra1URL || "").trim(),
-        String(item.PhotoExtra2URL || "").trim(),
-        String(item.PhotoExtra3URL || "").trim()
-      ].filter(Boolean);
     }
 
     function getCart() {
@@ -633,7 +625,7 @@
         const raw = localStorage.getItem(CART_KEY);
         const parsed = JSON.parse(raw || "[]");
         return Array.isArray(parsed) ? parsed : [];
-      } catch {
+      } catch (err) {
         return [];
       }
     }
@@ -644,16 +636,33 @@
 
     function updateCartBadge() {
       const cart = getCart();
-      const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-      cartCountBadge.textContent = String(count);
+      const totalQty = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      cartCountBadge.textContent = String(totalQty);
+    }
+
+    function isSold(item) {
+      return Number(item.Quantity || 0) <= 0;
+    }
+
+    function collectGallery(item) {
+      const result = [];
+      [
+        item.PhotoMainURL,
+        item.PhotoExtra1URL,
+        item.PhotoExtra2URL,
+        item.PhotoExtra3URL
+      ].forEach(url => {
+        const clean = String(url || "").trim();
+        if (clean && !result.includes(clean)) result.push(clean);
+      });
+      return result;
     }
 
     function setMainPhoto(index) {
-      if (!gallery.length || !gallery[index]) {
-        currentPhotoIndex = 0;
+      if (!gallery.length) {
         mainPhoto.classList.add("hidden");
-        mainPhoto.removeAttribute("src");
         mainPhotoFallback.classList.remove("hidden");
+        mainPhoto.removeAttribute("src");
         return;
       }
 
@@ -698,13 +707,22 @@
       const cart = getCart();
       const slug = String(currentCoin.Slug || "").trim();
       const id = String(currentCoin.ID || "").trim();
+      const stockQty = Number(currentCoin.Quantity || 0);
 
       const existing = cart.find(item =>
         (slug && item.slug === slug) || (!slug && id && item.id === id)
       );
 
       if (existing) {
-        existing.qty = Number(existing.qty || 1) + 1;
+        const nextQty = Number(existing.qty || 0) + 1;
+        if (nextQty > stockQty) {
+          addToCartBtn.textContent = "Максимум у кошику";
+          setTimeout(() => {
+            if (!isSold(currentCoin)) addToCartBtn.textContent = "Додати в кошик";
+          }, 1200);
+          return;
+        }
+        existing.qty = nextQty;
       } else {
         cart.push({
           id: id,
@@ -732,6 +750,7 @@
       const sold = isSold(item);
       const title = item.TitleUA || item.TitleEN || "Без назви";
       const price = Number(item.PriceUAH || 0);
+      const qty = Number(item.Quantity || 0);
 
       document.title = title + " — Монети Світу";
 
@@ -747,6 +766,7 @@
 
       stockText.textContent = sold ? "Немає в наявності" : "В наявності";
       stockText.className = "stock-text " + (sold ? "sold" : "in-stock");
+      stockQty.textContent = sold ? "Кількість: 0 шт" : "Кількість: " + qty + " шт";
 
       statusBadge.classList.toggle("hidden", !sold);
 
@@ -792,56 +812,63 @@
         messageBox.textContent = "Завантаження монети...";
         coinPage.classList.add("hidden");
 
-        const response = await fetch(url, { method: "GET", cache: "no-store" });
-        const data = await response.json();
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+
+        const text = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув не JSON");
+        }
 
         if (!data || !data.success || !data.item) {
           throw new Error((data && data.error) || "Монету не знайдено");
         }
 
         renderCoin(data.item);
-
-      } catch (error) {
-        console.error(error);
+        trackCoinView();
+      } catch (err) {
         coinPage.classList.add("hidden");
         messageBox.classList.remove("hidden");
-        messageBox.textContent = "Помилка завантаження монети.";
+        messageBox.textContent = "Помилка завантаження монети. " + String(err.message || err);
       }
     }
 
-    function openLightbox() {
+    mainPhotoWrap.addEventListener("click", () => {
       if (!gallery.length || !gallery[currentPhotoIndex]) return;
       lightboxImg.src = gallery[currentPhotoIndex];
       lightbox.classList.add("open");
-    }
+    });
 
-    function closeLightbox() {
+    lightboxClose.addEventListener("click", () => {
       lightbox.classList.remove("open");
       lightboxImg.removeAttribute("src");
-    }
-
-    mainPhotoWrap.addEventListener("click", () => {
-      if (!mainPhoto.classList.contains("hidden")) openLightbox();
     });
 
-    lightboxClose.addEventListener("click", closeLightbox);
     lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) closeLightbox();
+      if (e.target === lightbox) {
+        lightbox.classList.remove("open");
+        lightboxImg.removeAttribute("src");
+      }
     });
+
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeLightbox();
+      if (e.key === "Escape") {
+        lightbox.classList.remove("open");
+        lightboxImg.removeAttribute("src");
+      }
     });
 
     addToCartBtn.addEventListener("click", addCurrentCoinToCart);
 
-    mainPhoto.addEventListener("error", () => {
-      mainPhoto.classList.add("hidden");
-      mainPhotoFallback.classList.remove("hidden");
-    });
-
     updateCartBadge();
     loadCoin();
-    trackCoinView();
   </script>
 </body>
 </html>
