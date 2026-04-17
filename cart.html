@@ -156,6 +156,12 @@
       background: #fff;
     }
 
+    .cart-item.is-sold-out {
+      opacity: 0.72;
+      border-color: #f0b4b4;
+      background: #fffafa;
+    }
+
     .cart-item-photo-wrap {
       background: #fff;
       aspect-ratio: 1 / 1;
@@ -205,6 +211,22 @@
       color: #666;
     }
 
+    .cart-item-stock {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2e7d32;
+    }
+
+    .cart-item-stock.sold {
+      color: #c62828;
+    }
+
+    .cart-item-warning {
+      font-size: 13px;
+      color: #b42318;
+      line-height: 1.45;
+    }
+
     .cart-item-bottom {
       display: flex;
       flex-wrap: wrap;
@@ -233,6 +255,12 @@
 
     .qty-btn:hover {
       background: #f2f2f2;
+    }
+
+    .qty-btn:disabled {
+      background: #f1f1f1;
+      color: #999;
+      cursor: not-allowed;
     }
 
     .qty-value {
@@ -538,27 +566,27 @@
             </div>
 
             <div class="form-group">
-              <label for="email">Email (необов’язково)</label>
-              <input id="email" type="email" placeholder="example@email.com" />
+              <label for="email">Email</label>
+              <input id="email" type="email" placeholder="name@example.com" />
             </div>
 
             <div class="form-group">
-              <label for="comment">Коментар (необов’язково)</label>
-              <textarea id="comment" placeholder="Додаткові побажання до замовлення"></textarea>
+              <label for="comment">Коментар</label>
+              <textarea id="comment" placeholder="За потреби залиште коментар"></textarea>
             </div>
 
-            <button id="submitOrderBtn" class="btn" type="button">Підтвердити замовлення</button>
-
-            <div id="errorBox" class="error-box hidden"></div>
+            <button id="submitOrderBtn" class="btn" type="button">Оформити замовлення</button>
           </div>
+
+          <div id="errorBox" class="error-box hidden"></div>
         </div>
       </aside>
     </div>
   </main>
 
   <script>
-    const CART_KEY = "monety_svitu_cart";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
+    const CART_KEY = "monety_svitu_cart";
 
     const cartList = document.getElementById("cartList");
     const emptyBox = document.getElementById("emptyBox");
@@ -626,27 +654,113 @@
       cart.forEach(item => {
         const qty = Number(item.qty || 0);
         const price = Number(item.priceUAH || 0);
-        count += qty;
-        total += qty * price;
+        const availableQty = Number(item.availableQty || 0);
+
+        if (availableQty > 0) {
+          count += qty;
+          total += qty * price;
+        }
       });
 
       return { count, total };
     }
 
     function renderOrderPreview(cart) {
-      if (!cart.length) {
+      const activeItems = cart.filter(item => Number(item.availableQty || 0) > 0);
+
+      if (!activeItems.length) {
         orderPreview.classList.add("hidden");
         orderPreviewList.innerHTML = "";
         return;
       }
 
-      orderPreviewList.innerHTML = cart.map(item => {
+      orderPreviewList.innerHTML = activeItems.map(item => {
         const title = item.title || "Без назви";
         const qty = Number(item.qty || 1);
         return `<li>${esc(title)} — ${qty} шт.</li>`;
       }).join("");
 
       orderPreview.classList.remove("hidden");
+    }
+
+    async function fetchCoinByCartItem(item) {
+      const slug = String(item.slug || "").trim();
+      const id = String(item.id || "").trim();
+
+      let url = GAS_URL + "?action=getCoin&_ts=" + Date.now();
+      if (slug) {
+        url += "&slug=" + encodeURIComponent(slug);
+      } else if (id) {
+        url += "&id=" + encodeURIComponent(id);
+      } else {
+        return null;
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { "Accept": "application/json" },
+        cache: "no-store"
+      });
+
+      const text = await response.text();
+      const data = JSON.parse(text);
+
+      if (!data || !data.success || !data.item) {
+        return null;
+      }
+
+      return data.item;
+    }
+
+    async function syncCartWithStock() {
+      const cart = getCart();
+      if (!cart.length) return [];
+
+      const synced = [];
+
+      for (const item of cart) {
+        let serverItem = null;
+
+        try {
+          serverItem = await fetchCoinByCartItem(item);
+        } catch (err) {
+          serverItem = null;
+        }
+
+        if (!serverItem) {
+          synced.push({
+            ...item,
+            availableQty: 0,
+            stockWarning: "Монету не вдалося перевірити або її вже немає в каталозі."
+          });
+          continue;
+        }
+
+        const availableQty = Number(serverItem.Quantity || 0);
+        const currentQty = Math.max(1, Number(item.qty || 1));
+        const safeQty = availableQty > 0 ? Math.min(currentQty, availableQty) : currentQty;
+
+        let stockWarning = "";
+        if (availableQty <= 0) {
+          stockWarning = "Ця монета зараз відсутня в наявності.";
+        } else if (currentQty > availableQty) {
+          stockWarning = "Кількість у кошику зменшено до доступного залишку.";
+        }
+
+        synced.push({
+          id: String(serverItem.ID || item.id || "").trim(),
+          slug: String(serverItem.Slug || item.slug || "").trim(),
+          qty: safeQty,
+          title: String(serverItem.TitleUA || serverItem.TitleEN || item.title || "").trim(),
+          priceUAH: Number(serverItem.PriceUAH || item.priceUAH || 0),
+          photo: String(serverItem.PhotoMainURL || item.photo || "").trim(),
+          availableQty: availableQty,
+          stockWarning: stockWarning
+        });
+      }
+
+      saveCart(synced);
+      return synced;
     }
 
     function renderCart() {
@@ -666,14 +780,18 @@
       }
 
       emptyBox.classList.add("hidden");
-      checkoutBlock.classList.remove("hidden");
+
+      const activeItems = cart.filter(item => Number(item.availableQty || 0) > 0);
+      checkoutBlock.classList.toggle("hidden", !activeItems.length);
 
       const html = cart.map((item, index) => {
         const title = item.title || "Без назви";
         const photo = String(item.photo || "").trim();
         const qty = Number(item.qty || 1);
         const price = Number(item.priceUAH || 0);
-        const lineTotal = qty * price;
+        const availableQty = Number(item.availableQty || 0);
+        const soldOut = availableQty <= 0;
+        const lineTotal = soldOut ? 0 : qty * price;
         const link = buildCoinLink(item);
 
         const photoBlock = photo
@@ -687,7 +805,7 @@
           : `<div class="cart-item-no-photo">Немає фото</div>`;
 
         return `
-          <article class="cart-item">
+          <article class="cart-item ${soldOut ? "is-sold-out" : ""}">
             <div class="cart-item-photo-wrap">
               ${photoBlock}
             </div>
@@ -695,20 +813,22 @@
             <div class="cart-item-body">
               <a class="cart-item-title" href="${esc(link)}">${esc(title)}</a>
               <div class="cart-item-meta">Ціна за 1 шт: ${esc(formatPrice(price))}</div>
+              <div class="cart-item-stock ${soldOut ? "sold" : ""}">
+                ${soldOut ? "Немає в наявності" : "Доступно: " + availableQty + " шт"}
+              </div>
+              ${item.stockWarning ? `<div class="cart-item-warning">${esc(item.stockWarning)}</div>` : ""}
 
               <div class="cart-item-bottom">
                 <div class="qty-controls">
-                  <button class="qty-btn" type="button" data-action="minus" data-index="${index}">−</button>
+                  <button class="qty-btn" type="button" data-action="minus" data-index="${index}" ${soldOut || qty <= 1 ? "disabled" : ""}>−</button>
                   <div class="qty-value">${qty}</div>
-                  <button class="qty-btn" type="button" data-action="plus" data-index="${index}">+</button>
+                  <button class="qty-btn" type="button" data-action="plus" data-index="${index}" ${soldOut || qty >= availableQty ? "disabled" : ""}>+</button>
                 </div>
 
-                <div class="cart-item-price">${esc(formatPrice(lineTotal))}</div>
+                <div class="cart-item-price">${lineTotal} грн</div>
               </div>
 
-              <button class="remove-btn" type="button" data-action="remove" data-index="${index}">
-                Видалити
-              </button>
+              <button class="remove-btn" type="button" data-action="remove" data-index="${index}">Видалити</button>
             </div>
           </article>
         `;
@@ -718,7 +838,7 @@
 
       const totals = getTotals(cart);
       itemsCount.textContent = String(totals.count);
-      totalPrice.textContent = formatPrice(totals.total);
+      totalPrice.textContent = totals.total + " грн";
       renderOrderPreview(cart);
 
       cartList.querySelectorAll("[data-action]").forEach(btn => {
@@ -734,12 +854,17 @@
       const cart = getCart();
       if (!cart[index]) return;
 
+      const availableQty = Number(cart[index].availableQty || 0);
+      const currentQty = Number(cart[index].qty || 1);
+
       if (action === "minus") {
-        cart[index].qty = Math.max(1, Number(cart[index].qty || 1) - 1);
+        cart[index].qty = Math.max(1, currentQty - 1);
       }
 
       if (action === "plus") {
-        cart[index].qty = Number(cart[index].qty || 1) + 1;
+        if (availableQty > 0) {
+          cart[index].qty = Math.min(currentQty + 1, availableQty);
+        }
       }
 
       if (action === "remove") {
@@ -774,10 +899,21 @@
     }
 
     async function submitOrder() {
-      const cart = getCart();
+      await syncCartWithStock();
+      renderCart();
 
-      if (!cart.length) {
-        errorBox.textContent = "Кошик порожній.";
+      const cart = getCart();
+      const activeItems = cart.filter(item => Number(item.availableQty || 0) > 0);
+
+      if (!activeItems.length) {
+        errorBox.textContent = "У кошику немає монет, доступних для замовлення.";
+        errorBox.classList.remove("hidden");
+        return;
+      }
+
+      const hasUnavailable = cart.some(item => Number(item.availableQty || 0) <= 0);
+      if (hasUnavailable) {
+        errorBox.textContent = "У кошику є недоступні монети. Видаліть їх перед оформленням.";
         errorBox.classList.remove("hidden");
         return;
       }
@@ -802,7 +938,7 @@
           email: emailInput.value.trim(),
           messenger: phoneInput.value.trim(),
           comment: commentInput.value.trim(),
-          items: cart.map(item => ({
+          items: activeItems.map(item => ({
             id: String(item.id || "").trim(),
             slug: String(item.slug || "").trim(),
             qty: Number(item.qty || 1)
@@ -817,7 +953,14 @@
           body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув некоректну відповідь.");
+        }
 
         if (!data || !data.success || !data.order) {
           throw new Error((data && data.error) || "Не вдалося оформити замовлення.");
@@ -834,14 +977,19 @@
         errorBox.classList.remove("hidden");
       } finally {
         submitOrderBtn.disabled = false;
-        submitOrderBtn.textContent = "Підтвердити замовлення";
+        submitOrderBtn.textContent = "Оформити замовлення";
       }
     }
 
     clearCartBtn.addEventListener("click", clearCart);
     submitOrderBtn.addEventListener("click", submitOrder);
 
-    renderCart();
+    updateCartBadge();
+
+    (async function initCartPage() {
+      await syncCartWithStock();
+      renderCart();
+    })();
   </script>
 </body>
 </html>
