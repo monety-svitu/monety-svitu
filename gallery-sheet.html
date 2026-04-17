@@ -159,17 +159,20 @@
     }
 
     .filter-group input,
-    .filter-group select {
+    .filter-group select,
+    .list-textarea {
       width: 100%;
       padding: 8px 10px;
       border: 1px solid #d4d8de;
       border-radius: 10px;
       font-size: 14px;
       background: #fff;
+      font-family: Arial, sans-serif;
     }
 
     .filter-group input:focus,
-    .filter-group select:focus {
+    .filter-group select:focus,
+    .list-textarea:focus {
       outline: none;
       border-color: #8bb3ff;
       box-shadow: 0 0 0 3px rgba(31,111,235,0.10);
@@ -358,6 +361,16 @@
       white-space: nowrap;
     }
 
+    .list-box {
+      margin-top: 12px;
+    }
+
+    .list-textarea {
+      min-height: 160px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
     .pagination {
       display: flex;
       flex-wrap: wrap;
@@ -403,6 +416,7 @@
       header,
       .filters-card,
       .info-card,
+      .list-box,
       .pagination {
         display: none !important;
       }
@@ -533,6 +547,18 @@
         <div id="messageBox" class="message">Завантаження монет...</div>
         <div id="galleryGrid" class="gallery-grid hidden"></div>
 
+        <div id="sheetListBox" class="info-card list-box hidden">
+          <div class="info-inner">
+            <div class="panel-title">Список монет на цій сторінці</div>
+
+            <div class="actions-row" style="margin-bottom:10px;">
+              <button id="copySheetListBtn" class="small-btn secondary" type="button">Копіювати список</button>
+            </div>
+
+            <textarea id="sheetListText" class="list-textarea" readonly></textarea>
+          </div>
+        </div>
+
         <div id="pagination" class="pagination hidden">
           <button id="prevPageBtn" class="small-btn secondary" type="button">← Назад</button>
           <div id="pageIndicator" class="page-indicator">Сторінка 1 / 1</div>
@@ -567,6 +593,10 @@
     const pageNow = document.getElementById("pageNow");
     const messageBox = document.getElementById("messageBox");
     const galleryGrid = document.getElementById("galleryGrid");
+
+    const sheetListBox = document.getElementById("sheetListBox");
+    const sheetListText = document.getElementById("sheetListText");
+    const copySheetListBtn = document.getElementById("copySheetListBtn");
 
     const pagination = document.getElementById("pagination");
     const prevPageBtn = document.getElementById("prevPageBtn");
@@ -722,6 +752,29 @@
       }
     }
 
+    function buildSheetList(items, detailsMap = {}) {
+      if (!Array.isArray(items) || !items.length) {
+        sheetListText.value = "";
+        sheetListBox.classList.add("hidden");
+        return;
+      }
+
+      const lines = items.map(item => {
+        const key = String(item.Slug || item.ID || "").trim();
+        const detail = detailsMap[key] || item;
+
+        const idText = String(detail.ID || item.ID || "").trim();
+        const title = String(detail.TitleUA || detail.TitleEN || item.TitleUA || item.TitleEN || "Без назви").trim();
+        const period = String(detail.NominalPeriod || item.NominalPeriod || "").trim();
+        const price = Number(detail.PriceUAH || item.PriceUAH || 0);
+
+        return idText + " — " + title + " — " + period + " — " + price + " грн";
+      });
+
+      sheetListText.value = lines.join("\n");
+      sheetListBox.classList.remove("hidden");
+    }
+
     function renderCards(items, detailsMap = {}) {
       galleryGrid.innerHTML = items.map(item => {
         const key = String(item.Slug || item.ID || "").trim();
@@ -790,10 +843,12 @@
         galleryGrid.classList.add("hidden");
         messageBox.classList.remove("hidden");
         messageBox.textContent = "За вашим запитом нічого не знайдено.";
+        sheetListBox.classList.add("hidden");
         return;
       }
 
       renderCards(items, {});
+      buildSheetList(items, {});
       messageBox.classList.add("hidden");
       galleryGrid.classList.remove("hidden");
 
@@ -808,6 +863,7 @@
       });
 
       renderCards(items, detailsMap);
+      buildSheetList(items, detailsMap);
     }
 
     async function loadCoins() {
@@ -856,6 +912,23 @@
       inStockOnly.checked = true;
       filterItems();
     }
+
+    copySheetListBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(sheetListText.value || "");
+        copySheetListBtn.textContent = "Скопійовано";
+        setTimeout(() => {
+          copySheetListBtn.textContent = "Копіювати список";
+        }, 1200);
+      } catch (e) {
+        sheetListText.focus();
+        sheetListText.select();
+        copySheetListBtn.textContent = "Виділено";
+        setTimeout(() => {
+          copySheetListBtn.textContent = "Копіювати список";
+        }, 1200);
+      }
+    });
 
     searchInput.addEventListener("input", filterItems);
     continentSelect.addEventListener("change", filterItems);
