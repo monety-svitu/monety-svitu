@@ -4,213 +4,429 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Кошик — Монети Світу</title>
+  <link rel="icon" type="image/svg+xml" href="/monety-svitu/favicon.svg" />
+  <meta name="description" content="Кошик покупця на сайті Монети Світу." />
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-    }
-
-    .container {
-      width: min(1100px, calc(100% - 24px));
-      margin: 0 auto;
+      background: #f5f5f5;
+      color: #222;
     }
 
     header {
       background: #fff;
-      border-bottom: 1px solid #e5e7eb;
-      margin-bottom: 18px;
+      border-bottom: 1px solid #ddd;
+      padding: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
     }
 
-    .topbar {
+    .header-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 12px;
-      padding: 14px 0;
+    }
+
+    .brand {
+      text-decoration: none;
+      color: #222;
+    }
+
+    .brand h1 {
+      margin: 0 0 4px;
+      font-size: 26px;
+    }
+
+    .brand .subtitle {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-left: auto;
+      flex-wrap: wrap;
     }
 
     .back-link {
       text-decoration: none;
-      color: #2563eb;
+      color: #1f6feb;
       font-weight: 700;
+      white-space: nowrap;
     }
 
-    .layout {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 20px;
-      margin-bottom: 28px;
+    .cart-top-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      background: #1f6feb;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(31, 111, 235, 0.25);
     }
 
-    .box {
+    .cart-top-link:hover {
+      background: #1859be;
+    }
+
+    .cart-top-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .cart-count-badge {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
       background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 18px;
-      padding: 16px;
+      color: #1f6feb;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
     }
 
-    .box h2 {
-      margin: 0 0 14px;
-      font-size: 22px;
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .cart-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .cart-card,
+    .summary-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+
+    .cart-inner,
+    .summary-inner {
+      padding: 18px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .cart-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
     .cart-item {
       display: grid;
-      grid-template-columns: 90px 1fr auto;
-      gap: 12px;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 12px 0;
-      align-items: center;
-    }
-
-    .cart-item:last-child {
-      border-bottom: none;
-    }
-
-    .cart-thumb {
-      width: 90px;
-      height: 90px;
-      border-radius: 12px;
+      grid-template-columns: 110px 1fr;
+      gap: 14px;
+      border: 1px solid #eee;
+      border-radius: 14px;
       overflow: hidden;
-      background: #f9fafb;
+      background: #fff;
     }
 
-    .cart-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .cart-title {
-      font-size: 16px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .cart-price,
-    .cart-stock,
-    .cart-sum {
-      font-size: 14px;
-      color: #374151;
-      margin: 4px 0;
-    }
-
-    .qty-row {
+    .cart-item-photo-wrap {
+      background: #fff;
+      aspect-ratio: 1 / 1;
+      border-right: 1px solid #eee;
       display: flex;
       align-items: center;
+      justify-content: center;
+    }
+
+    .cart-item-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+
+    .cart-item-no-photo {
+      font-size: 13px;
+      color: #888;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .cart-item-body {
+      padding: 12px 14px 12px 0;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
-      margin-top: 8px;
+      min-width: 0;
+    }
+
+    .cart-item-title {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-decoration: none;
+      color: #222;
+    }
+
+    .cart-item-title:hover {
+      color: #1f6feb;
+    }
+
+    .cart-item-meta {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .cart-item-bottom {
+      display: flex;
       flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .qty-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .qty-btn {
       width: 34px;
       height: 34px;
-      border: none;
+      border: 1px solid #ccc;
+      background: #fff;
       border-radius: 10px;
-      background: #e5edff;
-      color: #1e3a8a;
-      font-size: 18px;
-      font-weight: 800;
       cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
     }
 
-    .qty-input {
-      width: 70px;
-      padding: 8px 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
+    .qty-btn:hover {
+      background: #f2f2f2;
+    }
+
+    .qty-value {
+      min-width: 26px;
       text-align: center;
-      font-size: 14px;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .cart-item-price {
+      font-size: 20px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     .remove-btn {
       border: none;
-      border-radius: 10px;
-      background: #fee2e2;
-      color: #991b1b;
-      padding: 10px 12px;
+      background: transparent;
+      color: #c62828;
+      font-size: 14px;
       cursor: pointer;
+      padding: 0;
       font-weight: 700;
+    }
+
+    .remove-btn:hover {
+      text-decoration: underline;
+    }
+
+    .summary-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 16px;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 12px;
       font-size: 15px;
     }
 
-    .summary-row:last-child {
-      border-bottom: none;
-      padding-top: 14px;
-      font-size: 20px;
-      font-weight: 800;
+    .summary-row.total {
+      font-size: 22px;
+      font-weight: 700;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+      margin-top: 14px;
     }
 
-    .form-grid {
-      display: grid;
-      gap: 10px;
-      margin-top: 16px;
+    .summary-note {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+      margin-top: 14px;
     }
 
-    .form-grid input,
-    .form-grid textarea,
-    .form-grid select {
-      width: 100%;
-      padding: 12px 13px;
-      border: 1px solid #d1d5db;
+    .order-preview {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: #fafafa;
+      border: 1px solid #eee;
       border-radius: 12px;
-      background: #fff;
-      font-size: 14px;
     }
 
-    .form-grid textarea {
-      min-height: 100px;
+    .order-preview-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .order-preview-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 14px;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .form-block {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid #eee;
+    }
+
+    .form-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 14px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    .form-group textarea {
+      min-height: 90px;
       resize: vertical;
     }
 
     .btn {
-      border: none;
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      background: #1f6feb;
+      color: #fff;
+      padding: 12px 16px;
       border-radius: 12px;
+      font-weight: 700;
+      border: none;
       cursor: pointer;
       font-size: 15px;
-      font-weight: 700;
-      padding: 12px 16px;
-      min-height: 46px;
     }
 
-    .btn-primary {
-      background: #2563eb;
-      color: #fff;
-      width: 100%;
-      margin-top: 14px;
+    .btn:hover {
+      background: #1859be;
+    }
+
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #eee;
+      color: #222;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e2e2;
+    }
+
+    .btn-danger {
+      background: #fff;
+      color: #c62828;
+      border: 1px solid #f0b4b4;
+    }
+
+    .btn-danger:hover {
+      background: #fff5f5;
     }
 
     .empty-box {
       text-align: center;
-      color: #6b7280;
-      padding: 24px 0;
+      color: #555;
+      padding: 30px 10px;
+      line-height: 1.6;
     }
 
-    .note {
-      color: #6b7280;
-      font-size: 13px;
-      line-height: 1.45;
-      margin-top: 10px;
+    .error-box {
+      background: #fff5f5;
+      border: 1px solid #f0b4b4;
+      color: #b42318;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
-    @media (max-width: 900px) {
-      .layout {
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      .cart-layout {
         grid-template-columns: 1fr;
       }
     }
@@ -220,337 +436,412 @@
         grid-template-columns: 1fr;
       }
 
-      .cart-thumb {
+      .cart-item-photo-wrap {
+        border-right: none;
+        border-bottom: 1px solid #eee;
+      }
+
+      .cart-item-body {
+        padding: 12px;
+      }
+
+      .header-wrap {
+        flex-wrap: wrap;
+      }
+
+      .header-right {
         width: 100%;
-        height: auto;
-        aspect-ratio: 1 / 1;
+        justify-content: flex-end;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="container topbar">
-      <a class="back-link" href="index.html">← Продовжити вибір монет</a>
-      <div><strong>Кошик</strong></div>
+    <div class="header-wrap">
+      <a class="brand" href="index.html">
+        <h1>Монети Світу</h1>
+        <div class="subtitle">Кошик покупця</div>
+      </a>
+
+      <div class="header-right">
+        <a class="back-link" href="index.html">← Назад до каталогу</a>
+        <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
+          <span class="cart-top-icon">🛒</span>
+          <span>Кошик</span>
+          <span id="cartCountBadge" class="cart-count-badge">0</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <main class="container">
-    <div class="layout">
-      <section class="box">
-        <h2>Ваші монети</h2>
-        <div id="cartItems"></div>
-      </section>
+  <main>
+    <div class="cart-layout">
+      <section class="cart-card">
+        <div class="cart-inner">
+          <h2 class="page-title">Кошик</h2>
+          <div class="page-subtitle">Перевірте вибрані товари перед оформленням</div>
 
-      <section class="box">
-        <h2>Оформлення замовлення</h2>
+          <div id="emptyBox" class="empty-box hidden">
+            У кошику поки що немає товарів.<br />
+            Поверніться в каталог і додайте потрібні монети.
+          </div>
 
-        <div id="summaryBox">
-          <div class="summary-row"><span>Кількість позицій</span><strong id="itemsCount">0</strong></div>
-          <div class="summary-row"><span>Загальна кількість</span><strong id="coinsCount">0</strong></div>
-          <div class="summary-row"><span>Разом</span><strong id="totalPrice">0 грн</strong></div>
-        </div>
-
-        <div class="form-grid">
-          <input type="text" id="lastName" placeholder="Прізвище *" required>
-          <input type="text" id="firstName" placeholder="Ім’я">
-          <input type="text" id="phone" placeholder="Телефон">
-          <textarea id="comment" placeholder="Коментар до замовлення"></textarea>
-        </div>
-
-        <button class="btn btn-primary" onclick="submitOrder()">Підтвердити замовлення</button>
-
-        <div class="note">
-          Прізвище є обов’язковим. Кількість у кошику не може перевищувати доступну наявність.
+          <div id="cartList" class="cart-list"></div>
         </div>
       </section>
+
+      <aside class="summary-card">
+        <div class="summary-inner">
+          <h3 class="summary-title">Підсумок</h3>
+
+          <div class="summary-row">
+            <span>Товарів</span>
+            <strong id="itemsCount">0</strong>
+          </div>
+
+          <div class="summary-row total">
+            <span>Разом</span>
+            <span id="totalPrice">0 грн</span>
+          </div>
+
+          <div class="summary-note">
+            Після оформлення замовлення монети резервуються на обмежений час.
+          </div>
+
+          <div id="orderPreview" class="order-preview hidden">
+            <div class="order-preview-title">Що піде в замовлення</div>
+            <ul id="orderPreviewList" class="order-preview-list"></ul>
+          </div>
+
+          <div class="actions">
+            <a class="btn btn-secondary" href="index.html">Продовжити вибір</a>
+            <button id="clearCartBtn" class="btn btn-danger" type="button">Очистити кошик</button>
+          </div>
+
+          <div class="form-block" id="checkoutBlock">
+            <h4 class="form-title">Оформлення замовлення</h4>
+
+            <div class="form-group">
+              <label for="lastName">Прізвище *</label>
+              <input id="lastName" type="text" placeholder="Ваше прізвище" />
+            </div>
+
+            <div class="form-group">
+              <label for="customerName">Ім’я *</label>
+              <input id="customerName" type="text" placeholder="Ваше ім’я" />
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Телефон / Viber *</label>
+              <input id="phone" type="text" placeholder="+380..." />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email (необов’язково)</label>
+              <input id="email" type="email" placeholder="example@email.com" />
+            </div>
+
+            <div class="form-group">
+              <label for="comment">Коментар (необов’язково)</label>
+              <textarea id="comment" placeholder="Додаткові побажання до замовлення"></textarea>
+            </div>
+
+            <button id="submitOrderBtn" class="btn" type="button">Підтвердити замовлення</button>
+
+            <div id="errorBox" class="error-box hidden"></div>
+          </div>
+        </div>
+      </aside>
     </div>
   </main>
 
   <script>
-    const GAS_URL = "ВСТАВ_СЮДИ_СВІЙ_GAS_WEB_APP_URL";
+    const CART_KEY = "monety_svitu_cart";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
 
-    let allCoins = [];
+    const cartList = document.getElementById("cartList");
+    const emptyBox = document.getElementById("emptyBox");
+    const itemsCount = document.getElementById("itemsCount");
+    const totalPrice = document.getElementById("totalPrice");
+    const clearCartBtn = document.getElementById("clearCartBtn");
+    const checkoutBlock = document.getElementById("checkoutBlock");
+    const errorBox = document.getElementById("errorBox");
+    const cartCountBadge = document.getElementById("cartCountBadge");
+    const orderPreview = document.getElementById("orderPreview");
+    const orderPreviewList = document.getElementById("orderPreviewList");
 
-    function safeNumber(value) {
-      const n = Number(value);
-      return Number.isFinite(n) ? n : 0;
-    }
+    const lastNameInput = document.getElementById("lastName");
+    const customerNameInput = document.getElementById("customerName");
+    const phoneInput = document.getElementById("phone");
+    const emailInput = document.getElementById("email");
+    const commentInput = document.getElementById("comment");
+    const submitOrderBtn = document.getElementById("submitOrderBtn");
 
-    function escapeHtml(text) {
-      return String(text ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function buildUrl(params = {}) {
-      const url = new URL(GAS_URL);
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          url.searchParams.set(key, value);
-        }
-      });
-      return url.toString();
-    }
-
-    async function fetchJson(params = {}) {
-      const response = await fetch(buildUrl(params), {
-        method: "GET",
-        cache: "no-store"
-      });
-
-      const text = await response.text();
-
-      try {
-        return JSON.parse(text);
-      } catch (error) {
-        console.error("Invalid JSON:", text);
-        throw new Error("Сервер повернув не JSON");
-      }
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
     function getCart() {
-      return JSON.parse(localStorage.getItem("cart") || "[]");
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
     }
 
     function saveCart(cart) {
-      localStorage.setItem("cart", JSON.stringify(cart));
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
     }
 
-    async function loadCoins() {
-      const data = await fetchJson({ action: "getCoins" });
-      allCoins = Array.isArray(data?.coins) ? data.coins : Array.isArray(data) ? data : [];
+    function updateCartBadge() {
+      const cart = getCart();
+      const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      cartCountBadge.textContent = String(count);
     }
 
-    function syncCartWithStock() {
-      let cart = getCart();
+    function buildCoinLink(item) {
+      const slug = String(item.slug || "").trim();
+      const id = String(item.id || "").trim();
 
-      cart = cart
-        .map(item => {
-          const coin = allCoins.find(c => String(c.ID) === String(item.ID));
-          if (!coin) return null;
+      if (slug) return "coin.html?slug=" + encodeURIComponent(slug);
+      if (id) return "coin.html?id=" + encodeURIComponent(id);
+      return "#";
+    }
 
-          const availableQty = safeNumber(coin.Quantity);
-          if (availableQty <= 0) return null;
+    function formatPrice(value) {
+      return Number(value || 0) + " грн";
+    }
 
-          return {
-            ...item,
-            TitleUA: coin.TitleUA || item.TitleUA || "",
-            PriceUAH: safeNumber(coin.PriceUAH || item.PriceUAH),
-            PhotoMainURL: coin.PhotoMainURL || item.PhotoMainURL || "",
-            availableQty,
-            qty: Math.min(Math.max(1, safeNumber(item.qty || 1)), availableQty)
-          };
-        })
-        .filter(Boolean);
+    function getTotals(cart) {
+      let count = 0;
+      let total = 0;
 
-      saveCart(cart);
-      return cart;
+      cart.forEach(item => {
+        const qty = Number(item.qty || 0);
+        const price = Number(item.priceUAH || 0);
+        count += qty;
+        total += qty * price;
+      });
+
+      return { count, total };
+    }
+
+    function renderOrderPreview(cart) {
+      if (!cart.length) {
+        orderPreview.classList.add("hidden");
+        orderPreviewList.innerHTML = "";
+        return;
+      }
+
+      orderPreviewList.innerHTML = cart.map(item => {
+        const title = item.title || "Без назви";
+        const qty = Number(item.qty || 1);
+        return `<li>${esc(title)} — ${qty} шт.</li>`;
+      }).join("");
+
+      orderPreview.classList.remove("hidden");
     }
 
     function renderCart() {
       const cart = getCart();
-      const container = document.getElementById("cartItems");
+
+      errorBox.classList.add("hidden");
+      updateCartBadge();
 
       if (!cart.length) {
-        container.innerHTML = `<div class="empty-box">Кошик порожній.</div>`;
-        updateSummary(cart);
+        cartList.innerHTML = "";
+        emptyBox.classList.remove("hidden");
+        itemsCount.textContent = "0";
+        totalPrice.textContent = "0 грн";
+        checkoutBlock.classList.add("hidden");
+        renderOrderPreview([]);
         return;
       }
 
-      container.innerHTML = cart.map(item => {
-        const itemPrice = safeNumber(item.PriceUAH);
-        const itemQty = safeNumber(item.qty);
-        const itemAvailable = safeNumber(item.availableQty);
+      emptyBox.classList.add("hidden");
+      checkoutBlock.classList.remove("hidden");
+
+      const html = cart.map((item, index) => {
+        const title = item.title || "Без назви";
+        const photo = String(item.photo || "").trim();
+        const qty = Number(item.qty || 1);
+        const price = Number(item.priceUAH || 0);
+        const lineTotal = qty * price;
+        const link = buildCoinLink(item);
+
+        const photoBlock = photo
+          ? `<img class="cart-item-photo"
+                  src="${esc(photo)}"
+                  alt="${esc(title)}"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+             <div class="cart-item-no-photo" style="display:none;">Немає фото</div>`
+          : `<div class="cart-item-no-photo">Немає фото</div>`;
 
         return `
-          <div class="cart-item">
-            <div class="cart-thumb">
-              <img src="${escapeHtml(item.PhotoMainURL || "")}" alt="${escapeHtml(item.TitleUA || "")}">
+          <article class="cart-item">
+            <div class="cart-item-photo-wrap">
+              ${photoBlock}
             </div>
 
-            <div>
-              <div class="cart-title">${escapeHtml(item.TitleUA || "")}</div>
-              <div class="cart-price">Ціна: ${itemPrice} грн</div>
-              <div class="cart-stock">В наявності: ${itemAvailable}</div>
-              <div class="cart-sum">Сума: ${itemPrice * itemQty} грн</div>
+            <div class="cart-item-body">
+              <a class="cart-item-title" href="${esc(link)}">${esc(title)}</a>
+              <div class="cart-item-meta">Ціна за 1 шт: ${esc(formatPrice(price))}</div>
 
-              <div class="qty-row">
-                <button class="qty-btn" onclick="decreaseCartQty('${escapeHtml(item.ID)}')">−</button>
+              <div class="cart-item-bottom">
+                <div class="qty-controls">
+                  <button class="qty-btn" type="button" data-action="minus" data-index="${index}">−</button>
+                  <div class="qty-value">${qty}</div>
+                  <button class="qty-btn" type="button" data-action="plus" data-index="${index}">+</button>
+                </div>
 
-                <input
-                  class="qty-input"
-                  type="number"
-                  min="1"
-                  max="${itemAvailable || 1}"
-                  value="${itemQty}"
-                  onchange="changeCartQty('${escapeHtml(item.ID)}', this.value)"
-                >
-
-                <button class="qty-btn" onclick="increaseCartQty('${escapeHtml(item.ID)}')">+</button>
+                <div class="cart-item-price">${esc(formatPrice(lineTotal))}</div>
               </div>
-            </div>
 
-            <div>
-              <button class="remove-btn" onclick="removeFromCart('${escapeHtml(item.ID)}')">Видалити</button>
+              <button class="remove-btn" type="button" data-action="remove" data-index="${index}">
+                Видалити
+              </button>
             </div>
-          </div>
+          </article>
         `;
       }).join("");
 
-      updateSummary(cart);
+      cartList.innerHTML = html;
+
+      const totals = getTotals(cart);
+      itemsCount.textContent = String(totals.count);
+      totalPrice.textContent = formatPrice(totals.total);
+      renderOrderPreview(cart);
+
+      cartList.querySelectorAll("[data-action]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const action = btn.dataset.action;
+          const index = Number(btn.dataset.index || 0);
+          handleCartAction(action, index);
+        });
+      });
     }
 
-    function updateSummary(cart) {
-      const itemsCount = cart.length;
-      const coinsCount = cart.reduce((sum, item) => sum + safeNumber(item.qty), 0);
-      const totalPrice = cart.reduce((sum, item) => sum + safeNumber(item.qty) * safeNumber(item.PriceUAH), 0);
+    function handleCartAction(action, index) {
+      const cart = getCart();
+      if (!cart[index]) return;
 
-      document.getElementById("itemsCount").textContent = itemsCount;
-      document.getElementById("coinsCount").textContent = coinsCount;
-      document.getElementById("totalPrice").textContent = `${totalPrice} грн`;
-    }
-
-    function changeCartQty(coinId, value) {
-      let cart = getCart();
-      const item = cart.find(x => String(x.ID) === String(coinId));
-      if (!item) return;
-
-      const maxQty = safeNumber(item.availableQty || 1);
-      let qty = safeNumber(value || 1);
-
-      if (!qty || qty < 1) qty = 1;
-      if (qty > maxQty) {
-        qty = maxQty;
-        alert(`Доступно лише ${maxQty} шт.`);
+      if (action === "minus") {
+        cart[index].qty = Math.max(1, Number(cart[index].qty || 1) - 1);
       }
 
-      item.qty = qty;
-      saveCart(cart);
-      renderCart();
-    }
-
-    function increaseCartQty(coinId) {
-      let cart = getCart();
-      const item = cart.find(x => String(x.ID) === String(coinId));
-      if (!item) return;
-
-      const maxQty = safeNumber(item.availableQty || 1);
-      const currentQty = safeNumber(item.qty || 1);
-
-      if (currentQty >= maxQty) {
-        alert(`Доступно лише ${maxQty} шт.`);
-        return;
+      if (action === "plus") {
+        cart[index].qty = Number(cart[index].qty || 1) + 1;
       }
 
-      item.qty = currentQty + 1;
-      saveCart(cart);
-      renderCart();
-    }
-
-    function decreaseCartQty(coinId) {
-      let cart = getCart();
-      const item = cart.find(x => String(x.ID) === String(coinId));
-      if (!item) return;
-
-      const currentQty = safeNumber(item.qty || 1);
-      item.qty = Math.max(1, currentQty - 1);
+      if (action === "remove") {
+        cart.splice(index, 1);
+      }
 
       saveCart(cart);
       renderCart();
     }
 
-    function removeFromCart(coinId) {
-      let cart = getCart();
-      cart = cart.filter(item => String(item.ID) !== String(coinId));
-      saveCart(cart);
+    function clearCart() {
+      const cart = getCart();
+      if (!cart.length) return;
+
+      const ok = confirm("Очистити весь кошик?");
+      if (!ok) return;
+
+      saveCart([]);
       renderCart();
     }
 
-    function buildOrderItemsText(cart) {
-      return cart.map(item => {
-        const qty = safeNumber(item.qty);
-        const price = safeNumber(item.PriceUAH);
-        const sum = qty * price;
-        return `${item.ID}. ${item.TitleUA}, ${price} грн, ${qty} шт., ${sum} грн`;
-      }).join("\n");
+    function validateForm() {
+      const lastName = lastNameInput.value.trim();
+      const name = customerNameInput.value.trim();
+      const phone = phoneInput.value.trim();
+
+      if (!lastName) return "Вкажіть прізвище.";
+      if (!name) return "Вкажіть ім’я.";
+      if (!phone) return "Вкажіть телефон / Viber.";
+
+      return "";
     }
 
     async function submitOrder() {
       const cart = getCart();
 
       if (!cart.length) {
-        alert("Кошик порожній.");
+        errorBox.textContent = "Кошик порожній.";
+        errorBox.classList.remove("hidden");
         return;
       }
 
-      const lastName = document.getElementById("lastName").value.trim();
-      const firstName = document.getElementById("firstName").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const comment = document.getElementById("comment").value.trim();
-
-      if (!lastName) {
-        alert("Вкажіть прізвище.");
-        document.getElementById("lastName").focus();
+      const validationError = validateForm();
+      if (validationError) {
+        errorBox.textContent = validationError;
+        errorBox.classList.remove("hidden");
         return;
       }
 
-      const orderData = {
-        action: "createOrder",
-        lastName,
-        firstName,
-        phone,
-        comment,
-        itemsText: buildOrderItemsText(cart),
-        items: JSON.stringify(cart.map(item => ({
-          id: item.ID,
-          qty: safeNumber(item.qty)
-        })))
-      };
+      errorBox.classList.add("hidden");
+      submitOrderBtn.disabled = true;
+      submitOrderBtn.textContent = "Відправка...";
 
       try {
+        const payload = {
+          action: "createOrder",
+          lastName: lastNameInput.value.trim(),
+          customerName: customerNameInput.value.trim(),
+          phone: phoneInput.value.trim(),
+          email: emailInput.value.trim(),
+          messenger: phoneInput.value.trim(),
+          comment: commentInput.value.trim(),
+          items: cart.map(item => ({
+            id: String(item.id || "").trim(),
+            slug: String(item.slug || "").trim(),
+            qty: Number(item.qty || 1)
+          }))
+        };
+
         const response = await fetch(GAS_URL, {
           method: "POST",
-          body: new URLSearchParams(orderData)
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
         });
 
-        const text = await response.text();
+        const data = await response.json();
 
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (error) {
-          console.error(text);
-          throw new Error("Сервер повернув некоректну відповідь");
+        if (!data || !data.success || !data.order) {
+          throw new Error((data && data.error) || "Не вдалося оформити замовлення.");
         }
 
-        if (!data?.success) {
-          throw new Error(data?.error || "Не вдалося створити замовлення");
-        }
+        saveCart([]);
+        updateCartBadge();
 
-        localStorage.removeItem("cart");
-        window.location.href = "success.html";
+        const orderId = String(data.order.OrderID || "").trim();
+        window.location.href = "success.html?order=" + encodeURIComponent(orderId);
+
       } catch (error) {
-        console.error(error);
-        alert(error.message || "Помилка при створенні замовлення.");
+        errorBox.textContent = error.message || "Сталася помилка під час оформлення замовлення.";
+        errorBox.classList.remove("hidden");
+      } finally {
+        submitOrderBtn.disabled = false;
+        submitOrderBtn.textContent = "Підтвердити замовлення";
       }
     }
 
-    async function init() {
-      await loadCoins();
-      syncCartWithStock();
-      renderCart();
-    }
+    clearCartBtn.addEventListener("click", clearCart);
+    submitOrderBtn.addEventListener("click", submitOrder);
 
-    init().catch(error => {
-      console.error(error);
-      document.getElementById("cartItems").innerHTML =
-        `<div class="empty-box">Не вдалося завантажити кошик.</div>`;
-    });
+    renderCart();
   </script>
 </body>
 </html>
