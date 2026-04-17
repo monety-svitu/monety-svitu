@@ -236,36 +236,34 @@
       overflow: hidden;
       box-shadow: var(--shadow);
       display: grid;
-      grid-template-columns: 94px 94px 1fr;
-      min-height: 108px;
+      grid-template-rows: 180px auto;
+    }
+
+    .sheet-photos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      background: #fff;
+      border-bottom: 1px solid var(--line-soft);
     }
 
     .sheet-photo-box {
-      width: 94px;
-      height: 94px;
+      height: 180px;
       background: #fff;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 7px 0 7px 0;
     }
 
-    .sheet-photo-box.first {
-      margin-left: 7px;
-      border-right: 1px solid var(--line-soft);
-      padding-right: 0;
-    }
-
-    .sheet-photo-box.second {
-      border-right: 1px solid var(--line-soft);
-      margin-left: 0;
+    .sheet-photo-box + .sheet-photo-box {
+      border-left: 1px solid var(--line-soft);
     }
 
     .sheet-photo {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
       background: #fff;
     }
@@ -277,47 +275,48 @@
     }
 
     .sheet-body {
-      padding: 8px 10px 8px 10px;
+      padding: 7px 9px 8px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
       min-width: 0;
     }
 
     .sheet-id {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #667085;
-      line-height: 1.15;
+      line-height: 1.1;
     }
 
     .sheet-type {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: #5f6f85;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      line-height: 1.15;
+      letter-spacing: 0.25px;
+      line-height: 1.1;
     }
 
     .sheet-title {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
-      line-height: 1.2;
+      line-height: 1.15;
       color: #111827;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 36px;
+      min-height: 30px;
+      margin-top: 1px;
     }
 
     .sheet-period {
-      margin-top: auto;
-      padding-top: 5px;
+      margin-top: 4px;
+      padding-top: 4px;
       border-top: 1px solid var(--line-soft);
-      font-size: 13px;
-      line-height: 1.2;
+      font-size: 11px;
+      line-height: 1.15;
       color: #475467;
       font-weight: 700;
     }
@@ -352,6 +351,14 @@
     @media (max-width: 760px) {
       .gallery-grid {
         grid-template-columns: 1fr;
+      }
+
+      .sheet-card {
+        grid-template-rows: 160px auto;
+      }
+
+      .sheet-photo-box {
+        height: 160px;
       }
     }
 
@@ -632,7 +639,8 @@
                    src="${esc(clean)}"
                    alt="${esc(alt)}"
                    loading="lazy"
-                   referrerpolicy="no-referrer" />`;
+                   referrerpolicy="no-referrer"
+                   onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=&quot;sheet-photo-empty&quot;></div>';" />`;
     }
 
     function getPageItems() {
@@ -676,8 +684,10 @@
 
         return `
           <article class="sheet-card">
-            <div class="sheet-photo-box first">${photo1}</div>
-            <div class="sheet-photo-box second">${photo2}</div>
+            <div class="sheet-photos">
+              <div class="sheet-photo-box">${photo1}</div>
+              <div class="sheet-photo-box">${photo2}</div>
+            </div>
 
             <div class="sheet-body">
               <div class="sheet-id">ID: ${esc(idText)}</div>
