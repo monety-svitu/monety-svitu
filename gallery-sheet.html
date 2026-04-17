@@ -241,27 +241,24 @@
       overflow: hidden;
       box-shadow: var(--shadow);
       display: grid;
-      grid-template-rows: 210px auto;
+      grid-template-rows: 250px auto;
     }
 
     .sheet-photos {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      background: #fff;
+      gap: 1px;
+      background: var(--line-soft);
       border-bottom: 1px solid var(--line-soft);
     }
 
     .sheet-photo-box {
-      height: 210px;
+      height: 250px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #fff;
       overflow: hidden;
-    }
-
-    .sheet-photo-box + .sheet-photo-box {
-      border-left: 1px solid var(--line-soft);
     }
 
     .sheet-photo {
@@ -280,9 +277,14 @@
 
     .sheet-body {
       padding: 6px 8px 7px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .sheet-left {
       min-width: 0;
     }
 
@@ -291,15 +293,7 @@
       line-height: 1.15;
       color: #5d6677;
       font-weight: 700;
-    }
-
-    .sheet-type {
-      font-size: 10px;
-      line-height: 1.15;
-      color: #5f6f85;
-      text-transform: uppercase;
-      letter-spacing: 0.25px;
-      font-weight: 700;
+      margin-bottom: 2px;
     }
 
     .sheet-title {
@@ -312,7 +306,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       min-height: 30px;
-      margin-top: 1px;
     }
 
     .sheet-period {
@@ -323,6 +316,25 @@
       line-height: 1.15;
       color: #475467;
       font-weight: 700;
+    }
+
+    .sheet-right {
+      min-width: 88px;
+      max-width: 112px;
+      text-align: right;
+      align-self: end;
+    }
+
+    .sheet-type {
+      font-size: 10px;
+      line-height: 1.15;
+      color: #5f6f85;
+      text-transform: uppercase;
+      letter-spacing: 0.25px;
+      font-weight: 700;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     .pagination {
@@ -358,11 +370,11 @@
       }
 
       .sheet-card {
-        grid-template-rows: 180px auto;
+        grid-template-rows: 190px auto;
       }
 
       .sheet-photo-box {
-        height: 180px;
+        height: 190px;
       }
     }
 
@@ -717,10 +729,15 @@
             </div>
 
             <div class="sheet-body">
-              <div class="sheet-id">ID: ${esc(idText)}</div>
-              <div class="sheet-type">${esc(typeText)}</div>
-              <div class="sheet-title">${esc(title)}</div>
-              <div class="sheet-period">${esc(periodText)}</div>
+              <div class="sheet-left">
+                <div class="sheet-id">ID: ${esc(idText)}</div>
+                <div class="sheet-title">${esc(title)}</div>
+                <div class="sheet-period">${esc(periodText)}</div>
+              </div>
+
+              <div class="sheet-right">
+                <div class="sheet-type">${esc(typeText)}</div>
+              </div>
             </div>
           </article>
         `;
