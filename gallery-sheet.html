@@ -276,16 +276,19 @@
     }
 
     .sheet-body {
-      padding: 5px 8px 6px;
+      padding: 4px 8px 5px;
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 8px;
+      grid-template-rows: auto auto;
+      gap: 3px 8px;
       align-items: start;
       min-width: 0;
     }
 
     .sheet-left {
       min-width: 0;
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
     }
 
     .sheet-id {
@@ -306,7 +309,7 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       min-height: 34px;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
 
     .sheet-period {
@@ -320,8 +323,10 @@
     }
 
     .sheet-right {
-      min-width: 100px;
-      max-width: 125px;
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      min-width: 105px;
+      max-width: 130px;
       text-align: right;
       align-self: start;
       padding-top: 1px;
@@ -703,16 +708,17 @@
       }
     }
 
-    function renderCards(items, detailsMap) {
+    function renderCards(items, detailsMap = {}) {
       galleryGrid.innerHTML = items.map(item => {
-        const detail = detailsMap[String(item.Slug || item.ID || "").trim()] || item;
+        const key = String(item.Slug || item.ID || "").trim();
+        const detail = detailsMap[key] || item;
 
         const title = detail.TitleUA || detail.TitleEN || item.TitleUA || item.TitleEN || "Без назви";
         const typeText = detail.Type || item.Type || "—";
         const idText = detail.ID || item.ID || "—";
         const periodText = detail.NominalPeriod || item.NominalPeriod || "—";
 
-        const photo1 = buildPhoto(detail.PhotoMainURL, title + " фото 1");
+        const photo1 = buildPhoto(detail.PhotoMainURL || item.PhotoMainURL, title + " фото 1");
 
         const photo2Url = String(
           detail.PhotoExtra1URL ||
@@ -768,24 +774,25 @@
         return;
       }
 
-      messageBox.classList.remove("hidden");
-      messageBox.textContent = "Завантаження карток...";
-      galleryGrid.classList.add("hidden");
-
-      const detailsArray = await Promise.all(items.map(fetchCoinDetail));
-      const detailsMap = {};
-
-      detailsArray.forEach((detail, index) => {
-        const key = String(items[index].Slug || items[index].ID || "").trim();
-        if (key && detail) {
-          detailsMap[key] = detail;
-        }
-      });
-
-      renderCards(items, detailsMap);
-
+      renderCards(items, {});
       messageBox.classList.add("hidden");
       galleryGrid.classList.remove("hidden");
+
+      const detailsMap = {};
+
+      for (const item of items) {
+        const key = String(item.Slug || item.ID || "").trim();
+        try {
+          const detail = await fetchCoinDetail(item);
+          if (key && detail) {
+            detailsMap[key] = detail;
+          }
+        } catch (e) {
+          console.error("Помилка getCoin для", item, e);
+        }
+      }
+
+      renderCards(items, detailsMap);
     }
 
     async function loadCoins() {
