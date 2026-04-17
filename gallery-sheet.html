@@ -113,12 +113,11 @@
       padding: 14px 16px 20px;
     }
 
-    .top-panel {
+    .page-layout {
       display: grid;
-      grid-template-columns: 250px 1fr;
+      grid-template-columns: 235px 1fr;
       gap: 12px;
       align-items: start;
-      margin-bottom: 12px;
     }
 
     .filters-card,
@@ -187,6 +186,14 @@
       margin-top: 2px;
     }
 
+    .content-col {
+      min-width: 0;
+    }
+
+    .info-card {
+      margin-bottom: 10px;
+    }
+
     .stats-row {
       display: flex;
       flex-wrap: wrap;
@@ -229,21 +236,18 @@
       overflow: hidden;
       box-shadow: var(--shadow);
       display: grid;
-      grid-template-rows: 118px auto;
-      min-height: 0;
+      grid-template-rows: 128px auto;
     }
 
     .sheet-photos {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0;
       border-bottom: 1px solid var(--line-soft);
       background: #fff;
     }
 
     .sheet-photo-box {
-      position: relative;
-      height: 118px;
+      height: 128px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -272,10 +276,10 @@
     }
 
     .sheet-body {
-      padding: 8px 10px 9px;
+      padding: 8px 9px 9px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       min-width: 0;
     }
 
@@ -283,7 +287,7 @@
       font-size: 12px;
       font-weight: 700;
       color: #667085;
-      line-height: 1.2;
+      line-height: 1.15;
     }
 
     .sheet-type {
@@ -291,30 +295,30 @@
       font-weight: 700;
       color: #5f6f85;
       text-transform: uppercase;
-      letter-spacing: 0.35px;
-      line-height: 1.2;
+      letter-spacing: 0.3px;
+      line-height: 1.15;
     }
 
     .sheet-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      line-height: 1.25;
+      line-height: 1.2;
       color: #111827;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 40px;
+      min-height: 36px;
     }
 
     .sheet-period {
-      font-size: 13px;
-      line-height: 1.3;
-      color: #475467;
-      font-weight: 700;
       margin-top: 2px;
       padding-top: 5px;
       border-top: 1px solid var(--line-soft);
+      font-size: 13px;
+      line-height: 1.25;
+      color: #475467;
+      font-weight: 700;
     }
 
     .pagination {
@@ -339,7 +343,7 @@
     }
 
     @media (max-width: 980px) {
-      .top-panel {
+      .page-layout {
         grid-template-columns: 1fr;
       }
     }
@@ -352,7 +356,8 @@
 
     @media print {
       header,
-      .top-panel,
+      .filters-card,
+      .info-card,
       .pagination {
         display: none !important;
       }
@@ -364,6 +369,10 @@
       main {
         max-width: none;
         padding: 0;
+      }
+
+      .page-layout {
+        display: block;
       }
 
       .gallery-grid {
@@ -393,7 +402,7 @@
   </header>
 
   <main>
-    <div class="top-panel">
+    <div class="page-layout">
       <section class="filters-card">
         <div class="filters-inner">
           <div class="panel-title">Фільтри</div>
@@ -458,31 +467,33 @@
         </div>
       </section>
 
-      <section class="info-card">
-        <div class="info-inner">
-          <div class="panel-title">Аркуш відбору</div>
+      <div class="content-col">
+        <section class="info-card">
+          <div class="info-inner">
+            <div class="panel-title">Аркуш відбору</div>
 
-          <div class="stats-row">
-            <div>Знайдено: <span id="foundCount" class="stats-strong">0</span></div>
-            <div>На сторінці: <span class="stats-strong">8</span></div>
-            <div>Сторінка: <span id="pageNow" class="stats-strong">1</span></div>
-          </div>
+            <div class="stats-row">
+              <div>Знайдено: <span id="foundCount" class="stats-strong">0</span></div>
+              <div>На сторінці: <span class="stats-strong">8</span></div>
+              <div>Сторінка: <span id="pageNow" class="stats-strong">1</span></div>
+            </div>
 
-          <div class="hint">
-            Це внутрішня сторінка для швидкого відбору. Показує 8 щільних карток
-            (2 колонки × 4 рядки). Зручно для скріну, друку або фіксації списку монет.
+            <div class="hint">
+              Це внутрішня сторінка для швидкого відбору. Показує 8 щільних карток
+              (2 колонки × 4 рядки). Зручно для скріну, друку або фіксації списку монет.
+            </div>
           </div>
+        </section>
+
+        <div id="messageBox" class="message">Завантаження монет...</div>
+        <div id="galleryGrid" class="gallery-grid hidden"></div>
+
+        <div id="pagination" class="pagination hidden">
+          <button id="prevPageBtn" class="small-btn secondary" type="button">← Назад</button>
+          <div id="pageIndicator" class="page-indicator">Сторінка 1 / 1</div>
+          <button id="nextPageBtn" class="small-btn" type="button">Далі →</button>
         </div>
-      </section>
-    </div>
-
-    <div id="messageBox" class="message">Завантаження монет...</div>
-    <div id="galleryGrid" class="gallery-grid hidden"></div>
-
-    <div id="pagination" class="pagination hidden">
-      <button id="prevPageBtn" class="small-btn secondary" type="button">← Назад</button>
-      <div id="pageIndicator" class="page-indicator">Сторінка 1 / 1</div>
-      <button id="nextPageBtn" class="small-btn" type="button">Далі →</button>
+      </div>
     </div>
   </main>
 
@@ -606,6 +617,7 @@
         item.PhotoExtra1URL ||
         item.PhotoExtra2URL ||
         item.PhotoExtra3URL ||
+        item.PhotoMainURL ||
         ""
       ).trim();
     }
