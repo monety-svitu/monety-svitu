@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Галерея для себе — Монети Світу</title>
+  <title>Аркуш відбору — Монети Світу</title>
   <link rel="icon" type="image/svg+xml" href="/monety-svitu/favicon.svg" />
   <meta name="robots" content="noindex,nofollow" />
   <meta name="description" content="Внутрішня галерея монет для відбору та фіксації списків." />
@@ -15,7 +15,7 @@
       --card: #ffffff;
       --line: #e4e7eb;
       --line-soft: #edf1f4;
-      --text: #1f2937;
+      --text: #111827;
       --muted: #6b7280;
       --primary: #2f6fdd;
       --primary-hover: #255fc2;
@@ -105,6 +105,11 @@
 
     .small-btn.secondary:hover {
       background: #e5ebf1;
+    }
+
+    .small-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
     }
 
     main {
@@ -236,24 +241,23 @@
       overflow: hidden;
       box-shadow: var(--shadow);
       display: grid;
-      grid-template-rows: 180px auto;
+      grid-template-rows: 210px auto;
     }
 
     .sheet-photos {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0;
       background: #fff;
       border-bottom: 1px solid var(--line-soft);
     }
 
     .sheet-photo-box {
-      height: 180px;
-      background: #fff;
-      overflow: hidden;
+      height: 210px;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #fff;
+      overflow: hidden;
     }
 
     .sheet-photo-box + .sheet-photo-box {
@@ -275,7 +279,7 @@
     }
 
     .sheet-body {
-      padding: 7px 9px 8px;
+      padding: 6px 8px 7px;
       display: flex;
       flex-direction: column;
       gap: 2px;
@@ -284,24 +288,24 @@
 
     .sheet-id {
       font-size: 11px;
+      line-height: 1.15;
+      color: #5d6677;
       font-weight: 700;
-      color: #667085;
-      line-height: 1.1;
     }
 
     .sheet-type {
       font-size: 10px;
-      font-weight: 700;
+      line-height: 1.15;
       color: #5f6f85;
       text-transform: uppercase;
       letter-spacing: 0.25px;
-      line-height: 1.1;
+      font-weight: 700;
     }
 
     .sheet-title {
       font-size: 13px;
-      font-weight: 700;
       line-height: 1.15;
+      font-weight: 700;
       color: #111827;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -354,11 +358,11 @@
       }
 
       .sheet-card {
-        grid-template-rows: 160px auto;
+        grid-template-rows: 180px auto;
       }
 
       .sheet-photo-box {
-        height: 160px;
+        height: 180px;
       }
     }
 
@@ -512,7 +516,8 @@
     const state = {
       items: [],
       filtered: [],
-      page: 1
+      page: 1,
+      detailsCache: {}
     };
 
     const searchInput = document.getElementById("searchInput");
@@ -620,13 +625,9 @@
       renderCurrentPage();
     }
 
-    function getSecondPhoto(item) {
-      return String(
-        item.PhotoExtra1URL ||
-        item.PhotoExtra2URL ||
-        item.PhotoExtra3URL ||
-        ""
-      ).trim();
+    function getPageItems() {
+      const start = (state.page - 1) * PER_PAGE;
+      return state.filtered.slice(start, start + PER_PAGE);
     }
 
     function buildPhoto(url, alt) {
@@ -643,12 +644,90 @@
                    onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=&quot;sheet-photo-empty&quot;></div>';" />`;
     }
 
-    function getPageItems() {
-      const start = (state.page - 1) * PER_PAGE;
-      return state.filtered.slice(start, start + PER_PAGE);
+    async function fetchCoinDetail(item) {
+      const cacheKey = String(item.Slug || item.ID || "").trim();
+      if (!cacheKey) return null;
+
+      if (state.detailsCache[cacheKey]) {
+        return state.detailsCache[cacheKey];
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.set("action", "getCoin");
+
+        if (item.Slug) {
+          params.set("slug", item.Slug);
+        } else {
+          params.set("id", item.ID);
+        }
+
+        const response = await fetch(GAS_URL + "?" + params.toString() + "&_ts=" + Date.now(), {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+
+        const text = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув не JSON");
+        }
+
+        if (!data || !data.success || !data.item) {
+          throw new Error((data && data.error) || "Не вдалося завантажити монету");
+        }
+
+        state.detailsCache[cacheKey] = data.item;
+        return data.item;
+      } catch (err) {
+        console.error("Не вдалося завантажити монету:", item, err);
+        return null;
+      }
     }
 
-    function renderCurrentPage() {
+    function renderCards(items, detailsMap) {
+      galleryGrid.innerHTML = items.map(item => {
+        const detail = detailsMap[String(item.Slug || item.ID || "").trim()] || item;
+
+        const title = detail.TitleUA || detail.TitleEN || item.TitleUA || item.TitleEN || "Без назви";
+        const typeText = detail.Type || item.Type || "—";
+        const idText = detail.ID || item.ID || "—";
+        const periodText = detail.NominalPeriod || item.NominalPeriod || "—";
+
+        const photo1 = buildPhoto(detail.PhotoMainURL, title + " фото 1");
+
+        const photo2Url = String(
+          detail.PhotoExtra1URL ||
+          detail.PhotoExtra2URL ||
+          detail.PhotoExtra3URL ||
+          ""
+        ).trim();
+
+        const photo2 = buildPhoto(photo2Url, title + " фото 2");
+
+        return `
+          <article class="sheet-card">
+            <div class="sheet-photos">
+              <div class="sheet-photo-box">${photo1}</div>
+              <div class="sheet-photo-box">${photo2}</div>
+            </div>
+
+            <div class="sheet-body">
+              <div class="sheet-id">ID: ${esc(idText)}</div>
+              <div class="sheet-type">${esc(typeText)}</div>
+              <div class="sheet-title">${esc(title)}</div>
+              <div class="sheet-period">${esc(periodText)}</div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function renderCurrentPage() {
       const total = state.filtered.length;
       const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
       if (state.page > totalPages) state.page = totalPages;
@@ -670,34 +749,24 @@
         return;
       }
 
+      messageBox.classList.remove("hidden");
+      messageBox.textContent = "Завантаження карток...";
+      galleryGrid.classList.add("hidden");
+
+      const detailsArray = await Promise.all(items.map(fetchCoinDetail));
+      const detailsMap = {};
+
+      detailsArray.forEach((detail, index) => {
+        const key = String(items[index].Slug || items[index].ID || "").trim();
+        if (key && detail) {
+          detailsMap[key] = detail;
+        }
+      });
+
+      renderCards(items, detailsMap);
+
       messageBox.classList.add("hidden");
       galleryGrid.classList.remove("hidden");
-
-      galleryGrid.innerHTML = items.map(item => {
-        const title = item.TitleUA || item.TitleEN || "Без назви";
-        const typeText = item.Type || "—";
-        const idText = item.ID || "—";
-        const periodText = item.NominalPeriod || "—";
-
-        const photo1 = buildPhoto(item.PhotoMainURL, title + " фото 1");
-        const photo2 = buildPhoto(getSecondPhoto(item), title + " фото 2");
-
-        return `
-          <article class="sheet-card">
-            <div class="sheet-photos">
-              <div class="sheet-photo-box">${photo1}</div>
-              <div class="sheet-photo-box">${photo2}</div>
-            </div>
-
-            <div class="sheet-body">
-              <div class="sheet-id">ID: ${esc(idText)}</div>
-              <div class="sheet-type">${esc(typeText)}</div>
-              <div class="sheet-title">${esc(title)}</div>
-              <div class="sheet-period">${esc(periodText)}</div>
-            </div>
-          </article>
-        `;
-      }).join("");
     }
 
     async function loadCoins() {
