@@ -369,6 +369,8 @@
       min-height: 160px;
       resize: vertical;
       line-height: 1.45;
+      white-space: pre;
+      tab-size: 4;
     }
 
     .pagination {
@@ -759,7 +761,11 @@
         return;
       }
 
-      const lines = items.map(item => {
+      const lines = [
+        ["ID", "Назва", "Період", "Ціна"].join("\t")
+      ];
+
+      items.forEach(item => {
         const key = String(item.Slug || item.ID || "").trim();
         const detail = detailsMap[key] || item;
 
@@ -768,7 +774,12 @@
         const period = String(detail.NominalPeriod || item.NominalPeriod || "").trim();
         const price = Number(detail.PriceUAH || item.PriceUAH || 0);
 
-        return idText + " — " + title + " — " + period + " — " + price + " грн";
+        lines.push([
+          idText,
+          title,
+          period,
+          price + " грн"
+        ].join("\t"));
       });
 
       sheetListText.value = lines.join("\n");
