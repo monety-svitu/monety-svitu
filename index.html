@@ -9,11 +9,28 @@
   <style>
     * { box-sizing: border-box; }
 
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --line: #e6e8ec;
+      --line-soft: #eef1f4;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --muted-soft: #8a94a6;
+      --primary: #2f6fdd;
+      --primary-hover: #255fc2;
+      --danger: #c62828;
+      --success: #2e7d32;
+      --shadow: 0 4px 14px rgba(0,0,0,0.05);
+      --radius: 18px;
+      --radius-sm: 12px;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      color: #222;
+      background: var(--bg);
+      color: var(--text);
     }
 
     header {
@@ -60,7 +77,7 @@
       align-items: center;
       gap: 8px;
       text-decoration: none;
-      background: #1f6feb;
+      background: var(--primary);
       color: #fff;
       padding: 10px 14px;
       border-radius: 999px;
@@ -71,7 +88,7 @@
     }
 
     .cart-top-link:hover {
-      background: #1859be;
+      background: var(--primary-hover);
     }
 
     .cart-top-icon {
@@ -85,7 +102,7 @@
       padding: 0 6px;
       border-radius: 999px;
       background: #fff;
-      color: #1f6feb;
+      color: var(--primary);
       font-size: 12px;
       font-weight: 700;
       display: inline-flex;
@@ -282,39 +299,45 @@
 
     .coins-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+      gap: 20px;
     }
 
     .coin-card {
       position: relative;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
       overflow: hidden;
       display: flex;
       flex-direction: column;
       min-height: 100%;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-      transition: opacity 0.2s ease;
+      box-shadow: var(--shadow);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.2s ease;
+    }
+
+    .coin-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.07);
     }
 
     .coin-card.is-sold {
-      opacity: 0.58;
+      opacity: 0.64;
     }
 
     .sold-badge {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 12px;
+      left: 12px;
       z-index: 3;
-      background: #c62828;
+      background: var(--danger);
       color: #fff;
       font-size: 12px;
       font-weight: 700;
-      padding: 6px 10px;
+      padding: 7px 11px;
       border-radius: 999px;
       letter-spacing: 0.4px;
+      box-shadow: 0 2px 8px rgba(198, 40, 40, 0.28);
     }
 
     .coin-photo-wrap {
@@ -323,7 +346,7 @@
       background: #fff;
       aspect-ratio: 1 / 1;
       overflow: hidden;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--line-soft);
       text-decoration: none;
     }
 
@@ -337,19 +360,19 @@
 
     .coin-qty-badge {
       position: absolute;
-      right: 10px;
-      bottom: 10px;
+      right: 12px;
+      bottom: 12px;
       z-index: 2;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 34px;
-      height: 30px;
-      padding: 0 10px;
+      min-width: 40px;
+      height: 32px;
+      padding: 0 12px;
       border-radius: 999px;
       background: rgba(255,255,255,0.96);
-      border: 1px solid rgba(0,0,0,0.08);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+      border: 1px solid rgba(0,0,0,0.07);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.12);
       font-size: 13px;
       font-weight: 700;
       color: #111827;
@@ -370,86 +393,124 @@
     }
 
     .coin-body {
-      padding: 12px 12px 14px;
+      padding: 14px 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
       flex: 1;
     }
 
     .coin-type {
       font-size: 12px;
-      color: #6b7280;
+      color: var(--muted-soft);
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.6px;
+      line-height: 1.3;
     }
 
     .coin-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
-      line-height: 1.28;
+      line-height: 1.35;
       min-height: 46px;
-      margin-top: 1px;
+      margin-top: -2px;
+      color: var(--text);
     }
 
-    .coin-meta {
-      font-size: 13px;
-      color: #666;
-      line-height: 1.4;
+    .coin-meta-box {
+      background: #fafbfc;
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 10px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .coin-meta-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 14px;
+      line-height: 1.35;
+      color: #374151;
+    }
+
+    .coin-meta-label {
+      color: var(--muted);
+      min-width: 40px;
+      flex: 0 0 auto;
+    }
+
+    .coin-meta-value {
+      font-weight: 600;
+      color: #374151;
     }
 
     .coin-description {
-      font-size: 13px;
-      color: #444;
-      line-height: 1.4;
-      margin-top: 2px;
+      font-size: 14px;
+      color: #434c5b;
+      line-height: 1.55;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 34px;
+      min-height: 64px;
+    }
+
+    .coin-price-block {
+      margin-top: auto;
+      padding-top: 6px;
+      border-top: 1px solid var(--line-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .coin-price {
-      margin-top: auto;
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 700;
-      line-height: 1.1;
-      padding-top: 6px;
+      line-height: 1.15;
       color: #111827;
     }
 
     .coin-status-text {
-      margin-top: 4px;
       font-size: 13px;
       font-weight: 700;
-      color: #c62828;
+      color: var(--danger);
     }
 
     .coin-actions {
-      margin-top: 10px;
+      margin-top: 2px;
       display: flex;
       gap: 8px;
       align-items: stretch;
     }
 
     .btn {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
       text-decoration: none;
-      background: #2f6fdd;
+      background: var(--primary);
       color: #fff;
       padding: 11px 14px;
-      border-radius: 10px;
+      border-radius: 11px;
       font-weight: 700;
       border: none;
       cursor: pointer;
       font-size: 15px;
+      transition: background 0.15s ease, transform 0.08s ease;
     }
 
     .btn:hover {
-      background: #255fc2;
+      background: var(--primary-hover);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
     }
 
     .btn-details {
@@ -468,7 +529,7 @@
     }
 
     .btn-cart.disabled {
-      background: #bdbdbd;
+      background: #c7ccd4;
       cursor: not-allowed;
     }
 
@@ -870,13 +931,26 @@
 
             <div class="coin-body">
               <div class="coin-type">${esc(typeLabel)}</div>
-              <div class="coin-title">${esc(title)}</div>
-              <div class="coin-meta">${esc(nominal)}</div>
-              <div class="coin-meta">${esc(km)}</div>
-              <div class="coin-description">${esc(description)}</div>
 
-              <div class="coin-price">${price} грн</div>
-              ${sold ? `<div class="coin-status-text">Немає в наявності</div>` : ""}
+              <div class="coin-title">${esc(title)}</div>
+
+              <div class="coin-meta-box">
+                <div class="coin-meta-row">
+                  <span class="coin-meta-label">Період:</span>
+                  <span class="coin-meta-value">${esc(nominal || "—")}</span>
+                </div>
+                <div class="coin-meta-row">
+                  <span class="coin-meta-label">KM#:</span>
+                  <span class="coin-meta-value">${esc(km || "—")}</span>
+                </div>
+              </div>
+
+              <div class="coin-description">${esc(description || "Опис відсутній")}</div>
+
+              <div class="coin-price-block">
+                <div class="coin-price">${price} грн</div>
+                ${sold ? `<div class="coin-status-text">Немає в наявності</div>` : ""}
+              </div>
 
               <div class="coin-actions">
                 <a class="btn btn-details" href="${esc(link)}">Детальніше</a>
