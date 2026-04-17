@@ -318,6 +318,7 @@
     }
 
     .coin-photo-wrap {
+      position: relative;
       display: block;
       background: #fff;
       aspect-ratio: 1 / 1;
@@ -332,6 +333,28 @@
       object-fit: contain;
       display: block;
       background: #fff;
+    }
+
+    .coin-qty-badge {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+      font-size: 13px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+      backdrop-filter: blur(2px);
     }
 
     .no-photo {
@@ -655,36 +678,12 @@
       selectEl.value = currentValue;
     }
 
-    function buildCoinLink(item) {
-      const slug = String(item.Slug || "").trim();
-      const id = String(item.ID || "").trim();
-      if (slug) return "coin.html?slug=" + encodeURIComponent(slug);
-      if (id) return "coin.html?id=" + encodeURIComponent(id);
-      return "#";
-    }
-
-    function coinSearchText(item) {
-      return [
-        item.Country, item.TitleUA, item.TitleEN, item.NominalPeriod,
-        item.KrauseNumber, item.Continent, item.Type, item.Metal,
-        item.Theme, item.Condition, item.ID, item.Slug, item.DescriptionUA
-      ].join(" ").toLowerCase();
-    }
-
-    function getPhotoUrl(item) {
-      return String(item.PhotoMainURL || "").trim();
-    }
-
-    function isSold(item) {
-      return Number(item.Quantity || 0) <= 0;
-    }
-
     function getCart() {
       try {
         const raw = localStorage.getItem(CART_KEY);
         const parsed = JSON.parse(raw || "[]");
         return Array.isArray(parsed) ? parsed : [];
-      } catch {
+      } catch (err) {
         return [];
       }
     }
@@ -695,12 +694,28 @@
 
     function updateCartBadge() {
       const cart = getCart();
-      const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-      cartCountBadge.textContent = String(count);
+      const totalQty = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      cartCountBadge.textContent = String(totalQty);
+    }
+
+    function shortDescription(text) {
+      return String(text || "").trim();
+    }
+
+    function isSold(item) {
+      return Number(item.Quantity || 0) <= 0;
+    }
+
+    function getCoinLink(item) {
+      const slug = String(item.Slug || "").trim();
+      const id = String(item.ID || "").trim();
+      if (slug) return "coin.html?slug=" + encodeURIComponent(slug);
+      if (id) return "coin.html?id=" + encodeURIComponent(id);
+      return "coin.html";
     }
 
     function addToCart(item) {
-      if (isSold(item)) return;
+      if (!item || isSold(item)) return;
 
       const cart = getCart();
       const slug = String(item.Slug || "").trim();
@@ -710,8 +725,12 @@
         (slug && cartItem.slug === slug) || (!slug && id && cartItem.id === id)
       );
 
+      const stockQty = Number(item.Quantity || 0);
+
       if (existing) {
-        existing.qty = Number(existing.qty || 1) + 1;
+        const nextQty = Number(existing.qty || 0) + 1;
+        if (nextQty > stockQty) return;
+        existing.qty = nextQty;
       } else {
         cart.push({
           id: id,
@@ -725,173 +744,237 @@
 
       saveCart(cart);
       updateCartBadge();
-      alert("Додано в кошик");
     }
 
-    function sortItems(items) {
-      const mode = sortSelect.value;
-      const arr = [...items];
-
-      arr.sort((a, b) => {
-        if (mode === "stock_first") {
-          const aSold = isSold(a) ? 1 : 0;
-          const bSold = isSold(b) ? 1 : 0;
-          if (aSold !== bSold) return aSold - bSold;
-          return String(a.TitleUA || a.TitleEN || "").localeCompare(String(b.TitleUA || b.TitleEN || ""), "uk");
-        }
-
-        if (mode === "price_asc") {
-          return Number(a.PriceUAH || 0) - Number(b.PriceUAH || 0);
-        }
-
-        if (mode === "price_desc") {
-          return Number(b.PriceUAH || 0) - Number(a.PriceUAH || 0);
-        }
-
-        if (mode === "title_asc") {
-          return String(a.TitleUA || a.TitleEN || "").localeCompare(String(b.TitleUA || b.TitleEN || ""), "uk");
-        }
-
-        if (mode === "title_desc") {
-          return String(b.TitleUA || b.TitleEN || "").localeCompare(String(a.TitleUA || a.TitleEN || ""), "uk");
-        }
-
-        return 0;
-      });
-
-      return arr;
+    function populateFilters(items) {
+      fillSelect(continentSelect, uniqueSortedValues(items, "Continent"), continentSelect.value);
+      fillSelect(countrySelect, uniqueSortedValues(items, "Country"), countrySelect.value);
+      fillSelect(typeSelect, uniqueSortedValues(items, "Type"), typeSelect.value);
+      fillSelect(periodSelect, uniqueSortedValues(items, "NominalPeriod"), periodSelect.value);
+      fillSelect(metalSelect, uniqueSortedValues(items, "Metal"), metalSelect.value);
+      fillSelect(conditionSelect, uniqueSortedValues(items, "Condition"), conditionSelect.value);
     }
 
-    function shortDescription(text) {
-      return String(text || "").trim();
-    }
+    function filterItems() {
+      const q = String(searchInput.value || "").trim().toLowerCase();
+      const continent = String(continentSelect.value || "").trim();
+      const country = String(countrySelect.value || "").trim();
+      const type = String(typeSelect.value || "").trim();
+      const period = String(periodSelect.value || "").trim();
+      const metal = String(metalSelect.value || "").trim();
+      const condition = String(conditionSelect.value || "").trim();
+      const stockOnly = !!inStockOnly.checked;
 
-    function renderCoins(items) {
-      if (!items.length) {
-        coinsGrid.classList.add("hidden");
-        messageBox.classList.remove("hidden");
-        messageBox.textContent = "Товарів не знайдено.";
-        statsText.textContent = "Знайдено: 0";
-        return;
-      }
-
-      const sortedItems = sortItems(items);
-
-      const html = sortedItems.map((item, index) => {
-        const title = item.TitleUA || item.TitleEN || "Без назви";
-        const type = item.Type || "";
-        const price = Number(item.PriceUAH || 0);
-        const link = buildCoinLink(item);
-        const photo = getPhotoUrl(item);
-        const nominal = item.NominalPeriod || "";
-        const km = item.KrauseNumber || "";
-        const description = shortDescription(item.DescriptionUA);
-        const sold = isSold(item);
-
-        const photoBlock = photo
-          ? `<img class="coin-photo" src="${esc(photo)}" alt="${esc(title)}" loading="lazy" referrerpolicy="no-referrer"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-             <div class="no-photo" style="display:none;">Фото недоступне</div>`
-          : `<div class="no-photo">Немає фото</div>`;
-
-        return `
-          <article class="coin-card ${sold ? "is-sold" : ""}">
-            ${sold ? `<div class="sold-badge">ПРОДАНО</div>` : ""}
-
-            <a class="coin-photo-wrap" href="${esc(link)}">
-              ${photoBlock}
-            </a>
-
-            <div class="coin-body">
-              <div class="coin-type">${esc(type || "Монета")}</div>
-              <div class="coin-title">${esc(title)}</div>
-
-              <div class="coin-meta">
-                ${nominal ? `<div>${esc(nominal)}</div>` : ""}
-                ${km ? `<div>${esc(km)}</div>` : ""}
-              </div>
-
-              ${description ? `<div class="coin-description">${esc(description)}</div>` : ""}
-
-              <div class="coin-price">${esc(price)} грн</div>
-              ${sold ? `<div class="coin-status-text">Немає в наявності</div>` : ""}
-
-              <div class="coin-actions">
-                <a class="btn btn-details" href="${esc(link)}">Детальніше</a>
-                <button class="btn btn-cart ${sold ? "disabled" : ""}" type="button"
-                  ${sold ? "disabled" : ""} data-index="${index}" title="Додати в кошик">🛒</button>
-              </div>
-            </div>
-          </article>
-        `;
-      }).join("");
-
-      coinsGrid.innerHTML = html;
-      coinsGrid.classList.remove("hidden");
-      messageBox.classList.add("hidden");
-      statsText.textContent = "Знайдено: " + sortedItems.length;
-
-      coinsGrid.querySelectorAll(".btn-cart").forEach(btn => {
-        if (btn.disabled) return;
-        btn.addEventListener("click", () => {
-          const index = Number(btn.dataset.index || 0);
-          const item = sortedItems[index];
-          if (item) addToCart(item);
-        });
-      });
-    }
-
-    function applyFilters() {
-      const q = searchInput.value.trim().toLowerCase();
-      const continent = continentSelect.value.trim();
-      const country = countrySelect.value.trim();
-      const type = typeSelect.value.trim();
-      const period = periodSelect.value.trim();
-      const metal = metalSelect.value.trim();
-      const condition = conditionSelect.value.trim();
-      const onlyStock = inStockOnly.checked;
-
-      state.filtered = state.items.filter(item => {
-        if (q && !coinSearchText(item).includes(q)) return false;
+      let items = state.items.filter(item => {
+        if (stockOnly && Number(item.Quantity || 0) <= 0) return false;
         if (continent && String(item.Continent || "").trim() !== continent) return false;
         if (country && String(item.Country || "").trim() !== country) return false;
         if (type && String(item.Type || "").trim() !== type) return false;
         if (period && String(item.NominalPeriod || "").trim() !== period) return false;
         if (metal && String(item.Metal || "").trim() !== metal) return false;
         if (condition && String(item.Condition || "").trim() !== condition) return false;
-        if (onlyStock && Number(item.Quantity || 0) <= 0) return false;
+
+        if (q) {
+          const haystack = [
+            item.TitleUA,
+            item.TitleEN,
+            item.Country,
+            item.Continent,
+            item.Type,
+            item.NominalPeriod,
+            item.KrauseNumber,
+            item.Metal,
+            item.Theme,
+            item.DescriptionUA,
+            item.ID,
+            item.Slug,
+            item.Condition
+          ].join(" ").toLowerCase();
+
+          if (!haystack.includes(q)) return false;
+        }
+
         return true;
       });
 
-      renderCoins(state.filtered);
-      refreshCountryOptions();
+      const sortValue = sortSelect.value;
+
+      items.sort((a, b) => {
+        const aSold = isSold(a) ? 1 : 0;
+        const bSold = isSold(b) ? 1 : 0;
+        const aPrice = Number(a.PriceUAH || 0);
+        const bPrice = Number(b.PriceUAH || 0);
+        const aTitle = String(a.TitleUA || a.TitleEN || "").trim();
+        const bTitle = String(b.TitleUA || b.TitleEN || "").trim();
+
+        if (sortValue === "stock_first") {
+          if (aSold !== bSold) return aSold - bSold;
+          return aTitle.localeCompare(bTitle, "uk");
+        }
+
+        if (sortValue === "price_asc") return aPrice - bPrice;
+        if (sortValue === "price_desc") return bPrice - aPrice;
+        if (sortValue === "title_asc") return aTitle.localeCompare(bTitle, "uk");
+        if (sortValue === "title_desc") return bTitle.localeCompare(aTitle, "uk");
+
+        return 0;
+      });
+
+      state.filtered = items;
+      renderCoins(items);
     }
 
-    function refreshCountryOptions() {
-      const selectedContinent = continentSelect.value.trim();
-      const currentCountry = countrySelect.value.trim();
-      let source = state.items;
+    function renderCoins(items) {
+      statsText.textContent = "Показано: " + items.length;
 
-      if (selectedContinent) {
-        source = source.filter(item => String(item.Continent || "").trim() === selectedContinent);
+      if (!items.length) {
+        coinsGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "За вашим запитом нічого не знайдено.";
+        return;
       }
 
-      const countries = uniqueSortedValues(source, "Country");
-      fillSelect(countrySelect, countries, currentCountry);
+      messageBox.classList.add("hidden");
+      coinsGrid.classList.remove("hidden");
 
-      if (currentCountry && !countries.includes(currentCountry)) {
-        countrySelect.value = "";
-        applyFilters();
+      coinsGrid.innerHTML = items.map(item => {
+        const title = item.TitleUA || item.TitleEN || "Без назви";
+        const typeLabel = item.Type === "Монета за типом" ? "Монета за типом" : "Монета";
+        const nominal = item.NominalPeriod || "";
+        const km = item.KrauseNumber || "";
+        const description = shortDescription(item.DescriptionUA);
+        const sold = isSold(item);
+        const qty = Number(item.Quantity || 0);
+        const price = Number(item.PriceUAH || 0);
+        const photo = String(item.PhotoMainURL || "").trim();
+        const link = getCoinLink(item);
+
+        const qtyBadge = qty > 0
+          ? `<div class="coin-qty-badge" title="Кількість у наявності">${esc(qty)} шт</div>`
+          : "";
+
+        const photoBlock = photo
+          ? `<img class="coin-photo" src="${esc(photo)}" alt="${esc(title)}" loading="lazy" referrerpolicy="no-referrer"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+             <div class="no-photo" style="display:none;">Фото недоступне</div>
+             ${qtyBadge}`
+          : `<div class="no-photo">Немає фото</div>${qtyBadge}`;
+
+        return `
+          <article class="coin-card ${sold ? "is-sold" : ""}">
+            ${sold ? `<div class="sold-badge">ПРОДАНО</div>` : ""}
+
+            <a class="coin-photo-wrap" href="${esc(link)}" aria-label="${esc(title)}">
+              ${photoBlock}
+            </a>
+
+            <div class="coin-body">
+              <div class="coin-type">${esc(typeLabel)}</div>
+              <div class="coin-title">${esc(title)}</div>
+              <div class="coin-meta">${esc(nominal)}</div>
+              <div class="coin-meta">${esc(km)}</div>
+              <div class="coin-description">${esc(description)}</div>
+
+              <div class="coin-price">${price} грн</div>
+              ${sold ? `<div class="coin-status-text">Немає в наявності</div>` : ""}
+
+              <div class="coin-actions">
+                <a class="btn btn-details" href="${esc(link)}">Детальніше</a>
+                <button class="btn btn-cart ${sold ? "disabled" : ""}" type="button"
+                        data-action="add-to-cart"
+                        data-id="${esc(item.ID || "")}"
+                        data-slug="${esc(item.Slug || "")}"
+                        ${sold ? "disabled" : ""}
+                        title="${sold ? "Немає в наявності" : "Додати в кошик"}">🛒</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      coinsGrid.querySelectorAll('[data-action="add-to-cart"]').forEach(btn => {
+        btn.addEventListener("click", () => {
+          const slug = String(btn.dataset.slug || "").trim();
+          const id = String(btn.dataset.id || "").trim();
+
+          const item = state.items.find(x =>
+            (slug && String(x.Slug || "").trim() === slug) ||
+            (!slug && id && String(x.ID || "").trim() === id)
+          );
+
+          if (!item || isSold(item)) return;
+
+          addToCart(item);
+          btn.textContent = "✓";
+          setTimeout(() => {
+            if (!btn.disabled) btn.textContent = "🛒";
+          }, 900);
+        });
+      });
+    }
+
+    async function trackSiteView() {
+      try {
+        await fetch(GAS_URL + "?action=trackSiteView&_ts=" + Date.now(), {
+          method: "GET",
+          cache: "no-store"
+        });
+      } catch (err) {
       }
     }
 
-    function fillAllFilters() {
-      fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"));
-      fillSelect(countrySelect, uniqueSortedValues(state.items, "Country"));
-      fillSelect(typeSelect, uniqueSortedValues(state.items, "Type"));
-      fillSelect(periodSelect, uniqueSortedValues(state.items, "NominalPeriod"));
-      fillSelect(metalSelect, uniqueSortedValues(state.items, "Metal"));
-      fillSelect(conditionSelect, uniqueSortedValues(state.items, "Condition"));
+    async function loadSiteStats() {
+      try {
+        const response = await fetch(GAS_URL + "?action=getStat&key=site_views_total&_ts=" + Date.now(), {
+          method: "GET",
+          cache: "no-store"
+        });
+
+        const data = await response.json();
+        if (data && data.success) {
+          siteStatsText.textContent = "Переглядів сайту: " + Number(data.value || 0);
+        } else {
+          siteStatsText.textContent = "Переглядів сайту: —";
+        }
+      } catch (err) {
+        siteStatsText.textContent = "Переглядів сайту: —";
+      }
+    }
+
+    async function loadCoins() {
+      try {
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Завантаження товарів...";
+        coinsGrid.classList.add("hidden");
+
+        const response = await fetch(GAS_URL + "?action=getCoins&_ts=" + Date.now(), {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+
+        const text = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув не JSON");
+        }
+
+        if (!data || !data.success || !Array.isArray(data.items)) {
+          throw new Error((data && data.error) || "Не вдалося завантажити каталог");
+        }
+
+        state.items = data.items;
+        populateFilters(state.items);
+        filterItems();
+      } catch (err) {
+        coinsGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Помилка завантаження каталогу. " + String(err.message || err);
+        statsText.textContent = "Помилка";
+      }
     }
 
     function resetFilters() {
@@ -904,72 +987,24 @@
       conditionSelect.value = "";
       inStockOnly.checked = true;
       sortSelect.value = "stock_first";
-      refreshCountryOptions();
-      applyFilters();
+      filterItems();
     }
 
-    async function trackSiteView() {
-      try {
-        const response = await fetch(GAS_URL + "?action=trackSiteView&_ts=" + Date.now(), {
-          method: "GET",
-          cache: "no-store"
-        });
-        const data = await response.json();
-
-        if (data && data.success) {
-          siteStatsText.textContent = "Переглядів сайту: " + Number(data.value || 0);
-        }
-      } catch (error) {
-        console.error("trackSiteView error:", error);
-      }
-    }
-
-    async function loadCoins() {
-      try {
-        messageBox.classList.remove("hidden");
-        coinsGrid.classList.add("hidden");
-        messageBox.textContent = "Завантаження товарів...";
-        statsText.textContent = "Завантаження...";
-
-        const url = GAS_URL + "?action=getCoins&_ts=" + Date.now();
-        const response = await fetch(url, { method: "GET", cache: "no-store" });
-        const data = await response.json();
-
-        if (!data || !data.success || !Array.isArray(data.items)) {
-          throw new Error((data && data.error) || "Не вдалося завантажити товари");
-        }
-
-        state.items = data.items;
-        fillAllFilters();
-        state.filtered = [...state.items];
-        renderCoins(state.filtered);
-
-      } catch (error) {
-        console.error(error);
-        coinsGrid.classList.add("hidden");
-        messageBox.classList.remove("hidden");
-        messageBox.textContent = "Помилка завантаження товарів.";
-        statsText.textContent = "Помилка";
-      }
-    }
-
-    searchInput.addEventListener("input", applyFilters);
-    continentSelect.addEventListener("change", () => {
-      refreshCountryOptions();
-      applyFilters();
-    });
-    countrySelect.addEventListener("change", applyFilters);
-    typeSelect.addEventListener("change", applyFilters);
-    periodSelect.addEventListener("change", applyFilters);
-    metalSelect.addEventListener("change", applyFilters);
-    conditionSelect.addEventListener("change", applyFilters);
-    inStockOnly.addEventListener("change", applyFilters);
-    sortSelect.addEventListener("change", applyFilters);
+    searchInput.addEventListener("input", filterItems);
+    continentSelect.addEventListener("change", filterItems);
+    countrySelect.addEventListener("change", filterItems);
+    typeSelect.addEventListener("change", filterItems);
+    periodSelect.addEventListener("change", filterItems);
+    metalSelect.addEventListener("change", filterItems);
+    conditionSelect.addEventListener("change", filterItems);
+    inStockOnly.addEventListener("change", filterItems);
+    sortSelect.addEventListener("change", filterItems);
     resetFiltersBtn.addEventListener("click", resetFilters);
 
     updateCartBadge();
-    loadCoins();
     trackSiteView();
+    loadSiteStats();
+    loadCoins();
   </script>
 </body>
 </html>
