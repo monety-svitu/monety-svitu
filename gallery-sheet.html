@@ -236,47 +236,48 @@
       overflow: hidden;
       box-shadow: var(--shadow);
       display: grid;
-      grid-template-rows: 128px auto;
-    }
-
-    .sheet-photos {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      border-bottom: 1px solid var(--line-soft);
-      background: #fff;
+      grid-template-columns: 94px 94px 1fr;
+      min-height: 108px;
     }
 
     .sheet-photo-box {
-      height: 128px;
+      width: 94px;
+      height: 94px;
+      background: #fff;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff;
-      overflow: hidden;
+      margin: 7px 0 7px 0;
     }
 
-    .sheet-photo-box + .sheet-photo-box {
-      border-left: 1px solid var(--line-soft);
+    .sheet-photo-box.first {
+      margin-left: 7px;
+      border-right: 1px solid var(--line-soft);
+      padding-right: 0;
+    }
+
+    .sheet-photo-box.second {
+      border-right: 1px solid var(--line-soft);
+      margin-left: 0;
     }
 
     .sheet-photo {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       display: block;
       background: #fff;
     }
 
-    .sheet-no-photo {
-      font-size: 11px;
-      color: #8b95a7;
-      text-align: center;
-      padding: 6px;
-      line-height: 1.25;
+    .sheet-photo-empty {
+      width: 100%;
+      height: 100%;
+      background: #fff;
     }
 
     .sheet-body {
-      padding: 8px 9px 9px;
+      padding: 8px 10px 8px 10px;
       display: flex;
       flex-direction: column;
       gap: 3px;
@@ -312,11 +313,11 @@
     }
 
     .sheet-period {
-      margin-top: 2px;
+      margin-top: auto;
       padding-top: 5px;
       border-top: 1px solid var(--line-soft);
       font-size: 13px;
-      line-height: 1.25;
+      line-height: 1.2;
       color: #475467;
       font-weight: 700;
     }
@@ -617,7 +618,6 @@
         item.PhotoExtra1URL ||
         item.PhotoExtra2URL ||
         item.PhotoExtra3URL ||
-        item.PhotoMainURL ||
         ""
       ).trim();
     }
@@ -625,16 +625,14 @@
     function buildPhoto(url, alt) {
       const clean = String(url || "").trim();
       if (!clean) {
-        return `<div class="sheet-no-photo">Немає фото</div>`;
+        return `<div class="sheet-photo-empty"></div>`;
       }
 
       return `<img class="sheet-photo"
                    src="${esc(clean)}"
                    alt="${esc(alt)}"
                    loading="lazy"
-                   referrerpolicy="no-referrer"
-                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-              <div class="sheet-no-photo" style="display:none;">Немає фото</div>`;
+                   referrerpolicy="no-referrer" />`;
     }
 
     function getPageItems() {
@@ -678,10 +676,8 @@
 
         return `
           <article class="sheet-card">
-            <div class="sheet-photos">
-              <div class="sheet-photo-box">${photo1}</div>
-              <div class="sheet-photo-box">${photo2}</div>
-            </div>
+            <div class="sheet-photo-box first">${photo1}</div>
+            <div class="sheet-photo-box second">${photo2}</div>
 
             <div class="sheet-body">
               <div class="sheet-id">ID: ${esc(idText)}</div>
