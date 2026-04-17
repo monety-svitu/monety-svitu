@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Галерея для себе — Монети Світу</title>
+  <link rel="icon" type="image/svg+xml" href="/monety-svitu/favicon.svg" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="description" content="Внутрішня галерея монет для відбору та фіксації списків." />
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --line: #e4e7eb;
+      --line-soft: #edf1f4;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2f6fdd;
+      --primary-hover: #255fc2;
+      --shadow: 0 3px 12px rgba(0,0,0,0.05);
+      --radius: 16px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 14px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .header-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      text-decoration: none;
+      color: #222;
+    }
+
+    .brand h1 {
+      margin: 0 0 4px;
+      font-size: 24px;
+    }
+
+    .brand .subtitle {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--primary);
+      font-weight: 700;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    .small-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      background: var(--primary);
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .small-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .small-btn.secondary {
+      background: #eef2f6;
+      color: #1f2937;
+    }
+
+    .small-btn.secondary:hover {
+      background: #e5ebf1;
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .top-panel {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .filters-card,
+    .info-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .filters-inner,
+    .info-inner {
+      padding: 14px;
+    }
+
+    .panel-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 5px;
+      font-weight: 700;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid #d4d8de;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: #8bb3ff;
+      box-shadow: 0 0 0 3px rgba(31,111,235,0.10);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #333;
+      margin-top: 2px;
+    }
+
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .stats-strong {
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .hint {
+      font-size: 13px;
+      line-height: 1.55;
+      color: #667085;
+    }
+
+    .message {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      color: #555;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .sheet-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 116px 1fr;
+      min-height: 166px;
+    }
+
+    .sheet-photos {
+      border-right: 1px solid var(--line-soft);
+      background: #fff;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .sheet-photo-box {
+      position: relative;
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+    }
+
+    .sheet-photo-box + .sheet-photo-box {
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .sheet-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+
+    .sheet-no-photo {
+      font-size: 12px;
+      color: #8b95a7;
+      text-align: center;
+      padding: 8px;
+      line-height: 1.3;
+    }
+
+    .sheet-body {
+      padding: 10px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .sheet-id {
+      font-size: 12px;
+      font-weight: 700;
+      color: #667085;
+      line-height: 1.2;
+    }
+
+    .sheet-type {
+      font-size: 12px;
+      font-weight: 700;
+      color: #5f6f85;
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
+      line-height: 1.2;
+    }
+
+    .sheet-title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #111827;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 40px;
+    }
+
+    .sheet-period {
+      margin-top: auto;
+      padding-top: 6px;
+      border-top: 1px solid var(--line-soft);
+      font-size: 13px;
+      line-height: 1.35;
+      color: #475467;
+      font-weight: 700;
+    }
+
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .page-indicator {
+      font-size: 14px;
+      font-weight: 700;
+      color: #344054;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      .top-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sheet-card {
+        grid-template-columns: 104px 1fr;
+      }
+    }
+
+    @media print {
+      header,
+      .top-panel,
+      .pagination {
+        display: none !important;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      main {
+        max-width: none;
+        padding: 0;
+      }
+
+      .gallery-grid {
+        gap: 8px;
+      }
+
+      .sheet-card {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrap">
+      <a class="brand" href="index.html">
+        <h1>Монети Світу</h1>
+        <div class="subtitle">Внутрішня галерея для відбору</div>
+      </a>
+
+      <div class="header-right">
+        <a class="back-link" href="index.html">← Назад до каталогу</a>
+        <button id="printBtn" class="small-btn secondary" type="button">Друк / PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="top-panel">
+      <section class="filters-card">
+        <div class="filters-inner">
+          <div class="panel-title">Фільтри</div>
+
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label for="searchInput">Пошук</label>
+              <input id="searchInput" type="text" placeholder="ID, назва, країна, KM..." />
+            </div>
+
+            <div class="filter-group">
+              <label for="continentSelect">Регіон</label>
+              <select id="continentSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="countrySelect">Країна</label>
+              <select id="countrySelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="typeSelect">Тип</label>
+              <select id="typeSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="periodSelect">Період</label>
+              <select id="periodSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="metalSelect">Метал</label>
+              <select id="metalSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="conditionSelect">Стан</label>
+              <select id="conditionSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="check-row">
+              <input id="inStockOnly" type="checkbox" checked />
+              <label for="inStockOnly" style="margin:0;">Тільки в наявності</label>
+            </div>
+
+            <div class="actions-row">
+              <button id="resetFiltersBtn" class="small-btn secondary" type="button">Скинути</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-card">
+        <div class="info-inner">
+          <div class="panel-title">Аркуш відбору</div>
+
+          <div class="stats-row">
+            <div>Знайдено: <span id="foundCount" class="stats-strong">0</span></div>
+            <div>На сторінці: <span class="stats-strong">8</span></div>
+            <div>Сторінка: <span id="pageNow" class="stats-strong">1</span></div>
+          </div>
+
+          <div class="hint">
+            Це внутрішня сторінка для швидкого відбору. Показує компактні картки по 8 штук: 2 колонки × 4 рядки.
+            Зручно для скріну, друку або збереження списку монет.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div id="messageBox" class="message">Завантаження монет...</div>
+    <div id="galleryGrid" class="gallery-grid hidden"></div>
+
+    <div id="pagination" class="pagination hidden">
+      <button id="prevPageBtn" class="small-btn secondary" type="button">← Назад</button>
+      <div id="pageIndicator" class="page-indicator">Сторінка 1 / 1</div>
+      <button id="nextPageBtn" class="small-btn" type="button">Далі →</button>
+    </div>
+  </main>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
+    const PER_PAGE = 8;
+
+    const state = {
+      items: [],
+      filtered: [],
+      page: 1
+    };
+
+    const searchInput = document.getElementById("searchInput");
+    const continentSelect = document.getElementById("continentSelect");
+    const countrySelect = document.getElementById("countrySelect");
+    const typeSelect = document.getElementById("typeSelect");
+    const periodSelect = document.getElementById("periodSelect");
+    const metalSelect = document.getElementById("metalSelect");
+    const conditionSelect = document.getElementById("conditionSelect");
+    const inStockOnly = document.getElementById("inStockOnly");
+    const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+
+    const foundCount = document.getElementById("foundCount");
+    const pageNow = document.getElementById("pageNow");
+    const messageBox = document.getElementById("messageBox");
+    const galleryGrid = document.getElementById("galleryGrid");
+
+    const pagination = document.getElementById("pagination");
+    const prevPageBtn = document.getElementById("prevPageBtn");
+    const nextPageBtn = document.getElementById("nextPageBtn");
+    const pageIndicator = document.getElementById("pageIndicator");
+    const printBtn = document.getElementById("printBtn");
+
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function uniqueSortedValues(items, fieldName) {
+      const set = new Set();
+      items.forEach(item => {
+        const value = String(item[fieldName] || "").trim();
+        if (value) set.add(value);
+      });
+      return Array.from(set).sort((a, b) => a.localeCompare(b, "uk"));
+    }
+
+    function fillSelect(selectEl, values, keepValue = "") {
+      selectEl.innerHTML = `<option value="">Усі</option>` +
+        values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+      selectEl.value = keepValue || "";
+    }
+
+    function populateFilters(items) {
+      fillSelect(continentSelect, uniqueSortedValues(items, "Continent"), continentSelect.value);
+      fillSelect(countrySelect, uniqueSortedValues(items, "Country"), countrySelect.value);
+      fillSelect(typeSelect, uniqueSortedValues(items, "Type"), typeSelect.value);
+      fillSelect(periodSelect, uniqueSortedValues(items, "NominalPeriod"), periodSelect.value);
+      fillSelect(metalSelect, uniqueSortedValues(items, "Metal"), metalSelect.value);
+      fillSelect(conditionSelect, uniqueSortedValues(items, "Condition"), conditionSelect.value);
+    }
+
+    function filterItems() {
+      const q = String(searchInput.value || "").trim().toLowerCase();
+      const continent = String(continentSelect.value || "").trim();
+      const country = String(countrySelect.value || "").trim();
+      const type = String(typeSelect.value || "").trim();
+      const period = String(periodSelect.value || "").trim();
+      const metal = String(metalSelect.value || "").trim();
+      const condition = String(conditionSelect.value || "").trim();
+      const stockOnly = !!inStockOnly.checked;
+
+      let items = state.items.filter(item => {
+        if (stockOnly && Number(item.Quantity || 0) <= 0) return false;
+        if (continent && String(item.Continent || "").trim() !== continent) return false;
+        if (country && String(item.Country || "").trim() !== country) return false;
+        if (type && String(item.Type || "").trim() !== type) return false;
+        if (period && String(item.NominalPeriod || "").trim() !== period) return false;
+        if (metal && String(item.Metal || "").trim() !== metal) return false;
+        if (condition && String(item.Condition || "").trim() !== condition) return false;
+
+        if (q) {
+          const haystack = [
+            item.ID,
+            item.TitleUA,
+            item.TitleEN,
+            item.Country,
+            item.Continent,
+            item.Type,
+            item.NominalPeriod,
+            item.KrauseNumber,
+            item.Metal,
+            item.DescriptionUA,
+            item.Slug,
+            item.Condition
+          ].join(" ").toLowerCase();
+
+          if (!haystack.includes(q)) return false;
+        }
+
+        return true;
+      });
+
+      items.sort((a, b) => {
+        const aTitle = String(a.TitleUA || a.TitleEN || "").trim();
+        const bTitle = String(b.TitleUA || b.TitleEN || "").trim();
+        return aTitle.localeCompare(bTitle, "uk");
+      });
+
+      state.filtered = items;
+      state.page = 1;
+      renderCurrentPage();
+    }
+
+    function buildPhoto(url, alt) {
+      const clean = String(url || "").trim();
+      if (!clean) {
+        return `<div class="sheet-no-photo">Немає фото</div>`;
+      }
+
+      return `<img class="sheet-photo"
+                   src="${esc(clean)}"
+                   alt="${esc(alt)}"
+                   loading="lazy"
+                   referrerpolicy="no-referrer"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+              <div class="sheet-no-photo" style="display:none;">Фото недоступне</div>`;
+    }
+
+    function getPageItems() {
+      const start = (state.page - 1) * PER_PAGE;
+      return state.filtered.slice(start, start + PER_PAGE);
+    }
+
+    function renderCurrentPage() {
+      const total = state.filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+      if (state.page > totalPages) state.page = totalPages;
+
+      foundCount.textContent = String(total);
+      pageNow.textContent = String(state.page);
+      pageIndicator.textContent = "Сторінка " + state.page + " / " + totalPages;
+
+      prevPageBtn.disabled = state.page <= 1;
+      nextPageBtn.disabled = state.page >= totalPages;
+
+      pagination.classList.toggle("hidden", total <= PER_PAGE);
+
+      const items = getPageItems();
+
+      if (!items.length) {
+        galleryGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "За вашим запитом нічого не знайдено.";
+        return;
+      }
+
+      messageBox.classList.add("hidden");
+      galleryGrid.classList.remove("hidden");
+
+      galleryGrid.innerHTML = items.map(item => {
+        const title = item.TitleUA || item.TitleEN || "Без назви";
+        const typeText = item.Type || "—";
+        const idText = item.ID || "—";
+        const periodText = item.NominalPeriod || "—";
+
+        const photo1 = buildPhoto(item.PhotoMainURL, title + " фото 1");
+        const photo2 = buildPhoto(item.PhotoExtra1URL || item.PhotoExtra2URL || item.PhotoExtra3URL, title + " фото 2");
+
+        return `
+          <article class="sheet-card">
+            <div class="sheet-photos">
+              <div class="sheet-photo-box">${photo1}</div>
+              <div class="sheet-photo-box">${photo2}</div>
+            </div>
+
+            <div class="sheet-body">
+              <div class="sheet-id">ID: ${esc(idText)}</div>
+              <div class="sheet-type">${esc(typeText)}</div>
+              <div class="sheet-title">${esc(title)}</div>
+              <div class="sheet-period">${esc(periodText)}</div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadCoins() {
+      try {
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Завантаження монет...";
+        galleryGrid.classList.add("hidden");
+
+        const response = await fetch(GAS_URL + "?action=getCoins&_ts=" + Date.now(), {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+
+        const text = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув не JSON");
+        }
+
+        if (!data || !data.success || !Array.isArray(data.items)) {
+          throw new Error((data && data.error) || "Не вдалося завантажити монети");
+        }
+
+        state.items = data.items;
+        populateFilters(state.items);
+        filterItems();
+      } catch (err) {
+        galleryGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Помилка завантаження. " + String(err.message || err);
+      }
+    }
+
+    function resetFilters() {
+      searchInput.value = "";
+      continentSelect.value = "";
+      countrySelect.value = "";
+      typeSelect.value = "";
+      periodSelect.value = "";
+      metalSelect.value = "";
+      conditionSelect.value = "";
+      inStockOnly.checked = true;
+      filterItems();
+    }
+
+    searchInput.addEventListener("input", filterItems);
+    continentSelect.addEventListener("change", filterItems);
+    countrySelect.addEventListener("change", filterItems);
+    typeSelect.addEventListener("change", filterItems);
+    periodSelect.addEventListener("change", filterItems);
+    metalSelect.addEventListener("change", filterItems);
+    conditionSelect.addEventListener("change", filterItems);
+    inStockOnly.addEventListener("change", filterItems);
+    resetFiltersBtn.addEventListener("click", resetFilters);
+
+    prevPageBtn.addEventListener("click", () => {
+      if (state.page > 1) {
+        state.page--;
+        renderCurrentPage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    nextPageBtn.addEventListener("click", () => {
+      const totalPages = Math.max(1, Math.ceil(state.filtered.length / PER_PAGE));
+      if (state.page < totalPages) {
+        state.page++;
+        renderCurrentPage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    printBtn.addEventListener("click", () => {
+      window.print();
+    });
+
+    loadCoins();
+  </script>
+</body>
+</html>
