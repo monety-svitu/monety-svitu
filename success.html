@@ -9,11 +9,26 @@
   <style>
     * { box-sizing: border-box; }
 
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --line: #e4e7eb;
+      --line-soft: #edf1f4;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2f6fdd;
+      --primary-hover: #255fc2;
+      --success: #2e7d32;
+      --success-soft: #eaf8ee;
+      --shadow: 0 3px 12px rgba(0,0,0,0.05);
+      --radius: 22px;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      color: #222;
+      background: var(--bg);
+      color: var(--text);
     }
 
     header {
@@ -58,7 +73,7 @@
 
     .back-link {
       text-decoration: none;
-      color: #1f6feb;
+      color: var(--primary);
       font-weight: 700;
       white-space: nowrap;
     }
@@ -68,7 +83,7 @@
       align-items: center;
       gap: 8px;
       text-decoration: none;
-      background: #1f6feb;
+      background: var(--primary);
       color: #fff;
       padding: 10px 14px;
       border-radius: 999px;
@@ -79,7 +94,7 @@
     }
 
     .cart-top-link:hover {
-      background: #1859be;
+      background: var(--primary-hover);
     }
 
     .cart-top-icon {
@@ -93,7 +108,7 @@
       padding: 0 6px;
       border-radius: 999px;
       background: #fff;
-      color: #1f6feb;
+      color: var(--primary);
       font-size: 12px;
       font-weight: 700;
       display: inline-flex;
@@ -109,10 +124,10 @@
     }
 
     .success-card {
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 22px;
-      box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       overflow: hidden;
     }
 
@@ -121,15 +136,16 @@
     }
 
     .success-badge {
-      width: 64px;
-      height: 64px;
+      width: 62px;
+      height: 62px;
       border-radius: 999px;
-      background: #e9f9ee;
+      background: var(--success-soft);
       color: #1b5e20;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 34px;
+      font-size: 32px;
+      font-weight: 700;
       margin-bottom: 16px;
     }
 
@@ -138,18 +154,20 @@
       font-weight: 700;
       margin-bottom: 10px;
       line-height: 1.2;
+      color: var(--text);
     }
 
     .success-text {
       font-size: 16px;
-      color: #444;
+      color: #475467;
       line-height: 1.65;
       margin-bottom: 18px;
+      max-width: 720px;
     }
 
     .order-box {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
+      background: #fafbfc;
+      border: 1px solid var(--line-soft);
       border-radius: 16px;
       padding: 16px;
       margin-bottom: 18px;
@@ -157,7 +175,7 @@
 
     .order-label {
       font-size: 13px;
-      color: #666;
+      color: var(--muted);
       margin-bottom: 6px;
       font-weight: 700;
     }
@@ -165,15 +183,30 @@
     .order-number {
       font-size: 24px;
       font-weight: 700;
-      color: #111;
+      color: #111827;
       word-break: break-word;
+      line-height: 1.2;
+    }
+
+    .info-box {
+      background: #fff;
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      padding: 15px 16px;
+    }
+
+    .info-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #344054;
     }
 
     .info-list {
       margin: 0;
       padding-left: 18px;
-      color: #444;
-      line-height: 1.7;
+      color: #475467;
+      line-height: 1.65;
       font-size: 15px;
     }
 
@@ -185,10 +218,12 @@
     }
 
     .btn {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
       text-decoration: none;
-      background: #1f6feb;
+      background: var(--primary);
       color: #fff;
       padding: 12px 18px;
       border-radius: 12px;
@@ -196,25 +231,30 @@
       border: none;
       cursor: pointer;
       font-size: 15px;
+      transition: background 0.15s ease, transform 0.08s ease;
     }
 
     .btn:hover {
-      background: #1859be;
+      background: var(--primary-hover);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
     }
 
     .btn-secondary {
-      background: #eee;
-      color: #222;
+      background: #eef2f6;
+      color: #1f2937;
     }
 
     .btn-secondary:hover {
-      background: #e2e2e2;
+      background: #e5ebf1;
     }
 
     .note {
       margin-top: 18px;
       font-size: 14px;
-      color: #666;
+      color: #667085;
       line-height: 1.6;
     }
 
@@ -281,11 +321,14 @@
           <div id="orderNumber" class="order-number">—</div>
         </div>
 
-        <ul class="info-list">
-          <li>На фото в каталозі показані реальні лоти.</li>
-          <li>Після підтвердження замовлення монети резервуються.</li>
-          <li>Зв’язок відбуватиметься за вказаним номером телефону / Viber.</li>
-        </ul>
+        <div class="info-box">
+          <div class="info-title">Що далі</div>
+          <ul class="info-list">
+            <li>Після підтвердження замовлення монети резервуються.</li>
+            <li>Зв’язок відбуватиметься за вказаним номером телефону / Viber.</li>
+            <li>Збережіть номер замовлення на випадок уточнень.</li>
+          </ul>
+        </div>
 
         <div class="actions">
           <a class="btn" href="index.html">Повернутися в каталог</a>
@@ -293,7 +336,7 @@
         </div>
 
         <div class="note">
-          Збережіть номер замовлення на випадок уточнень.
+          Якщо сторінка була відкрита повторно, номер замовлення береться з адресного рядка.
         </div>
       </div>
     </section>
