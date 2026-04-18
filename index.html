@@ -742,7 +742,7 @@
       const currentValue = keepValue || "";
       selectEl.innerHTML = `<option value="">Усі</option>` +
         values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
-      selectEl.value = currentValue;
+      selectEl.value = values.includes(currentValue) ? currentValue : "";
     }
 
     function getCart() {
@@ -813,16 +813,67 @@
       updateCartBadge();
     }
 
-    function populateFilters(items) {
-      fillSelect(continentSelect, uniqueSortedValues(items, "Continent"), continentSelect.value);
-      fillSelect(countrySelect, uniqueSortedValues(items, "Country"), countrySelect.value);
-      fillSelect(typeSelect, uniqueSortedValues(items, "Type"), typeSelect.value);
-      fillSelect(periodSelect, uniqueSortedValues(items, "NominalPeriod"), periodSelect.value);
-      fillSelect(metalSelect, uniqueSortedValues(items, "Metal"), metalSelect.value);
-      fillSelect(conditionSelect, uniqueSortedValues(items, "Condition"), conditionSelect.value);
+    function repopulateLinkedFilters() {
+      const continentValue = String(continentSelect.value || "").trim();
+      const countryValue = String(countrySelect.value || "").trim();
+      const typeValue = String(typeSelect.value || "").trim();
+      const periodValue = String(periodSelect.value || "").trim();
+      const metalValue = String(metalSelect.value || "").trim();
+      const conditionValue = String(conditionSelect.value || "").trim();
+
+      const itemsForCountry = state.items.filter(item => {
+        if (continentValue && String(item.Continent || "").trim() !== continentValue) return false;
+        return true;
+      });
+
+      const countryValues = uniqueSortedValues(itemsForCountry, "Country");
+      fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"), continentValue);
+      fillSelect(countrySelect, countryValues, countryValue);
+
+      const actualCountryValue = String(countrySelect.value || "").trim();
+
+      const itemsForType = itemsForCountry.filter(item => {
+        if (actualCountryValue && String(item.Country || "").trim() !== actualCountryValue) return false;
+        return true;
+      });
+
+      const typeValues = uniqueSortedValues(itemsForType, "Type");
+      fillSelect(typeSelect, typeValues, typeValue);
+
+      const actualTypeValue = String(typeSelect.value || "").trim();
+
+      const itemsForPeriod = itemsForType.filter(item => {
+        if (actualTypeValue && String(item.Type || "").trim() !== actualTypeValue) return false;
+        return true;
+      });
+
+      const periodValues = uniqueSortedValues(itemsForPeriod, "NominalPeriod");
+      fillSelect(periodSelect, periodValues, periodValue);
+
+      const actualPeriodValue = String(periodSelect.value || "").trim();
+
+      const itemsForMetal = itemsForPeriod.filter(item => {
+        if (actualPeriodValue && String(item.NominalPeriod || "").trim() !== actualPeriodValue) return false;
+        return true;
+      });
+
+      const metalValues = uniqueSortedValues(itemsForMetal, "Metal");
+      fillSelect(metalSelect, metalValues, metalValue);
+
+      const actualMetalValue = String(metalSelect.value || "").trim();
+
+      const itemsForCondition = itemsForMetal.filter(item => {
+        if (actualMetalValue && String(item.Metal || "").trim() !== actualMetalValue) return false;
+        return true;
+      });
+
+      const conditionValues = uniqueSortedValues(itemsForCondition, "Condition");
+      fillSelect(conditionSelect, conditionValues, conditionValue);
     }
 
     function filterItems() {
+      repopulateLinkedFilters();
+
       const q = String(searchInput.value || "").trim().toLowerCase();
       const continent = String(continentSelect.value || "").trim();
       const country = String(countrySelect.value || "").trim();
@@ -1047,7 +1098,7 @@
         }
 
         state.items = data.items;
-        populateFilters(state.items);
+        repopulateLinkedFilters();
         filterItems();
       } catch (err) {
         coinsGrid.classList.add("hidden");
@@ -1067,6 +1118,7 @@
       conditionSelect.value = "";
       inStockOnly.checked = true;
       sortSelect.value = "stock_first";
+      repopulateLinkedFilters();
       filterItems();
     }
 
