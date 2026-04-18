@@ -327,7 +327,7 @@
       position: absolute;
       top: 12px;
       left: 12px;
-      z-index: 3;
+      z-index: 4;
       background: var(--danger);
       color: #fff;
       font-size: 12px;
@@ -346,6 +346,7 @@
       overflow: hidden;
       border-bottom: 1px solid var(--line-soft);
       text-decoration: none;
+      touch-action: pan-y;
     }
 
     .coin-photo {
@@ -354,13 +355,79 @@
       object-fit: contain;
       display: block;
       background: #fff;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .coin-photo-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.92);
+      color: #111827;
+      font-size: 22px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 3;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+      opacity: 0;
+      transition: opacity 0.15s ease, background 0.15s ease;
+    }
+
+    .coin-card:hover .coin-photo-nav,
+    .coin-photo-wrap.has-multiple .coin-photo-nav {
+      opacity: 1;
+    }
+
+    .coin-photo-nav:hover {
+      background: #fff;
+    }
+
+    .coin-photo-prev {
+      left: 8px;
+    }
+
+    .coin-photo-next {
+      right: 8px;
+    }
+
+    .coin-photo-dots {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+      z-index: 3;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(2px);
+    }
+
+    .coin-photo-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(17,24,39,0.25);
+    }
+
+    .coin-photo-dot.active {
+      background: rgba(17,24,39,0.8);
     }
 
     .coin-qty-badge {
       position: absolute;
       right: 12px;
-      bottom: 12px;
-      z-index: 2;
+      top: 12px;
+      z-index: 3;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -577,6 +644,12 @@
       .coins-grid {
         grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
       }
+
+      .coin-photo-nav {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+      }
     }
   </style>
 </head>
@@ -702,7 +775,8 @@
 
     const state = {
       items: [],
-      filtered: []
+      filtered: [],
+      cardGalleryIndex: {}
     };
 
     const searchInput = document.getElementById("searchInput");
@@ -781,6 +855,24 @@
       return "coin.html";
     }
 
+    function getItemKey(item) {
+      return String(item.Slug || item.ID || "").trim();
+    }
+
+    function getCardPhotos(item) {
+      const photos = [];
+      [
+        item.PhotoMainURL,
+        item.PhotoExtra1URL,
+        item.PhotoExtra2URL,
+        item.PhotoExtra3URL
+      ].forEach(url => {
+        const clean = String(url || "").trim();
+        if (clean && !photos.includes(clean)) photos.push(clean);
+      });
+      return photos;
+    }
+
     function addToCart(item) {
       if (!item || isSold(item)) return;
 
@@ -821,54 +913,41 @@
       const metalValue = String(metalSelect.value || "").trim();
       const conditionValue = String(conditionSelect.value || "").trim();
 
+      fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"), continentValue);
+
       const itemsForCountry = state.items.filter(item => {
         if (continentValue && String(item.Continent || "").trim() !== continentValue) return false;
         return true;
       });
-
-      const countryValues = uniqueSortedValues(itemsForCountry, "Country");
-      fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"), continentValue);
-      fillSelect(countrySelect, countryValues, countryValue);
-
+      fillSelect(countrySelect, uniqueSortedValues(itemsForCountry, "Country"), countryValue);
       const actualCountryValue = String(countrySelect.value || "").trim();
 
       const itemsForType = itemsForCountry.filter(item => {
         if (actualCountryValue && String(item.Country || "").trim() !== actualCountryValue) return false;
         return true;
       });
-
-      const typeValues = uniqueSortedValues(itemsForType, "Type");
-      fillSelect(typeSelect, typeValues, typeValue);
-
+      fillSelect(typeSelect, uniqueSortedValues(itemsForType, "Type"), typeValue);
       const actualTypeValue = String(typeSelect.value || "").trim();
 
       const itemsForPeriod = itemsForType.filter(item => {
         if (actualTypeValue && String(item.Type || "").trim() !== actualTypeValue) return false;
         return true;
       });
-
-      const periodValues = uniqueSortedValues(itemsForPeriod, "NominalPeriod");
-      fillSelect(periodSelect, periodValues, periodValue);
-
+      fillSelect(periodSelect, uniqueSortedValues(itemsForPeriod, "NominalPeriod"), periodValue);
       const actualPeriodValue = String(periodSelect.value || "").trim();
 
       const itemsForMetal = itemsForPeriod.filter(item => {
         if (actualPeriodValue && String(item.NominalPeriod || "").trim() !== actualPeriodValue) return false;
         return true;
       });
-
-      const metalValues = uniqueSortedValues(itemsForMetal, "Metal");
-      fillSelect(metalSelect, metalValues, metalValue);
-
+      fillSelect(metalSelect, uniqueSortedValues(itemsForMetal, "Metal"), metalValue);
       const actualMetalValue = String(metalSelect.value || "").trim();
 
       const itemsForCondition = itemsForMetal.filter(item => {
         if (actualMetalValue && String(item.Metal || "").trim() !== actualMetalValue) return false;
         return true;
       });
-
-      const conditionValues = uniqueSortedValues(itemsForCondition, "Condition");
-      fillSelect(conditionSelect, conditionValues, conditionValue);
+      fillSelect(conditionSelect, uniqueSortedValues(itemsForCondition, "Condition"), conditionValue);
     }
 
     function filterItems() {
@@ -964,26 +1043,44 @@
         const sold = isSold(item);
         const qty = Number(item.Quantity || 0);
         const price = Number(item.PriceUAH || 0);
-        const photo = String(item.PhotoMainURL || "").trim();
         const link = getCoinLink(item);
+        const photos = getCardPhotos(item);
+        const itemKey = getItemKey(item);
+        const currentIndex = Math.min(Number(state.cardGalleryIndex[itemKey] || 0), Math.max(photos.length - 1, 0));
+        const currentPhoto = photos[currentIndex] || "";
+        const hasManyPhotos = photos.length > 1;
 
         const qtyBadge = qty > 0
           ? `<div class="coin-qty-badge" title="Кількість у наявності">${esc(qty)} шт</div>`
           : "";
 
-        const photoBlock = photo
-          ? `<img class="coin-photo" src="${esc(photo)}" alt="${esc(title)}" loading="lazy" referrerpolicy="no-referrer"
+        const dots = hasManyPhotos
+          ? `<div class="coin-photo-dots">${photos.map((_, i) => `<span class="coin-photo-dot ${i === currentIndex ? "active" : ""}"></span>`).join("")}</div>`
+          : "";
+
+        const photoNav = hasManyPhotos
+          ? `
+            <button class="coin-photo-nav coin-photo-prev" type="button" data-action="prev-photo" data-key="${esc(itemKey)}" aria-label="Попереднє фото">‹</button>
+            <button class="coin-photo-nav coin-photo-next" type="button" data-action="next-photo" data-key="${esc(itemKey)}" aria-label="Наступне фото">›</button>
+          `
+          : "";
+
+        const photoBlock = currentPhoto
+          ? `<img class="coin-photo" src="${esc(currentPhoto)}" alt="${esc(title)}" loading="lazy" referrerpolicy="no-referrer"
                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-             <div class="no-photo" style="display:none;">Фото недоступне</div>
-             ${qtyBadge}`
-          : `<div class="no-photo">Немає фото</div>${qtyBadge}`;
+             <div class="no-photo" style="display:none;">Фото недоступне</div>`
+          : `<div class="no-photo">Немає фото</div>`;
 
         return `
           <article class="coin-card ${sold ? "is-sold" : ""}">
             ${sold ? `<div class="sold-badge">ПРОДАНО</div>` : ""}
 
-            <a class="coin-photo-wrap" href="${esc(link)}" aria-label="${esc(title)}">
+            <a class="coin-photo-wrap ${hasManyPhotos ? "has-multiple" : ""}" href="${esc(link)}" aria-label="${esc(title)}"
+               data-gallery-key="${esc(itemKey)}">
               ${photoBlock}
+              ${qtyBadge}
+              ${photoNav}
+              ${dots}
             </a>
 
             <div class="coin-body">
@@ -1041,6 +1138,79 @@
             if (!btn.disabled) btn.textContent = "🛒";
           }, 900);
         });
+      });
+
+      coinsGrid.querySelectorAll('[data-action="prev-photo"], [data-action="next-photo"]').forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const key = String(btn.dataset.key || "").trim();
+          const item = items.find(x => getItemKey(x) === key);
+          if (!item) return;
+
+          const photos = getCardPhotos(item);
+          if (photos.length <= 1) return;
+
+          const currentIndex = Number(state.cardGalleryIndex[key] || 0);
+          const nextIndex = btn.dataset.action === "prev-photo"
+            ? (currentIndex - 1 + photos.length) % photos.length
+            : (currentIndex + 1) % photos.length;
+
+          state.cardGalleryIndex[key] = nextIndex;
+          renderCoins(state.filtered);
+        });
+      });
+
+      coinsGrid.querySelectorAll('.coin-photo-wrap[data-gallery-key]').forEach(wrap => {
+        let startX = 0;
+        let startY = 0;
+        let moved = false;
+
+        wrap.addEventListener("touchstart", (e) => {
+          if (!e.touches || !e.touches.length) return;
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          moved = false;
+        }, { passive: true });
+
+        wrap.addEventListener("touchmove", (e) => {
+          if (!e.touches || !e.touches.length) return;
+          const dx = e.touches[0].clientX - startX;
+          const dy = e.touches[0].clientY - startY;
+          if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) {
+            moved = true;
+          }
+        }, { passive: true });
+
+        wrap.addEventListener("touchend", (e) => {
+          const key = String(wrap.dataset.galleryKey || "").trim();
+          const item = items.find(x => getItemKey(x) === key);
+          if (!item) return;
+
+          const photos = getCardPhotos(item);
+          if (photos.length <= 1) return;
+
+          const touch = e.changedTouches && e.changedTouches[0];
+          if (!touch) return;
+
+          const dx = touch.clientX - startX;
+          const dy = touch.clientY - startY;
+
+          if (!moved) return;
+          if (Math.abs(dx) < 35) return;
+          if (Math.abs(dx) <= Math.abs(dy)) return;
+
+          e.preventDefault();
+
+          const currentIndex = Number(state.cardGalleryIndex[key] || 0);
+          const nextIndex = dx < 0
+            ? (currentIndex + 1) % photos.length
+            : (currentIndex - 1 + photos.length) % photos.length;
+
+          state.cardGalleryIndex[key] = nextIndex;
+          renderCoins(state.filtered);
+        }, { passive: false });
       });
     }
 
