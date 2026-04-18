@@ -724,21 +724,60 @@
     }
 
     function fillSelect(selectEl, values, keepValue = "") {
+      const currentValue = keepValue || "";
       selectEl.innerHTML = `<option value="">Усі</option>` +
         values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
-      selectEl.value = keepValue || "";
+      selectEl.value = values.includes(currentValue) ? currentValue : "";
     }
 
-    function populateFilters(items) {
-      fillSelect(continentSelect, uniqueSortedValues(items, "Continent"), continentSelect.value);
-      fillSelect(countrySelect, uniqueSortedValues(items, "Country"), countrySelect.value);
-      fillSelect(typeSelect, uniqueSortedValues(items, "Type"), typeSelect.value);
-      fillSelect(periodSelect, uniqueSortedValues(items, "NominalPeriod"), periodSelect.value);
-      fillSelect(metalSelect, uniqueSortedValues(items, "Metal"), metalSelect.value);
-      fillSelect(conditionSelect, uniqueSortedValues(items, "Condition"), conditionSelect.value);
+    function populateFilters() {
+      const continentValue = String(continentSelect.value || "").trim();
+      const countryValue = String(countrySelect.value || "").trim();
+      const typeValue = String(typeSelect.value || "").trim();
+      const periodValue = String(periodSelect.value || "").trim();
+      const metalValue = String(metalSelect.value || "").trim();
+      const conditionValue = String(conditionSelect.value || "").trim();
+
+      fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"), continentValue);
+
+      const itemsForCountry = state.items.filter(item => {
+        if (continentValue && String(item.Continent || "").trim() !== continentValue) return false;
+        return true;
+      });
+      fillSelect(countrySelect, uniqueSortedValues(itemsForCountry, "Country"), countryValue);
+      const actualCountryValue = String(countrySelect.value || "").trim();
+
+      const itemsForType = itemsForCountry.filter(item => {
+        if (actualCountryValue && String(item.Country || "").trim() !== actualCountryValue) return false;
+        return true;
+      });
+      fillSelect(typeSelect, uniqueSortedValues(itemsForType, "Type"), typeValue);
+      const actualTypeValue = String(typeSelect.value || "").trim();
+
+      const itemsForPeriod = itemsForType.filter(item => {
+        if (actualTypeValue && String(item.Type || "").trim() !== actualTypeValue) return false;
+        return true;
+      });
+      fillSelect(periodSelect, uniqueSortedValues(itemsForPeriod, "NominalPeriod"), periodValue);
+      const actualPeriodValue = String(periodSelect.value || "").trim();
+
+      const itemsForMetal = itemsForPeriod.filter(item => {
+        if (actualPeriodValue && String(item.NominalPeriod || "").trim() !== actualPeriodValue) return false;
+        return true;
+      });
+      fillSelect(metalSelect, uniqueSortedValues(itemsForMetal, "Metal"), metalValue);
+      const actualMetalValue = String(metalSelect.value || "").trim();
+
+      const itemsForCondition = itemsForMetal.filter(item => {
+        if (actualMetalValue && String(item.Metal || "").trim() !== actualMetalValue) return false;
+        return true;
+      });
+      fillSelect(conditionSelect, uniqueSortedValues(itemsForCondition, "Condition"), conditionValue);
     }
 
     function filterItems() {
+      populateFilters();
+
       const q = String(searchInput.value || "").trim().toLowerCase();
       const continent = String(continentSelect.value || "").trim();
       const country = String(countrySelect.value || "").trim();
@@ -1005,7 +1044,7 @@
         }
 
         state.items = data.items;
-        populateFilters(state.items);
+        populateFilters();
         filterItems();
       } catch (err) {
         galleryGrid.classList.add("hidden");
@@ -1023,6 +1062,7 @@
       metalSelect.value = "";
       conditionSelect.value = "";
       inStockOnly.checked = true;
+      populateFilters();
       filterItems();
     }
 
