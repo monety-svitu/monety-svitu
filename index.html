@@ -41,7 +41,7 @@
     }
 
     .header-wrap {
-      max-width: 1280px;
+      max-width: 1680px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -110,7 +110,7 @@
     }
 
     main {
-      max-width: 1280px;
+      max-width: 1680px;
       margin: 0 auto;
       padding: 20px 16px 40px;
     }
@@ -146,7 +146,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 250px 1fr;
+      grid-template-columns: 250px minmax(0, 1fr);
       gap: 18px;
       align-items: start;
     }
@@ -297,7 +297,7 @@
 
     .coins-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 18px;
     }
 
@@ -543,6 +543,10 @@
       .filters {
         position: static;
       }
+
+      .coins-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      }
     }
 
     @media (max-width: 640px) {
@@ -568,6 +572,10 @@
 
       .sort-wrap {
         min-width: 0;
+      }
+
+      .coins-grid {
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
       }
     }
   </style>
