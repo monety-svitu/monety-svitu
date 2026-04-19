@@ -12,16 +12,70 @@
     :root {
       --bg: #f5f6f8;
       --card: #ffffff;
+      --card-soft: #fafbfc;
+      --header-bg: #ffffff;
+      --surface-2: #eef3fb;
       --line: #e4e7eb;
+      --line-strong: #dddddd;
       --line-soft: #edf1f4;
       --text: #1f2937;
+      --text-strong: #111827;
+      --text-soft: #333333;
       --muted: #6b7280;
       --muted-soft: #8a94a6;
       --primary: #2f6fdd;
       --primary-hover: #255fc2;
       --danger: #c62828;
       --shadow: 0 3px 12px rgba(0,0,0,0.05);
+      --shadow-strong: 0 7px 18px rgba(0,0,0,0.07);
+      --qty-bg: rgba(255,255,255,0.97);
+      --qty-border: rgba(0,0,0,0.08);
+      --dot-bg: rgba(17,24,39,0.25);
+      --dot-active: rgba(17,24,39,0.8);
+      --photo-nav-bg: rgba(255,255,255,0.92);
+      --photo-dots-bg: rgba(255,255,255,0.82);
       --radius: 18px;
+      --theme-btn-bg: #eef2f6;
+      --theme-btn-hover: #e5ebf1;
+      --theme-btn-color: #1f2937;
+      --input-bg: #ffffff;
+      --input-text: #1f2937;
+      --input-border: #d4d4d4;
+      --message-text: #555555;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --card-soft: #172131;
+      --header-bg: #111827;
+      --surface-2: #182233;
+      --line: #243244;
+      --line-strong: #2a3a50;
+      --line-soft: #223041;
+      --text: #e5edf7;
+      --text-strong: #f8fafc;
+      --text-soft: #d7e0ea;
+      --muted: #aab7c8;
+      --muted-soft: #90a0b5;
+      --primary: #5b8cff;
+      --primary-hover: #79a0ff;
+      --danger: #ff6b6b;
+      --shadow: 0 6px 18px rgba(0,0,0,0.28);
+      --shadow-strong: 0 10px 24px rgba(0,0,0,0.34);
+      --qty-bg: rgba(15,23,42,0.92);
+      --qty-border: rgba(255,255,255,0.12);
+      --dot-bg: rgba(255,255,255,0.28);
+      --dot-active: rgba(255,255,255,0.92);
+      --photo-nav-bg: rgba(15,23,42,0.92);
+      --photo-dots-bg: rgba(15,23,42,0.82);
+      --theme-btn-bg: #1b2636;
+      --theme-btn-hover: #233247;
+      --theme-btn-color: #e5edf7;
+      --input-bg: #0f172a;
+      --input-text: #e5edf7;
+      --input-border: #314257;
+      --message-text: #c8d2df;
     }
 
     body {
@@ -29,15 +83,17 @@
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
+      transition: background-color 0.18s ease, color 0.18s ease;
     }
 
     header {
-      background: #fff;
-      border-bottom: 1px solid #ddd;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--line-strong);
       padding: 16px;
       position: sticky;
       top: 0;
       z-index: 20;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .header-wrap {
@@ -55,10 +111,11 @@
     h1 {
       margin: 0 0 8px;
       font-size: 28px;
+      color: var(--text-strong);
     }
 
     .subtitle {
-      color: #666;
+      color: var(--muted);
       font-size: 14px;
     }
 
@@ -68,6 +125,28 @@
       gap: 14px;
       margin-left: auto;
       flex-wrap: wrap;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 46px;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--theme-btn-bg);
+      color: var(--theme-btn-color);
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      background: var(--theme-btn-hover);
     }
 
     .cart-top-link {
@@ -116,12 +195,13 @@
     }
 
     .welcome-box {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: var(--card);
+      border: 1px solid var(--line-strong);
       border-radius: 16px;
       padding: 16px 18px;
       margin-bottom: 18px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .welcome-title {
@@ -129,10 +209,11 @@
       font-weight: 700;
       margin-bottom: 8px;
       line-height: 1.25;
+      color: var(--text-strong);
     }
 
     .welcome-text {
-      color: #333;
+      color: var(--text-soft);
       line-height: 1.55;
       font-size: 15px;
     }
@@ -140,7 +221,7 @@
     .site-stats {
       margin-top: 24px;
       font-size: 13px;
-      color: #666;
+      color: var(--muted);
       text-align: center;
     }
 
@@ -152,19 +233,21 @@
     }
 
     .filters {
-      background: #fff;
-      border: 1px solid #e2e2e2;
+      background: var(--card);
+      border: 1px solid var(--line);
       border-radius: 16px;
       padding: 14px;
       position: sticky;
       top: 92px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .filters-title {
       font-size: 18px;
       font-weight: 700;
       margin-bottom: 12px;
+      color: var(--text-strong);
     }
 
     .filter-group {
@@ -174,7 +257,7 @@
     .filter-group label {
       display: block;
       font-size: 13px;
-      color: #555;
+      color: var(--muted);
       margin-bottom: 5px;
       font-weight: 700;
     }
@@ -183,11 +266,12 @@
     .filter-group select {
       width: 100%;
       padding: 10px 12px;
-      border: 1px solid #d4d4d4;
+      border: 1px solid var(--input-border);
       border-radius: 10px;
       font-size: 15px;
-      background: #fff;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      background: var(--input-bg);
+      color: var(--input-text);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.18s ease, color 0.18s ease;
     }
 
     .filter-group input:focus,
@@ -204,12 +288,13 @@
       margin-top: 6px;
       margin-bottom: 10px;
       font-size: 14px;
-      color: #333;
+      color: var(--text-soft);
       line-height: 1.3;
     }
 
     .check-row input[type="checkbox"] {
       margin: 0;
+      accent-color: var(--primary);
     }
 
     .filters-actions {
@@ -226,16 +311,17 @@
       cursor: pointer;
       font-weight: 700;
       font-size: 14px;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
 
     .btn-reset {
-      background: #f3f4f6;
-      color: #333;
-      border: 1px solid #e3e5e8;
+      background: var(--theme-btn-bg);
+      color: var(--theme-btn-color);
+      border: 1px solid var(--line);
     }
 
     .btn-reset:hover {
-      background: #e9ecef;
+      background: var(--theme-btn-hover);
     }
 
     .content {
@@ -259,7 +345,7 @@
     }
 
     .stats {
-      color: #374151;
+      color: var(--text);
       font-size: 14px;
       font-weight: 700;
       padding: 0 2px 8px 2px;
@@ -272,7 +358,7 @@
     .sort-wrap label {
       display: block;
       font-size: 13px;
-      color: #555;
+      color: var(--muted);
       margin-bottom: 5px;
       font-weight: 700;
     }
@@ -280,19 +366,21 @@
     .sort-wrap select {
       width: 100%;
       padding: 10px 12px;
-      border: 1px solid #d4d4d4;
+      border: 1px solid var(--input-border);
       border-radius: 10px;
       font-size: 15px;
-      background: #fff;
+      background: var(--input-bg);
+      color: var(--input-text);
     }
 
     .message {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: var(--card);
+      border: 1px solid var(--line-strong);
       border-radius: 12px;
       padding: 20px;
       text-align: center;
-      color: #555;
+      color: var(--message-text);
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     }
 
     .coins-grid {
@@ -311,12 +399,12 @@
       flex-direction: column;
       min-height: 100%;
       box-shadow: var(--shadow);
-      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.2s ease;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.2s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .coin-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 7px 18px rgba(0,0,0,0.07);
+      box-shadow: var(--shadow-strong);
     }
 
     .coin-card.is-sold {
@@ -341,12 +429,13 @@
     .coin-photo-wrap {
       position: relative;
       display: block;
-      background: #fff;
+      background: var(--card);
       aspect-ratio: 1 / 1;
       overflow: hidden;
       border-bottom: 1px solid var(--line-soft);
       text-decoration: none;
       touch-action: pan-y;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .coin-photo {
@@ -354,7 +443,7 @@
       height: 100%;
       object-fit: contain;
       display: block;
-      background: #fff;
+      background: var(--card);
       user-select: none;
       -webkit-user-drag: none;
     }
@@ -367,8 +456,8 @@
       height: 34px;
       border: none;
       border-radius: 999px;
-      background: rgba(255,255,255,0.92);
-      color: #111827;
+      background: var(--photo-nav-bg);
+      color: var(--text-strong);
       font-size: 22px;
       font-weight: 700;
       display: inline-flex;
@@ -378,7 +467,7 @@
       z-index: 3;
       box-shadow: 0 2px 8px rgba(0,0,0,0.16);
       opacity: 0;
-      transition: opacity 0.15s ease, background 0.15s ease;
+      transition: opacity 0.15s ease, background 0.15s ease, color 0.18s ease;
     }
 
     .coin-card:hover .coin-photo-nav,
@@ -387,7 +476,7 @@
     }
 
     .coin-photo-nav:hover {
-      background: #fff;
+      background: var(--card);
     }
 
     .coin-photo-prev {
@@ -408,7 +497,7 @@
       z-index: 3;
       padding: 4px 8px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.82);
+      background: var(--photo-dots-bg);
       backdrop-filter: blur(2px);
     }
 
@@ -416,11 +505,11 @@
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: rgba(17,24,39,0.25);
+      background: var(--dot-bg);
     }
 
     .coin-photo-dot.active {
-      background: rgba(17,24,39,0.8);
+      background: var(--dot-active);
     }
 
     .coin-qty-badge {
@@ -435,14 +524,15 @@
       height: 30px;
       padding: 0 11px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.97);
-      border: 1px solid rgba(0,0,0,0.08);
+      background: var(--qty-bg);
+      border: 1px solid var(--qty-border);
       box-shadow: 0 2px 8px rgba(0,0,0,0.12);
       font-size: 13px;
       font-weight: 700;
-      color: #111827;
+      color: var(--text-strong);
       line-height: 1;
       backdrop-filter: blur(2px);
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     }
 
     .no-photo {
@@ -451,7 +541,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #888;
+      color: var(--muted);
       font-size: 14px;
       text-align: center;
       padding: 12px;
@@ -469,7 +559,7 @@
       font-size: 12px;
       font-weight: 700;
       line-height: 1.2;
-      color: #5f6f85;
+      color: var(--muted-soft);
       text-transform: uppercase;
       letter-spacing: 0.45px;
     }
@@ -484,13 +574,14 @@
     }
 
     .coin-meta-box {
-      background: #fafbfc;
+      background: var(--card-soft);
       border: 1px solid var(--line-soft);
       border-radius: 11px;
       padding: 7px 9px;
       display: flex;
       flex-direction: column;
       gap: 5px;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .coin-meta-row {
@@ -499,7 +590,7 @@
       gap: 6px;
       font-size: 13px;
       line-height: 1.28;
-      color: #374151;
+      color: var(--text);
     }
 
     .coin-meta-label {
@@ -510,12 +601,12 @@
 
     .coin-meta-value {
       font-weight: 700;
-      color: #374151;
+      color: var(--text);
     }
 
     .coin-description {
       font-size: 13px;
-      color: #4b5563;
+      color: var(--text-soft);
       line-height: 1.45;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -537,7 +628,7 @@
       font-size: 18px;
       font-weight: 700;
       line-height: 1.1;
-      color: #111827;
+      color: var(--text-strong);
     }
 
     .coin-status-text {
@@ -594,7 +685,7 @@
     }
 
     .btn-cart.disabled {
-      background: #c7ccd4;
+      background: #6b7280;
       cursor: not-allowed;
     }
 
@@ -662,6 +753,8 @@
       </div>
 
       <div class="header-right">
+        <button id="themeToggle" class="theme-toggle" type="button" title="Перемкнути тему" aria-label="Перемкнути тему">🌙</button>
+
         <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
           <span class="cart-top-icon">🛒</span>
           <span>Кошик</span>
@@ -772,6 +865,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
     const CART_KEY = "monety_svitu_cart";
+    const THEME_KEY = "monety_svitu_theme";
 
     const state = {
       items: [],
@@ -794,6 +888,7 @@
     const messageBox = document.getElementById("messageBox");
     const coinsGrid = document.getElementById("coinsGrid");
     const cartCountBadge = document.getElementById("cartCountBadge");
+    const themeToggle = document.getElementById("themeToggle");
 
     function esc(value) {
       return String(value ?? "")
@@ -801,6 +896,43 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function applyTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      if (normalized === "dark") {
+        document.body.setAttribute("data-theme", "dark");
+        themeToggle.textContent = "☀";
+        themeToggle.title = "Увімкнути світлу тему";
+        themeToggle.setAttribute("aria-label", "Увімкнути світлу тему");
+      } else {
+        document.body.removeAttribute("data-theme");
+        themeToggle.textContent = "🌙";
+        themeToggle.title = "Увімкнути нічний режим";
+        themeToggle.setAttribute("aria-label", "Увімкнути нічний режим");
+      }
+      localStorage.setItem(THEME_KEY, normalized);
+    }
+
+    function initTheme() {
+      let savedTheme = "";
+      try {
+        savedTheme = String(localStorage.getItem(THEME_KEY) || "").trim();
+      } catch (err) {
+      }
+
+      if (savedTheme === "dark" || savedTheme === "light") {
+        applyTheme(savedTheme);
+        return;
+      }
+
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyTheme(prefersDark ? "dark" : "light");
+    }
+
+    function toggleTheme() {
+      const current = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      applyTheme(current === "dark" ? "light" : "dark");
     }
 
     function uniqueSortedValues(items, fieldName) {
@@ -1302,7 +1434,9 @@
     inStockOnly.addEventListener("change", filterItems);
     sortSelect.addEventListener("change", filterItems);
     resetFiltersBtn.addEventListener("click", resetFilters);
+    themeToggle.addEventListener("click", toggleTheme);
 
+    initTheme();
     updateCartBadge();
     trackSiteView();
     loadSiteStats();
