@@ -12,9 +12,14 @@
     :root {
       --bg: #f5f6f8;
       --card: #ffffff;
+      --card-soft: #fafbfc;
+      --header-bg: #ffffff;
       --line: #e4e7eb;
+      --line-strong: #dddddd;
       --line-soft: #edf1f4;
       --text: #1f2937;
+      --text-strong: #111827;
+      --text-soft: #444444;
       --muted: #6b7280;
       --muted-soft: #8a94a6;
       --primary: #2f6fdd;
@@ -23,6 +28,52 @@
       --success: #2e7d32;
       --shadow: 0 3px 12px rgba(0,0,0,0.05);
       --radius: 18px;
+      --theme-btn-bg: #eef2f6;
+      --theme-btn-hover: #e5ebf1;
+      --theme-btn-color: #1f2937;
+      --input-bg: #ffffff;
+      --input-text: #1f2937;
+      --lightbox-bg: rgba(0,0,0,0.88);
+      --lightbox-img-bg: #ffffff;
+      --lightbox-btn-bg: rgba(255,255,255,0.92);
+      --lightbox-btn-color: #111111;
+      --lightbox-counter-bg: rgba(0,0,0,0.35);
+      --badge-bg: #eef3fb;
+      --badge-border: #d7e3f4;
+      --badge-text: #344054;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --card-soft: #172131;
+      --header-bg: #111827;
+      --line: #243244;
+      --line-strong: #2a3a50;
+      --line-soft: #223041;
+      --text: #e5edf7;
+      --text-strong: #f8fafc;
+      --text-soft: #d7e0ea;
+      --muted: #aab7c8;
+      --muted-soft: #90a0b5;
+      --primary: #5b8cff;
+      --primary-hover: #79a0ff;
+      --danger: #ff6b6b;
+      --success: #6edb8f;
+      --shadow: 0 6px 18px rgba(0,0,0,0.28);
+      --theme-btn-bg: #1b2636;
+      --theme-btn-hover: #233247;
+      --theme-btn-color: #e5edf7;
+      --input-bg: #0f172a;
+      --input-text: #e5edf7;
+      --lightbox-bg: rgba(2,6,23,0.94);
+      --lightbox-img-bg: #0f172a;
+      --lightbox-btn-bg: rgba(15,23,42,0.92);
+      --lightbox-btn-color: #f8fafc;
+      --lightbox-counter-bg: rgba(15,23,42,0.78);
+      --badge-bg: #182233;
+      --badge-border: #314257;
+      --badge-text: #dbe6f3;
     }
 
     body {
@@ -30,15 +81,17 @@
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
+      transition: background-color 0.18s ease, color 0.18s ease;
     }
 
     header {
-      background: #fff;
-      border-bottom: 1px solid #ddd;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--line-strong);
       padding: 16px;
       position: sticky;
       top: 0;
       z-index: 20;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .header-wrap {
@@ -51,17 +104,18 @@
 
     .brand {
       text-decoration: none;
-      color: #222;
+      color: var(--text-strong);
     }
 
     .brand h1 {
       margin: 0 0 4px;
       font-size: 26px;
+      color: var(--text-strong);
     }
 
     .brand .subtitle {
       font-size: 14px;
-      color: #666;
+      color: var(--muted);
     }
 
     .header-right {
@@ -70,6 +124,27 @@
       gap: 14px;
       margin-left: auto;
       flex-wrap: wrap;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--theme-btn-bg);
+      color: var(--theme-btn-color);
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      background: var(--theme-btn-hover);
     }
 
     .back-link {
@@ -125,33 +200,36 @@
     }
 
     .message {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: var(--card);
+      border: 1px solid var(--line-strong);
       border-radius: 14px;
       padding: 24px;
       text-align: center;
-      color: #555;
+      color: var(--muted);
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     }
 
     .trust-box {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: var(--card);
+      border: 1px solid var(--line-strong);
       border-radius: 16px;
       padding: 15px 18px;
       margin-bottom: 18px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .trust-title {
       font-size: 16px;
       font-weight: 700;
       margin-bottom: 7px;
+      color: var(--text-strong);
     }
 
     .trust-text {
       font-size: 14px;
       line-height: 1.55;
-      color: #444;
+      color: var(--text-soft);
     }
 
     .coin-layout {
@@ -163,11 +241,12 @@
 
     .gallery-card,
     .info-card {
-      background: #fff;
+      background: var(--card);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: var(--shadow);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .gallery-inner,
@@ -179,11 +258,12 @@
       position: relative;
       width: 100%;
       aspect-ratio: 1 / 1;
-      background: #fff;
+      background: var(--card);
       border: 1px solid var(--line-soft);
       border-radius: 14px;
       overflow: hidden;
       cursor: zoom-in;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .main-photo {
@@ -191,7 +271,7 @@
       height: 100%;
       object-fit: contain;
       display: block;
-      background: #fff;
+      background: var(--card);
     }
 
     .no-photo {
@@ -200,7 +280,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #888;
+      color: var(--muted);
       font-size: 14px;
       text-align: center;
       padding: 12px;
@@ -215,13 +295,13 @@
 
     .thumb-btn {
       border: 1px solid var(--line-soft);
-      background: #fff;
+      background: var(--card);
       padding: 0;
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
       aspect-ratio: 1 / 1;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.18s ease;
     }
 
     .thumb-btn.active {
@@ -234,7 +314,7 @@
       height: 100%;
       object-fit: contain;
       display: block;
-      background: #fff;
+      background: var(--card);
     }
 
     .thumb-btn .thumb-no-photo {
@@ -244,7 +324,7 @@
       align-items: center;
       justify-content: center;
       font-size: 12px;
-      color: #888;
+      color: var(--muted);
       padding: 8px;
     }
 
@@ -265,9 +345,9 @@
       display: inline-block;
       font-size: 13px;
       font-weight: 700;
-      color: #344054;
-      background: #eef3fb;
-      border: 1px solid #d7e3f4;
+      color: var(--badge-text);
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
       border-radius: 999px;
       padding: 7px 12px;
       margin-bottom: 14px;
@@ -278,7 +358,7 @@
       font-weight: 700;
       line-height: 1.2;
       margin-bottom: 14px;
-      color: #1f2937;
+      color: var(--text-strong);
     }
 
     .coin-price {
@@ -286,7 +366,7 @@
       font-weight: 800;
       line-height: 1.08;
       margin-bottom: 14px;
-      color: #0f4fbf;
+      color: var(--primary);
     }
 
     .stock-row {
@@ -314,7 +394,7 @@
 
     .stock-qty {
       font-size: 14px;
-      color: #475467;
+      color: var(--muted);
       font-weight: 700;
     }
 
@@ -325,11 +405,12 @@
       margin-top: 8px;
       margin-bottom: 18px;
       padding: 12px 13px;
-      background: #fafbfc;
+      background: var(--card-soft);
       border: 1px solid var(--line-soft);
       border-radius: 14px;
       font-size: 14px;
       line-height: 1.42;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .details-label {
@@ -338,7 +419,7 @@
     }
 
     .details-value {
-      color: #222;
+      color: var(--text);
       word-break: break-word;
       font-weight: 600;
     }
@@ -347,23 +428,24 @@
       margin-top: 4px;
       margin-bottom: 18px;
       padding: 13px 14px;
-      background: #fafbfc;
+      background: var(--card-soft);
       border: 1px solid var(--line-soft);
       border-radius: 14px;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .description-title {
       font-size: 14px;
       font-weight: 700;
       margin-bottom: 7px;
-      color: #344054;
+      color: var(--muted);
     }
 
     .description-text {
       font-size: 15px;
       line-height: 1.55;
       white-space: pre-wrap;
-      color: #222;
+      color: var(--text);
     }
 
     .actions {
@@ -399,16 +481,17 @@
     }
 
     .btn-secondary {
-      background: #eef2f6;
-      color: #1f2937;
+      background: var(--theme-btn-bg);
+      color: var(--theme-btn-color);
+      border: 1px solid var(--line);
     }
 
     .btn-secondary:hover {
-      background: #e5ebf1;
+      background: var(--theme-btn-hover);
     }
 
     .btn-disabled {
-      background: #c7ccd4;
+      background: #6b7280;
       color: #fff;
       cursor: not-allowed;
     }
@@ -416,7 +499,7 @@
     .lightbox {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.88);
+      background: var(--lightbox-bg);
       display: none;
       align-items: center;
       justify-content: center;
@@ -442,7 +525,7 @@
       max-height: 90vh;
       display: block;
       object-fit: contain;
-      background: #fff;
+      background: var(--lightbox-img-bg);
       border-radius: 10px;
     }
 
@@ -454,8 +537,8 @@
       height: 36px;
       border: none;
       border-radius: 999px;
-      background: #fff;
-      color: #222;
+      background: var(--lightbox-btn-bg);
+      color: var(--lightbox-btn-color);
       font-size: 20px;
       font-weight: 700;
       cursor: pointer;
@@ -471,8 +554,8 @@
       height: 48px;
       border: none;
       border-radius: 999px;
-      background: rgba(255,255,255,0.92);
-      color: #111;
+      background: var(--lightbox-btn-bg);
+      color: var(--lightbox-btn-color);
       font-size: 28px;
       font-weight: 700;
       cursor: pointer;
@@ -484,7 +567,7 @@
     }
 
     .lightbox-nav:hover {
-      background: #fff;
+      background: var(--card);
     }
 
     .lightbox-prev {
@@ -503,7 +586,7 @@
       color: #fff;
       font-size: 14px;
       font-weight: 700;
-      background: rgba(0,0,0,0.35);
+      background: var(--lightbox-counter-bg);
       padding: 6px 10px;
       border-radius: 999px;
       white-space: nowrap;
@@ -581,6 +664,7 @@
       </a>
 
       <div class="header-right">
+        <button id="themeToggle" class="theme-toggle" type="button" title="Перемкнути тему" aria-label="Перемкнути тему">🌙</button>
         <a class="back-link" href="index.html">← Назад до каталогу</a>
         <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
           <span class="cart-top-icon">🛒</span>
@@ -679,6 +763,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
     const CART_KEY = "monety_svitu_cart";
+    const THEME_KEY = "monety_svitu_theme";
 
     const messageBox = document.getElementById("messageBox");
     const coinPage = document.getElementById("coinPage");
@@ -710,10 +795,48 @@
     const lightboxNext = document.getElementById("lightboxNext");
     const lightboxCounter = document.getElementById("lightboxCounter");
     const cartCountBadge = document.getElementById("cartCountBadge");
+    const themeToggle = document.getElementById("themeToggle");
 
     let currentCoin = null;
     let gallery = [];
     let currentPhotoIndex = 0;
+
+    function applyTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      if (normalized === "dark") {
+        document.body.setAttribute("data-theme", "dark");
+        themeToggle.textContent = "☀";
+        themeToggle.title = "Увімкнути світлу тему";
+        themeToggle.setAttribute("aria-label", "Увімкнути світлу тему");
+      } else {
+        document.body.removeAttribute("data-theme");
+        themeToggle.textContent = "🌙";
+        themeToggle.title = "Увімкнути нічний режим";
+        themeToggle.setAttribute("aria-label", "Увімкнути нічний режим");
+      }
+      localStorage.setItem(THEME_KEY, normalized);
+    }
+
+    function initTheme() {
+      let savedTheme = "";
+      try {
+        savedTheme = String(localStorage.getItem(THEME_KEY) || "").trim();
+      } catch (err) {
+      }
+
+      if (savedTheme === "dark" || savedTheme === "light") {
+        applyTheme(savedTheme);
+        return;
+      }
+
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyTheme(prefersDark ? "dark" : "light");
+    }
+
+    function toggleTheme() {
+      const current = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    }
 
     function getQueryParam(name) {
       const params = new URLSearchParams(window.location.search);
@@ -1046,7 +1169,9 @@
     });
 
     addToCartBtn.addEventListener("click", addCurrentCoinToCart);
+    themeToggle.addEventListener("click", toggleTheme);
 
+    initTheme();
     updateCartBadge();
     loadCoin();
   </script>
