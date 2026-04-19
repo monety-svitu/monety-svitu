@@ -218,13 +218,6 @@
       font-size: 15px;
     }
 
-    .site-stats {
-      margin-top: 24px;
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-    }
-
     .layout {
       display: grid;
       grid-template-columns: 250px minmax(0, 1fr);
@@ -689,6 +682,65 @@
       cursor: not-allowed;
     }
 
+    .footer {
+      margin-top: 26px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .footer-inner {
+      padding: 16px 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px 18px;
+      align-items: start;
+    }
+
+    .footer-col {
+      min-width: 0;
+    }
+
+    .footer-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .footer-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .footer-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+
+    .footer-note {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .footer-stats {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      font-weight: 700;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -704,6 +756,12 @@
 
       .coins-grid {
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      }
+    }
+
+    @media (max-width: 860px) {
+      .footer-inner {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -857,9 +915,29 @@
       </section>
     </div>
 
-    <div id="siteStatsText" class="site-stats">
-      Переглядів сайту: —
-    </div>
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-col">
+          <div class="footer-title">Статистика</div>
+          <div id="siteStatsText" class="footer-stats">Переглядів сайту: —</div>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-title">Viber</div>
+          <div class="footer-text">
+            <a class="footer-link" href="viber://chat?number=%2B380639672019">+380639672019</a>
+            <span class="footer-note">Тільки переписка, будь ласка. Не телефонувати.</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-title">Email</div>
+          <div class="footer-text">
+            <a class="footer-link" href="mailto:monety2026@gmail.com">monety2026@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </main>
 
   <script>
