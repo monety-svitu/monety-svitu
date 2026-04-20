@@ -92,10 +92,30 @@
       gap: 12px;
     }
 
-    .brand {
-      text-decoration: none;
-      color: var(--text-strong);
-    }
+   .brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--text-strong);
+}
+
+.logo-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  flex: 0 0 34px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.brand-text {
+  min-width: 0;
+}
 
     .brand h1 {
       margin: 0 0 4px;
