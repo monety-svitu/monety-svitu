@@ -682,6 +682,48 @@
       cursor: not-allowed;
     }
 
+    .pagination {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pagination.hidden {
+      display: none !important;
+    }
+
+    .pagination-info {
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 700;
+      min-width: 170px;
+      text-align: center;
+    }
+
+    .pagination-btn {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--theme-btn-hover);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
     .footer {
       margin-top: 26px;
       background: var(--card);
@@ -912,6 +954,12 @@
 
         <div id="messageBox" class="message">Завантаження товарів...</div>
         <div id="coinsGrid" class="coins-grid hidden"></div>
+
+        <div id="pagination" class="pagination hidden">
+          <button id="prevPageBtn" class="pagination-btn" type="button">Назад</button>
+          <div id="paginationInfo" class="pagination-info">Показано 0–0 з 0</div>
+          <button id="nextPageBtn" class="pagination-btn" type="button">Далі</button>
+        </div>
       </section>
     </div>
 
@@ -948,7 +996,9 @@
     const state = {
       items: [],
       filtered: [],
-      cardGalleryIndex: {}
+      cardGalleryIndex: {},
+      currentPage: 1,
+      pageSize: 20
     };
 
     const searchInput = document.getElementById("searchInput");
@@ -967,6 +1017,10 @@
     const coinsGrid = document.getElementById("coinsGrid");
     const cartCountBadge = document.getElementById("cartCountBadge");
     const themeToggle = document.getElementById("themeToggle");
+    const pagination = document.getElementById("pagination");
+    const prevPageBtn = document.getElementById("prevPageBtn");
+    const nextPageBtn = document.getElementById("nextPageBtn");
+    const paginationInfo = document.getElementById("paginationInfo");
 
     function esc(value) {
       return String(value ?? "")
@@ -1160,6 +1214,32 @@
       fillSelect(conditionSelect, uniqueSortedValues(itemsForCondition, "Condition"), conditionValue);
     }
 
+    function goToPage(page) {
+      const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+      state.currentPage = Math.min(Math.max(1, page), totalPages);
+      renderCoins(state.filtered);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function updatePagination(totalItems) {
+      const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
+      const currentPage = Math.min(state.currentPage, totalPages);
+      state.currentPage = currentPage;
+
+      if (totalItems <= state.pageSize) {
+        pagination.classList.add("hidden");
+      } else {
+        pagination.classList.remove("hidden");
+      }
+
+      const start = totalItems === 0 ? 0 : (currentPage - 1) * state.pageSize + 1;
+      const end = Math.min(currentPage * state.pageSize, totalItems);
+
+      paginationInfo.textContent = `Показано ${start}–${end} з ${totalItems}`;
+      prevPageBtn.disabled = currentPage <= 1;
+      nextPageBtn.disabled = currentPage >= totalPages;
+    }
+
     function filterItems() {
       repopulateLinkedFilters();
 
@@ -1228,14 +1308,27 @@
       });
 
       state.filtered = items;
+      state.currentPage = 1;
       renderCoins(items);
     }
 
     function renderCoins(items) {
-      statsText.textContent = "Показано: " + items.length;
+      const totalItems = items.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
 
-      if (!items.length) {
+      if (state.currentPage > totalPages) {
+        state.currentPage = totalPages;
+      }
+
+      const startIndex = (state.currentPage - 1) * state.pageSize;
+      const endIndex = startIndex + state.pageSize;
+      const pageItems = items.slice(startIndex, endIndex);
+
+      statsText.textContent = "Знайдено: " + totalItems;
+
+      if (!totalItems) {
         coinsGrid.classList.add("hidden");
+        pagination.classList.add("hidden");
         messageBox.classList.remove("hidden");
         messageBox.textContent = "За вашим запитом нічого не знайдено.";
         return;
@@ -1243,8 +1336,9 @@
 
       messageBox.classList.add("hidden");
       coinsGrid.classList.remove("hidden");
+      updatePagination(totalItems);
 
-      coinsGrid.innerHTML = items.map(item => {
+      coinsGrid.innerHTML = pageItems.map(item => {
         const title = item.TitleUA || item.TitleEN || "Без назви";
         const typeLabel = item.Type === "Монета за типом" ? "Монета за типом" : "Монета";
         const nominal = item.NominalPeriod || "";
@@ -1356,7 +1450,7 @@
           e.stopPropagation();
 
           const key = String(btn.dataset.key || "").trim();
-          const item = items.find(x => getItemKey(x) === key);
+          const item = state.filtered.find(x => getItemKey(x) === key);
           if (!item) return;
 
           const photos = getCardPhotos(item);
@@ -1395,7 +1489,7 @@
 
         wrap.addEventListener("touchend", (e) => {
           const key = String(wrap.dataset.galleryKey || "").trim();
-          const item = items.find(x => getItemKey(x) === key);
+          const item = state.filtered.find(x => getItemKey(x) === key);
           if (!item) return;
 
           const photos = getCardPhotos(item);
@@ -1457,6 +1551,7 @@
         messageBox.classList.remove("hidden");
         messageBox.textContent = "Завантаження товарів...";
         coinsGrid.classList.add("hidden");
+        pagination.classList.add("hidden");
 
         const response = await fetch(GAS_URL + "?action=getCoins&_ts=" + Date.now(), {
           method: "GET",
@@ -1482,6 +1577,7 @@
         filterItems();
       } catch (err) {
         coinsGrid.classList.add("hidden");
+        pagination.classList.add("hidden");
         messageBox.classList.remove("hidden");
         messageBox.textContent = "Помилка завантаження каталогу. " + String(err.message || err);
         statsText.textContent = "Помилка";
@@ -1513,6 +1609,14 @@
     sortSelect.addEventListener("change", filterItems);
     resetFiltersBtn.addEventListener("click", resetFilters);
     themeToggle.addEventListener("click", toggleTheme);
+
+    prevPageBtn.addEventListener("click", () => {
+      goToPage(state.currentPage - 1);
+    });
+
+    nextPageBtn.addEventListener("click", () => {
+      goToPage(state.currentPage + 1);
+    });
 
     initTheme();
     updateCartBadge();
