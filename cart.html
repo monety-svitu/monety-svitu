@@ -21,6 +21,8 @@
       --danger: #c62828;
       --danger-soft: #fff5f5;
       --success: #2e7d32;
+      --warning: #b26a00;
+      --warning-soft: #fff8e8;
       --shadow: 0 3px 12px rgba(0,0,0,0.05);
       --radius: 18px;
     }
@@ -346,6 +348,21 @@
       margin-top: 14px;
     }
 
+    .summary-rule-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: var(--warning-soft);
+      border: 1px solid #f2deb0;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #6b4a00;
+    }
+
+    .summary-rule-box strong {
+      color: #5c3f00;
+    }
+
     .order-preview {
       margin-top: 14px;
       padding: 12px 14px;
@@ -491,6 +508,17 @@
       line-height: 1.5;
     }
 
+    .success-box {
+      background: #f0fff4;
+      border: 1px solid #b7e1c0;
+      color: #1d6b2a;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -579,6 +607,13 @@
             Після оформлення замовлення монети резервуються на обмежений час.
           </div>
 
+          <div class="summary-rule-box">
+            <strong>Умови оформлення:</strong><br>
+            Мінімальна сума замовлення — <strong>200 грн</strong>.<br>
+            Замовлення понад <strong>2000 грн</strong> доступні лише для попередньо погоджених номерів телефону.<br>
+            Якщо сума більша — напишіть нам у Viber.
+          </div>
+
           <div id="orderPreview" class="order-preview hidden">
             <div class="order-preview-title">Що піде в замовлення</div>
             <ul id="orderPreviewList" class="order-preview-list"></ul>
@@ -621,6 +656,7 @@
           </div>
 
           <div id="errorBox" class="error-box hidden"></div>
+          <div id="successBox" class="success-box hidden"></div>
         </div>
       </aside>
     </div>
@@ -630,6 +666,12 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
     const CART_KEY = "monety_svitu_cart";
 
+    const MIN_ORDER_TOTAL_UAH = 200;
+    const MAX_AUTO_ORDER_TOTAL_UAH = 2000;
+    const ALLOWED_BIG_ORDER_PHONES = [
+      "380639672019"
+    ];
+
     const cartList = document.getElementById("cartList");
     const emptyBox = document.getElementById("emptyBox");
     const itemsCount = document.getElementById("itemsCount");
@@ -637,6 +679,7 @@
     const clearCartBtn = document.getElementById("clearCartBtn");
     const checkoutBlock = document.getElementById("checkoutBlock");
     const errorBox = document.getElementById("errorBox");
+    const successBox = document.getElementById("successBox");
     const cartCountBadge = document.getElementById("cartCountBadge");
     const orderPreview = document.getElementById("orderPreview");
     const orderPreviewList = document.getElementById("orderPreviewList");
@@ -687,6 +730,40 @@
 
     function formatPrice(value) {
       return Number(value || 0) + " грн";
+    }
+
+    function normalizePhoneUa(value) {
+      let phone = String(value || "").replace(/\D+/g, "").trim();
+
+      if (!phone) return "";
+
+      if (phone.startsWith("380")) return phone;
+      if (phone.startsWith("80")) return "3" + phone;
+      if (phone.startsWith("0")) return "38" + phone;
+
+      return phone;
+    }
+
+    function showError(message) {
+      successBox.classList.add("hidden");
+      errorBox.textContent = message;
+      errorBox.classList.remove("hidden");
+    }
+
+    function hideError() {
+      errorBox.classList.add("hidden");
+      errorBox.textContent = "";
+    }
+
+    function showSuccess(message) {
+      hideError();
+      successBox.textContent = message;
+      successBox.classList.remove("hidden");
+    }
+
+    function hideSuccess() {
+      successBox.classList.add("hidden");
+      successBox.textContent = "";
     }
 
     function getTotals(cart) {
@@ -808,7 +885,8 @@
     function renderCart() {
       const cart = getCart();
 
-      errorBox.classList.add("hidden");
+      hideError();
+      hideSuccess();
       updateCartBadge();
 
       if (!cart.length) {
@@ -928,19 +1006,39 @@
       renderCart();
     }
 
-    function validateForm() {
+    function validateForm(activeItems) {
       const lastName = lastNameInput.value.trim();
       const name = customerNameInput.value.trim();
       const phone = phoneInput.value.trim();
+      const normalizedPhone = normalizePhoneUa(phone);
 
       if (!lastName) return "Вкажіть прізвище.";
       if (!name) return "Вкажіть ім’я.";
       if (!phone) return "Вкажіть телефон / Viber.";
 
+      let total = 0;
+      activeItems.forEach(item => {
+        total += Number(item.priceUAH || 0) * Number(item.qty || 0);
+      });
+
+      if (total < MIN_ORDER_TOTAL_UAH) {
+        return "Мінімальна сума замовлення — " + MIN_ORDER_TOTAL_UAH + " грн. Додайте ще монети до кошика.";
+      }
+
+      if (
+        total > MAX_AUTO_ORDER_TOTAL_UAH &&
+        ALLOWED_BIG_ORDER_PHONES.indexOf(normalizedPhone) === -1
+      ) {
+        return "Замовлення понад " + MAX_AUTO_ORDER_TOTAL_UAH + " грн доступні лише для попередньо погоджених номерів. Напишіть нам у Viber для підтвердження.";
+      }
+
       return "";
     }
 
     async function submitOrder() {
+      hideError();
+      hideSuccess();
+
       await syncCartWithStock();
       renderCart();
 
@@ -948,26 +1046,22 @@
       const activeItems = cart.filter(item => Number(item.availableQty || 0) > 0);
 
       if (!activeItems.length) {
-        errorBox.textContent = "У кошику немає монет, доступних для замовлення.";
-        errorBox.classList.remove("hidden");
+        showError("У кошику немає монет, доступних для замовлення.");
         return;
       }
 
       const hasUnavailable = cart.some(item => Number(item.availableQty || 0) <= 0);
       if (hasUnavailable) {
-        errorBox.textContent = "У кошику є недоступні монети. Видаліть їх перед оформленням.";
-        errorBox.classList.remove("hidden");
+        showError("У кошику є недоступні монети. Видаліть їх перед оформленням.");
         return;
       }
 
-      const validationError = validateForm();
+      const validationError = validateForm(activeItems);
       if (validationError) {
-        errorBox.textContent = validationError;
-        errorBox.classList.remove("hidden");
+        showError(validationError);
         return;
       }
 
-      errorBox.classList.add("hidden");
       submitOrderBtn.disabled = true;
       submitOrderBtn.textContent = "Відправка...";
 
@@ -1010,13 +1104,15 @@
 
         saveCart([]);
         updateCartBadge();
+        showSuccess("Замовлення успішно прийнято. Переходимо на сторінку підтвердження...");
 
         const orderId = String(data.order.OrderID || "").trim();
-        window.location.href = "success.html?order=" + encodeURIComponent(orderId);
+        setTimeout(() => {
+          window.location.href = "success.html?order=" + encodeURIComponent(orderId);
+        }, 500);
 
       } catch (error) {
-        errorBox.textContent = error.message || "Сталася помилка під час оформлення замовлення.";
-        errorBox.classList.remove("hidden");
+        showError(error.message || "Сталася помилка під час оформлення замовлення.");
       } finally {
         submitOrderBtn.disabled = false;
         submitOrderBtn.textContent = "Оформити замовлення";
