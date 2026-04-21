@@ -104,30 +104,30 @@
       gap: 14px;
     }
 
-   .brand-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  text-decoration: none;
-  color: var(--text-strong);
-}
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      text-decoration: none;
+      color: var(--text-strong);
+    }
 
-.logo-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  object-fit: cover;
-  display: block;
-  flex: 0 0 34px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      object-fit: cover;
+      display: block;
+      flex: 0 0 34px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
 
-.brand-text {
-  min-width: 0;
-}
+    .brand-text {
+      min-width: 0;
+    }
 
     h1 {
       margin: 0 0 8px;
@@ -438,6 +438,26 @@
       border-radius: 999px;
       letter-spacing: 0.4px;
       box-shadow: 0 2px 8px rgba(198, 40, 40, 0.28);
+    }
+
+    .new-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 4;
+      background: #16a34a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 11px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
+    }
+
+    body[data-theme="dark"] .new-badge {
+      background: #22c55e;
+      color: #062b14;
     }
 
     .coin-photo-wrap {
@@ -868,13 +888,13 @@
 <body>
   <header>
     <div class="header-wrap">
-     <a class="brand-wrap" href="index.html">
-  <img class="logo-mark" src="/monety-svitu/logo.png" alt="Логотип Монети Світу" />
-  <div class="brand-text">
-    <h1>Монети Світу</h1>
-    <div class="subtitle">Каталог монет</div>
-  </div>
-</a>
+      <a class="brand-wrap" href="index.html">
+        <img class="logo-mark" src="/monety-svitu/logo.png" alt="Логотип Монети Світу" />
+        <div class="brand-text">
+          <h1>Монети Світу</h1>
+          <div class="subtitle">Каталог монет</div>
+        </div>
+      </a>
 
       <div class="header-right">
         <button id="themeToggle" class="theme-toggle" type="button" title="Перемкнути тему" aria-label="Перемкнути тему">🌙</button>
@@ -966,6 +986,7 @@
             <div class="sort-wrap">
               <label for="sortSelect">Сортування</label>
               <select id="sortSelect">
+                <option value="newest" selected>Спочатку найновіші</option>
                 <option value="stock_first">Спочатку в наявності</option>
                 <option value="price_asc">Ціна: дешевші спочатку</option>
                 <option value="price_desc">Ціна: дорожчі спочатку</option>
@@ -1129,6 +1150,36 @@
 
     function shortDescription(text) {
       return String(text || "").trim();
+    }
+
+    function parseItemDate(value) {
+      if (!value) return null;
+
+      const direct = new Date(value);
+      if (!isNaN(direct.getTime())) return direct;
+
+      const text = String(value).trim();
+      const match = text.match(/^(\d{4})[-\/.](\d{2})[-\/.](\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+      if (!match) return null;
+
+      const year = Number(match[1]);
+      const month = Number(match[2]) - 1;
+      const day = Number(match[3]);
+      const hour = Number(match[4] || 0);
+      const minute = Number(match[5] || 0);
+      const second = Number(match[6] || 0);
+
+      const dt = new Date(year, month, day, hour, minute, second);
+      return isNaN(dt.getTime()) ? null : dt;
+    }
+
+    function isNewItem(item) {
+      const created = parseItemDate(item.CreatedAt);
+      if (!created) return false;
+
+      const now = Date.now();
+      const diff = now - created.getTime();
+      return diff >= 0 && diff <= 24 * 60 * 60 * 1000;
     }
 
     function isSold(item) {
@@ -1317,9 +1368,19 @@
         const bPrice = Number(b.PriceUAH || 0);
         const aTitle = String(a.TitleUA || a.TitleEN || "").trim();
         const bTitle = String(b.TitleUA || b.TitleEN || "").trim();
+        const aCreated = parseItemDate(a.CreatedAt);
+        const bCreated = parseItemDate(b.CreatedAt);
+        const aCreatedTime = aCreated ? aCreated.getTime() : 0;
+        const bCreatedTime = bCreated ? bCreated.getTime() : 0;
+
+        if (sortValue === "newest") {
+          if (bCreatedTime !== aCreatedTime) return bCreatedTime - aCreatedTime;
+          return aTitle.localeCompare(bTitle, "uk");
+        }
 
         if (sortValue === "stock_first") {
           if (aSold !== bSold) return aSold - bSold;
+          if (bCreatedTime !== aCreatedTime) return bCreatedTime - aCreatedTime;
           return aTitle.localeCompare(bTitle, "uk");
         }
 
@@ -1369,6 +1430,7 @@
         const km = item.KrauseNumber || "";
         const description = shortDescription(item.DescriptionUA);
         const sold = isSold(item);
+        const isNew = isNewItem(item);
         const qty = Number(item.Quantity || 0);
         const price = Number(item.PriceUAH || 0);
         const link = getCoinLink(item);
@@ -1401,7 +1463,7 @@
 
         return `
           <article class="coin-card ${sold ? "is-sold" : ""}">
-            ${sold ? `<div class="sold-badge">ПРОДАНО</div>` : ""}
+            ${sold ? `<div class="sold-badge">ПРОДАНО</div>` : (isNew ? `<div class="new-badge">Новинка</div>` : "")}
 
             <a class="coin-photo-wrap ${hasManyPhotos ? "has-multiple" : ""}" href="${esc(link)}" aria-label="${esc(title)}"
                data-gallery-key="${esc(itemKey)}">
@@ -1617,7 +1679,7 @@
       metalSelect.value = "";
       conditionSelect.value = "";
       inStockOnly.checked = true;
-      sortSelect.value = "stock_first";
+      sortSelect.value = "newest";
       repopulateLinkedFilters();
       filterItems();
     }
