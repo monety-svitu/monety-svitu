@@ -14,13 +14,79 @@
       --bg: #f5f6f8;
       --card: #ffffff;
       --line: #e4e7eb;
+      --line-strong: #dddddd;
       --line-soft: #edf1f4;
       --text: #111827;
+      --text-strong: #111827;
+      --text-soft: #334155;
       --muted: #6b7280;
       --primary: #2f6fdd;
       --primary-hover: #255fc2;
       --shadow: 0 3px 12px rgba(0,0,0,0.05);
       --radius: 16px;
+
+      --header-bg: #ffffff;
+      --header-border: #dddddd;
+
+      --btn-secondary-bg: #eef2f6;
+      --btn-secondary-hover: #e5ebf1;
+      --btn-secondary-text: #1f2937;
+
+      --input-bg: #ffffff;
+      --input-border: #d4d8de;
+      --input-text: #111827;
+
+      --panel-title: #111827;
+      --hint: #667085;
+
+      --sheet-photo-bg: #ffffff;
+      --sheet-price: #0f172a;
+      --sheet-id: #4b5565;
+      --sheet-type: #475569;
+
+      --zoom-value-bg: #f7f9fb;
+      --zoom-value-text: #344054;
+
+      --message-text: #555555;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --line: #243244;
+      --line-strong: #2a3a50;
+      --line-soft: #223041;
+      --text: #e5edf7;
+      --text-strong: #f8fafc;
+      --text-soft: #d7e0ea;
+      --muted: #aab7c8;
+      --primary: #5b8cff;
+      --primary-hover: #79a0ff;
+      --shadow: 0 6px 18px rgba(0,0,0,0.28);
+
+      --header-bg: #111827;
+      --header-border: #2a3a50;
+
+      --btn-secondary-bg: #1b2636;
+      --btn-secondary-hover: #233247;
+      --btn-secondary-text: #e5edf7;
+
+      --input-bg: #0f172a;
+      --input-border: #314257;
+      --input-text: #e5edf7;
+
+      --panel-title: #f8fafc;
+      --hint: #aab7c8;
+
+      --sheet-photo-bg: #0f172a;
+      --sheet-price: #f8fafc;
+      --sheet-id: #aab7c8;
+      --sheet-type: #b7c6d8;
+
+      --zoom-value-bg: #182233;
+      --zoom-value-text: #e5edf7;
+
+      --message-text: #c8d2df;
     }
 
     body {
@@ -28,13 +94,15 @@
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
+      transition: background-color 0.18s ease, color 0.18s ease;
     }
 
     header {
-      background: #fff;
-      border-bottom: 1px solid #ddd;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--header-border);
       padding: 12px 16px;
       position: static;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .header-wrap {
@@ -48,7 +116,7 @@
 
     .brand {
       text-decoration: none;
-      color: #222;
+      color: var(--text-strong);
     }
 
     .brand h1 {
@@ -58,7 +126,7 @@
 
     .brand .subtitle {
       font-size: 13px;
-      color: #666;
+      color: var(--muted);
     }
 
     .header-right {
@@ -75,6 +143,28 @@
       font-weight: 700;
       white-space: nowrap;
       font-size: 14px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 46px;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      background: var(--btn-secondary-hover);
     }
 
     .small-btn {
@@ -97,12 +187,13 @@
     }
 
     .small-btn.secondary {
-      background: #eef2f6;
-      color: #1f2937;
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      border: 1px solid var(--line);
     }
 
     .small-btn.secondary:hover {
-      background: #e5ebf1;
+      background: var(--btn-secondary-hover);
     }
 
     .small-btn:disabled {
@@ -125,10 +216,11 @@
 
     .filters-card,
     .info-card {
-      background: #fff;
+      background: var(--card);
       border: 1px solid var(--line);
       border-radius: 16px;
       box-shadow: var(--shadow);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .filters-inner,
@@ -140,6 +232,7 @@
       font-size: 17px;
       font-weight: 700;
       margin-bottom: 10px;
+      color: var(--panel-title);
     }
 
     .filter-grid {
@@ -151,7 +244,7 @@
     .filter-group label {
       display: block;
       font-size: 12px;
-      color: #555;
+      color: var(--muted);
       margin-bottom: 5px;
       font-weight: 700;
     }
@@ -161,11 +254,13 @@
     .list-textarea {
       width: 100%;
       padding: 8px 10px;
-      border: 1px solid #d4d8de;
+      border: 1px solid var(--input-border);
       border-radius: 10px;
       font-size: 14px;
-      background: #fff;
+      background: var(--input-bg);
+      color: var(--input-text);
       font-family: Arial, sans-serif;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.18s ease, color 0.18s ease;
     }
 
     .filter-group input:focus,
@@ -181,7 +276,7 @@
       align-items: center;
       gap: 8px;
       font-size: 14px;
-      color: #333;
+      color: var(--text);
       margin-top: 2px;
     }
 
@@ -211,13 +306,13 @@
 
     .stats-strong {
       font-weight: 700;
-      color: #111827;
+      color: var(--text-strong);
     }
 
     .hint {
       font-size: 13px;
       line-height: 1.45;
-      color: #667085;
+      color: var(--hint);
     }
 
     .zoom-toolbar {
@@ -233,16 +328,16 @@
     .zoom-label {
       font-size: 13px;
       font-weight: 700;
-      color: #475467;
+      color: var(--muted);
       margin-right: 2px;
     }
 
     .zoom-btn {
       min-width: 40px;
       padding: 8px 10px;
-      border: 1px solid #d4d8de;
-      background: #fff;
-      color: #1f2937;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--input-text);
       border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
@@ -251,7 +346,7 @@
     }
 
     .zoom-btn:hover {
-      background: #f7f9fb;
+      background: var(--btn-secondary-hover);
     }
 
     .zoom-range {
@@ -264,8 +359,8 @@
       text-align: center;
       font-size: 13px;
       font-weight: 700;
-      color: #344054;
-      background: #f7f9fb;
+      color: var(--zoom-value-text);
+      background: var(--zoom-value-bg);
       border: 1px solid var(--line-soft);
       border-radius: 10px;
       padding: 8px 10px;
@@ -278,12 +373,13 @@
     }
 
     .message {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: var(--card);
+      border: 1px solid var(--line-strong);
       border-radius: 12px;
       padding: 18px;
       text-align: center;
-      color: #555;
+      color: var(--message-text);
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     }
 
     .gallery-grid {
@@ -300,6 +396,7 @@
       box-shadow: var(--shadow);
       display: grid;
       grid-template-rows: 250px auto;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .sheet-photos {
@@ -315,7 +412,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff;
+      background: var(--sheet-photo-bg);
       overflow: hidden;
     }
 
@@ -324,13 +421,13 @@
       height: 100%;
       object-fit: contain;
       display: block;
-      background: #fff;
+      background: var(--sheet-photo-bg);
     }
 
     .sheet-photo-empty {
       width: 100%;
       height: 100%;
-      background: #fff;
+      background: var(--sheet-photo-bg);
     }
 
     .sheet-body {
@@ -351,7 +448,7 @@
     .sheet-id {
       font-size: 14px;
       line-height: 1.2;
-      color: #4b5565;
+      color: var(--sheet-id);
       font-weight: 700;
       margin-bottom: 3px;
     }
@@ -360,7 +457,7 @@
       font-size: 16px;
       line-height: 1.18;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-strong);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -375,7 +472,7 @@
       border-top: 1px solid var(--line-soft);
       font-size: 14px;
       line-height: 1.18;
-      color: #334155;
+      color: var(--text-soft);
       font-weight: 700;
     }
 
@@ -391,7 +488,7 @@
     .sheet-type {
       font-size: 13px;
       line-height: 1.18;
-      color: #475569;
+      color: var(--sheet-type);
       text-transform: uppercase;
       letter-spacing: 0.2px;
       font-weight: 700;
@@ -411,7 +508,7 @@
     .sheet-price {
       font-size: 15px;
       line-height: 1.15;
-      color: #0f172a;
+      color: var(--sheet-price);
       font-weight: 700;
       white-space: nowrap;
     }
@@ -440,7 +537,7 @@
     .page-indicator {
       font-size: 14px;
       font-weight: 700;
-      color: #344054;
+      color: var(--text-soft);
       min-width: 120px;
       text-align: center;
     }
@@ -519,6 +616,7 @@
       </a>
 
       <div class="header-right">
+        <button id="themeToggle" class="theme-toggle" type="button" title="Перемкнути тему" aria-label="Перемкнути тему">🌙</button>
         <a class="back-link" href="index.html">← Назад до каталогу</a>
         <button id="printBtn" class="small-btn secondary" type="button">Друк / PDF</button>
       </div>
@@ -655,6 +753,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
     const PER_PAGE = 8;
+    const THEME_KEY = "monety_svitu_theme";
 
     const state = {
       items: [],
@@ -696,6 +795,7 @@
     const nextPageBtn = document.getElementById("nextPageBtn");
     const pageIndicator = document.getElementById("pageIndicator");
     const printBtn = document.getElementById("printBtn");
+    const themeToggle = document.getElementById("themeToggle");
 
     function esc(value) {
       return String(value ?? "")
@@ -703,6 +803,43 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function applyTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      if (normalized === "dark") {
+        document.body.setAttribute("data-theme", "dark");
+        themeToggle.textContent = "☀";
+        themeToggle.title = "Увімкнути світлу тему";
+        themeToggle.setAttribute("aria-label", "Увімкнути світлу тему");
+      } else {
+        document.body.removeAttribute("data-theme");
+        themeToggle.textContent = "🌙";
+        themeToggle.title = "Увімкнути нічний режим";
+        themeToggle.setAttribute("aria-label", "Увімкнути нічний режим");
+      }
+      localStorage.setItem(THEME_KEY, normalized);
+    }
+
+    function initTheme() {
+      let savedTheme = "";
+      try {
+        savedTheme = String(localStorage.getItem(THEME_KEY) || "").trim();
+      } catch (err) {
+      }
+
+      if (savedTheme === "dark" || savedTheme === "light") {
+        applyTheme(savedTheme);
+        return;
+      }
+
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyTheme(prefersDark ? "dark" : "light");
+    }
+
+    function toggleTheme() {
+      const current = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      applyTheme(current === "dark" ? "light" : "dark");
     }
 
     function applyZoom() {
@@ -1151,6 +1288,9 @@
       window.print();
     });
 
+    themeToggle.addEventListener("click", toggleTheme);
+
+    initTheme();
     applyZoom();
     loadCoins();
   </script>
