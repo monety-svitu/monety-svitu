@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Монети Світу — Галерея</title>
+
+<style>
+:root {
+  --bg: #0b1220;
+  --card: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #2563eb;
+}
+
+/* світлий режим */
+body.light {
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+/* верх */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+select, button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background: var(--card);
+  color: var(--text);
+}
+
+/* GRID */
+.coins-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  gap: 10px;
+  padding: 10px;
+}
+
+/* CARD */
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* фото */
+.images {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.images img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* текст */
+.info {
+  padding: 10px;
+}
+
+.id {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+.price {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: right;
+  margin-top: 10px;
+}
+
+/* новинка */
+.badge-new {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: #22c55e;
+  color: white;
+  padding: 3px 6px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+
+  <div class="controls">
+
+    Колонки:
+    <select id="cols">
+      <option>2</option>
+      <option selected>3</option>
+      <option>4</option>
+      <option>5</option>
+      <option>6</option>
+    </select>
+
+    Рядки:
+    <select id="rows">
+      <option>2</option>
+      <option selected>3</option>
+      <option>4</option>
+      <option>5</option>
+    </select>
+
+    <button onclick="applyGrid()">Застосувати</button>
+
+  </div>
+
+  <button onclick="toggleTheme()">🌓</button>
+
+</div>
+
+<div id="coins" class="coins-grid"></div>
+
+<script>
+
+// ================== НАСТРОЙКИ ==================
+const API_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec"; // ← встав свій GAS URL
+
+let coins = [];
+
+// ================== ТЕМА ==================
+function toggleTheme() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+}
+
+(function initTheme(){
+  if(localStorage.getItem("theme")==="light"){
+    document.body.classList.add("light");
+  }
+})();
+
+// ================== GRID ==================
+function applyGrid(){
+  const cols = +document.getElementById("cols").value;
+  const rows = +document.getElementById("rows").value;
+
+  localStorage.setItem("cols", cols);
+  localStorage.setItem("rows", rows);
+
+  document.documentElement.style.setProperty("--cols", cols);
+
+  render(cols * rows);
+}
+
+(function initGrid(){
+  const cols = localStorage.getItem("cols") || 3;
+  const rows = localStorage.getItem("rows") || 3;
+
+  document.getElementById("cols").value = cols;
+  document.getElementById("rows").value = rows;
+
+  document.documentElement.style.setProperty("--cols", cols);
+})();
+
+// ================== НОВИНКА ==================
+function isNew(createdAt){
+  if(!createdAt) return false;
+
+  const now = new Date();
+  const created = new Date(createdAt);
+
+  return (now - created) < (24 * 60 * 60 * 1000);
+}
+
+// ================== РЕНДЕР ==================
+function render(limit = 9){
+  const container = document.getElementById("coins");
+  container.innerHTML = "";
+
+  coins.slice(0, limit).forEach(c => {
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const wrap = document.createElement("div");
+    wrap.style.position = "relative";
+
+    // бейдж
+    if(isNew(c.CreatedAt)){
+      const badge = document.createElement("div");
+      badge.className = "badge-new";
+      badge.innerText = "НОВИНКА";
+      wrap.appendChild(badge);
+    }
+
+    // фото
+    const images = document.createElement("div");
+    images.className = "images";
+
+    images.innerHTML = `
+      <img src="${c.PhotoMainURL || ''}">
+      <img src="${c.PhotoExtra1URL || ''}">
+    `;
+
+    wrap.appendChild(images);
+    card.appendChild(wrap);
+
+    // текст
+    const info = document.createElement("div");
+    info.className = "info";
+
+    info.innerHTML = `
+      <div class="id">ID: ${c.ID || ''}</div>
+      <div class="title">${c.TitleUA || ''}</div>
+      <div class="price">${c.PriceUAH || ''} грн</div>
+    `;
+
+    card.appendChild(info);
+
+    container.appendChild(card);
+  });
+}
+
+// ================== API ==================
+async function loadCoins(){
+  const res = await fetch(API_URL + "?action=getCoins");
+  const data = await res.json();
+
+  coins = data.coins || [];
+
+  // сортування нові зверху
+  coins.sort((a,b)=>{
+    return new Date(b.CreatedAt || 0) - new Date(a.CreatedAt || 0);
+  });
+
+  const cols = localStorage.getItem("cols") || 3;
+  const rows = localStorage.getItem("rows") || 3;
+
+  render(cols * rows);
+}
+
+// ================== INIT ==================
+loadCoins();
+
+</script>
+
+</body>
+</html>
