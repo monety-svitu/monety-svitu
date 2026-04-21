@@ -985,6 +985,13 @@
         </div>
 
         <div class="filter-group">
+          <label for="themeSelect">Тема</label>
+          <select id="themeSelect">
+            <option value="">Усі</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
           <label for="conditionSelect">Стан</label>
           <select id="conditionSelect">
             <option value="">Усі</option>
@@ -1075,6 +1082,7 @@
     const typeSelect = document.getElementById("typeSelect");
     const periodSelect = document.getElementById("periodSelect");
     const metalSelect = document.getElementById("metalSelect");
+    const themeSelect = document.getElementById("themeSelect");
     const conditionSelect = document.getElementById("conditionSelect");
     const inStockOnly = document.getElementById("inStockOnly");
     const resetFiltersBtn = document.getElementById("resetFiltersBtn");
@@ -1273,6 +1281,7 @@
       const typeValue = String(typeSelect.value || "").trim();
       const periodValue = String(periodSelect.value || "").trim();
       const metalValue = String(metalSelect.value || "").trim();
+      const themeValue = String(themeSelect.value || "").trim();
       const conditionValue = String(conditionSelect.value || "").trim();
 
       fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"), continentValue);
@@ -1305,8 +1314,15 @@
       fillSelect(metalSelect, uniqueSortedValues(itemsForMetal, "Metal"), metalValue);
       const actualMetalValue = String(metalSelect.value || "").trim();
 
-      const itemsForCondition = itemsForMetal.filter(item => {
+      const itemsForTheme = itemsForMetal.filter(item => {
         if (actualMetalValue && String(item.Metal || "").trim() !== actualMetalValue) return false;
+        return true;
+      });
+      fillSelect(themeSelect, uniqueSortedValues(itemsForTheme, "Theme"), themeValue);
+      const actualThemeValue = String(themeSelect.value || "").trim();
+
+      const itemsForCondition = itemsForTheme.filter(item => {
+        if (actualThemeValue && String(item.Theme || "").trim() !== actualThemeValue) return false;
         return true;
       });
       fillSelect(conditionSelect, uniqueSortedValues(itemsForCondition, "Condition"), conditionValue);
@@ -1347,6 +1363,7 @@
       const type = String(typeSelect.value || "").trim();
       const period = String(periodSelect.value || "").trim();
       const metal = String(metalSelect.value || "").trim();
+      const theme = String(themeSelect.value || "").trim();
       const condition = String(conditionSelect.value || "").trim();
       const stockOnly = !!inStockOnly.checked;
 
@@ -1357,6 +1374,7 @@
         if (type && String(item.Type || "").trim() !== type) return false;
         if (period && String(item.NominalPeriod || "").trim() !== period) return false;
         if (metal && String(item.Metal || "").trim() !== metal) return false;
+        if (theme && String(item.Theme || "").trim() !== theme) return false;
         if (condition && String(item.Condition || "").trim() !== condition) return false;
 
         if (q) {
@@ -1700,6 +1718,7 @@
       typeSelect.value = "";
       periodSelect.value = "";
       metalSelect.value = "";
+      themeSelect.value = "";
       conditionSelect.value = "";
       inStockOnly.checked = true;
       sortSelect.value = "newest";
@@ -1713,6 +1732,7 @@
     typeSelect.addEventListener("change", filterItems);
     periodSelect.addEventListener("change", filterItems);
     metalSelect.addEventListener("change", filterItems);
+    themeSelect.addEventListener("change", filterItems);
     conditionSelect.addEventListener("change", filterItems);
     inStockOnly.addEventListener("change", filterItems);
     sortSelect.addEventListener("change", filterItems);
