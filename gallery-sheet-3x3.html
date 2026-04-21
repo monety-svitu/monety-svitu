@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Аркуш відбору 3×3 — Монети Світу</title>
+  <link rel="icon" type="image/svg+xml" href="/monety-svitu/favicon.svg" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="description" content="Внутрішня галерея монет 3×3 для відбору та фіксації списків." />
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --line: #e4e7eb;
+      --line-strong: #dddddd;
+      --line-soft: #edf1f4;
+      --text: #111827;
+      --text-strong: #111827;
+      --text-soft: #334155;
+      --muted: #6b7280;
+      --primary: #2f6fdd;
+      --primary-hover: #255fc2;
+      --shadow: 0 3px 12px rgba(0,0,0,0.05);
+      --radius: 16px;
+
+      --header-bg: #ffffff;
+      --header-border: #dddddd;
+
+      --btn-secondary-bg: #eef2f6;
+      --btn-secondary-hover: #e5ebf1;
+      --btn-secondary-text: #1f2937;
+
+      --input-bg: #ffffff;
+      --input-border: #d4d8de;
+      --input-text: #111827;
+
+      --panel-title: #111827;
+      --hint: #667085;
+
+      --sheet-photo-bg: #ffffff;
+      --sheet-price: #0f172a;
+      --sheet-id: #4b5565;
+      --sheet-type: #475569;
+
+      --zoom-value-bg: #f7f9fb;
+      --zoom-value-text: #344054;
+
+      --message-text: #555555;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --line: #243244;
+      --line-strong: #2a3a50;
+      --line-soft: #223041;
+      --text: #e5edf7;
+      --text-strong: #f8fafc;
+      --text-soft: #d7e0ea;
+      --muted: #aab7c8;
+      --primary: #5b8cff;
+      --primary-hover: #79a0ff;
+      --shadow: 0 6px 18px rgba(0,0,0,0.28);
+
+      --header-bg: #111827;
+      --header-border: #2a3a50;
+
+      --btn-secondary-bg: #1b2636;
+      --btn-secondary-hover: #233247;
+      --btn-secondary-text: #e5edf7;
+
+      --input-bg: #0f172a;
+      --input-border: #314257;
+      --input-text: #e5edf7;
+
+      --panel-title: #f8fafc;
+      --hint: #aab7c8;
+
+      --sheet-photo-bg: #0f172a;
+      --sheet-price: #f8fafc;
+      --sheet-id: #aab7c8;
+      --sheet-type: #b7c6d8;
+
+      --zoom-value-bg: #182233;
+      --zoom-value-text: #e5edf7;
+
+      --message-text: #c8d2df;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background-color 0.18s ease, color 0.18s ease;
+    }
+
+    header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--header-border);
+      padding: 12px 16px;
+      position: static;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .header-wrap {
+      max-width: 1500px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      text-decoration: none;
+      color: var(--text-strong);
+    }
+
+    .brand h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+    }
+
+    .brand .subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--primary);
+      font-weight: 700;
+      white-space: nowrap;
+      font-size: 16px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 46px;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      background: var(--btn-secondary-hover);
+    }
+
+    .small-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      background: var(--primary);
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .small-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .small-btn.secondary {
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      border: 1px solid var(--line);
+    }
+
+    .small-btn.secondary:hover {
+      background: var(--btn-secondary-hover);
+    }
+
+    .small-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    main {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 14px 16px 20px;
+    }
+
+    .page-layout {
+      display: grid;
+      grid-template-columns: 235px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .filters-card,
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .filters-inner,
+    .info-inner {
+      padding: 12px;
+    }
+
+    .panel-title {
+      font-size: 21px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--panel-title);
+      line-height: 1.2;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .filter-group input,
+    .filter-group select,
+    .list-textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      font-size: 16px;
+      background: var(--input-bg);
+      color: var(--input-text);
+      font-family: Arial, sans-serif;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.18s ease, color 0.18s ease;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus,
+    .list-textarea:focus {
+      outline: none;
+      border-color: #8bb3ff;
+      box-shadow: 0 0 0 3px rgba(31,111,235,0.10);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      color: var(--text);
+      margin-top: 2px;
+      font-weight: 700;
+    }
+
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .content-col {
+      min-width: 0;
+    }
+
+    .info-card {
+      margin-bottom: 10px;
+    }
+
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .stats-strong {
+      font-weight: 700;
+      color: var(--text-strong);
+      font-size: 18px;
+    }
+
+    .hint {
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--hint);
+      font-weight: 700;
+    }
+
+    .zoom-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .zoom-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-right: 2px;
+    }
+
+    .zoom-btn {
+      min-width: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--input-text);
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .zoom-btn:hover {
+      background: var(--btn-secondary-hover);
+    }
+
+    .zoom-range {
+      width: 170px;
+      max-width: 100%;
+    }
+
+    .zoom-value {
+      min-width: 58px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--zoom-value-text);
+      background: var(--zoom-value-bg);
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .gallery-zoom-wrap {
+      transform-origin: top center;
+      transition: transform 0.12s ease;
+      will-change: transform;
+    }
+
+    .message {
+      background: var(--card);
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      color: var(--message-text);
+      font-size: 18px;
+      font-weight: 700;
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .sheet-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: 220px auto;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .sheet-photos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .sheet-photo-box {
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--sheet-photo-bg);
+      overflow: hidden;
+    }
+
+    .sheet-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: var(--sheet-photo-bg);
+    }
+
+    .sheet-photo-empty {
+      width: 100%;
+      height: 100%;
+      background: var(--sheet-photo-bg);
+    }
+
+    .sheet-body {
+      padding: 4px 8px 5px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto 1fr;
+      gap: 4px 8px;
+      min-width: 0;
+    }
+
+    .sheet-left {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      min-width: 0;
+    }
+
+    .sheet-id {
+      font-size: 17px;
+      line-height: 1.12;
+      color: var(--sheet-id);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .sheet-title {
+      font-size: 17px;
+      line-height: 1.12;
+      font-weight: 700;
+      color: var(--text-strong);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 38px;
+      margin-bottom: 2px;
+    }
+
+    .sheet-period {
+      margin-top: 2px;
+      padding-top: 4px;
+      border-top: 1px solid var(--line-soft);
+      font-size: 16px;
+      line-height: 1.12;
+      color: var(--text-soft);
+      font-weight: 700;
+    }
+
+    .sheet-top-right {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      min-width: 82px;
+      max-width: 120px;
+      text-align: right;
+      align-self: start;
+    }
+
+    .sheet-type {
+      font-size: 15px;
+      line-height: 1.08;
+      color: var(--sheet-type);
+      text-transform: uppercase;
+      letter-spacing: 0.1px;
+      font-weight: 700;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .sheet-bottom-right {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      min-width: 82px;
+      text-align: right;
+      align-self: end;
+    }
+
+    .sheet-price {
+      font-size: 24px;
+      line-height: 1;
+      color: var(--sheet-price);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .list-box {
+      margin-top: 12px;
+    }
+
+    .list-textarea {
+      min-height: 160px;
+      resize: vertical;
+      line-height: 1.5;
+      white-space: pre;
+      tab-size: 4;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .page-indicator {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-soft);
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1180px) {
+      .gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .sheet-card {
+        grid-template-rows: 230px auto;
+      }
+
+      .sheet-photo-box {
+        height: 230px;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .page-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sheet-card {
+        grid-template-rows: 190px auto;
+      }
+
+      .sheet-photo-box {
+        height: 190px;
+      }
+
+      .zoom-toolbar {
+        gap: 6px;
+      }
+
+      .zoom-range {
+        width: 130px;
+      }
+
+      .sheet-id {
+        font-size: 17px;
+      }
+
+      .sheet-title {
+        font-size: 17px;
+      }
+
+      .sheet-period {
+        font-size: 16px;
+      }
+
+      .sheet-type {
+        font-size: 15px;
+      }
+
+      .sheet-price {
+        font-size: 24px;
+      }
+    }
+
+    @media print {
+      header,
+      .filters-card,
+      .info-card,
+      .list-box,
+      .pagination {
+        display: none !important;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      main {
+        max-width: none;
+        padding: 0;
+      }
+
+      .page-layout {
+        display: block;
+      }
+
+      .gallery-grid {
+        gap: 8px;
+      }
+
+      .sheet-card {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrap">
+      <a class="brand" href="index.html">
+        <h1>Монети Світу</h1>
+        <div class="subtitle">Внутрішня галерея 3×3 для відбору</div>
+      </a>
+
+      <div class="header-right">
+        <button id="themeToggle" class="theme-toggle" type="button" title="Перемкнути тему" aria-label="Перемкнути тему">🌙</button>
+        <a class="back-link" href="index.html">← Назад до каталогу</a>
+        <button id="printBtn" class="small-btn secondary" type="button">Друк / PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-layout">
+      <section class="filters-card">
+        <div class="filters-inner">
+          <div class="panel-title">Фільтри</div>
+
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label for="searchInput">Пошук</label>
+              <input id="searchInput" type="text" placeholder="ID, назва, країна, KM..." />
+            </div>
+
+            <div class="filter-group">
+              <label for="continentSelect">Регіон</label>
+              <select id="continentSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="countrySelect">Країна</label>
+              <select id="countrySelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="typeSelect">Тип</label>
+              <select id="typeSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="periodSelect">Період</label>
+              <select id="periodSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="metalSelect">Метал</label>
+              <select id="metalSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="themeSelect">Тема</label>
+              <select id="themeSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="conditionSelect">Стан</label>
+              <select id="conditionSelect">
+                <option value="">Усі</option>
+              </select>
+            </div>
+
+            <div class="check-row">
+              <input id="inStockOnly" type="checkbox" checked />
+              <label for="inStockOnly" style="margin:0;">Тільки в наявності</label>
+            </div>
+
+            <div class="actions-row">
+              <button id="resetFiltersBtn" class="small-btn secondary" type="button">Скинути</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="content-col">
+        <section class="info-card">
+          <div class="info-inner">
+            <div class="panel-title">Аркуш відбору 3×3</div>
+
+            <div class="stats-row">
+              <div>Знайдено: <span id="foundCount" class="stats-strong">0</span></div>
+              <div>На сторінці: <span class="stats-strong">9</span></div>
+              <div>Сторінка: <span id="pageNow" class="stats-strong">1</span></div>
+            </div>
+
+            <div class="hint">
+              Це внутрішня сторінка для швидкого відбору. Показує 9 щільних карток
+              (3 колонки × 3 рядки). Зручно для скріну, друку або фіксації списку монет.
+            </div>
+
+            <div class="zoom-toolbar">
+              <div class="zoom-label">Масштаб:</div>
+              <button id="zoomOutBtn" class="zoom-btn" type="button">−</button>
+              <input id="zoomRange" class="zoom-range" type="range" min="50" max="150" step="5" value="100" />
+              <button id="zoomInBtn" class="zoom-btn" type="button">+</button>
+              <button id="zoomResetBtn" class="zoom-btn" type="button">100%</button>
+              <div id="zoomValue" class="zoom-value">100%</div>
+            </div>
+          </div>
+        </section>
+
+        <div id="messageBox" class="message">Завантаження монет...</div>
+
+        <div id="galleryZoomWrap" class="gallery-zoom-wrap">
+          <div id="galleryGrid" class="gallery-grid hidden"></div>
+        </div>
+
+        <div id="sheetListBox" class="info-card list-box hidden">
+          <div class="info-inner">
+            <div class="panel-title">Список монет на цій сторінці</div>
+
+            <div class="actions-row" style="margin-bottom:10px;">
+              <button id="copySheetListBtn" class="small-btn secondary" type="button">Копіювати список</button>
+            </div>
+
+            <textarea id="sheetListText" class="list-textarea" readonly></textarea>
+          </div>
+        </div>
+
+        <div id="pagination" class="pagination hidden">
+          <button id="prevPageBtn" class="small-btn secondary" type="button">← Назад</button>
+          <div id="pageIndicator" class="page-indicator">Сторінка 1 / 1</div>
+          <button id="nextPageBtn" class="small-btn" type="button">Далі →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
+    const PER_PAGE = 9;
+    const THEME_KEY = "monety_svitu_theme";
+
+    const state = {
+      items: [],
+      filtered: [],
+      page: 1,
+      detailsCache: {},
+      zoom: 100
+    };
+
+    const searchInput = document.getElementById("searchInput");
+    const continentSelect = document.getElementById("continentSelect");
+    const countrySelect = document.getElementById("countrySelect");
+    const typeSelect = document.getElementById("typeSelect");
+    const periodSelect = document.getElementById("periodSelect");
+    const metalSelect = document.getElementById("metalSelect");
+    const themeSelect = document.getElementById("themeSelect");
+    const conditionSelect = document.getElementById("conditionSelect");
+    const inStockOnly = document.getElementById("inStockOnly");
+    const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+
+    const foundCount = document.getElementById("foundCount");
+    const pageNow = document.getElementById("pageNow");
+    const messageBox = document.getElementById("messageBox");
+    const galleryGrid = document.getElementById("galleryGrid");
+    const galleryZoomWrap = document.getElementById("galleryZoomWrap");
+
+    const zoomRange = document.getElementById("zoomRange");
+    const zoomOutBtn = document.getElementById("zoomOutBtn");
+    const zoomInBtn = document.getElementById("zoomInBtn");
+    const zoomResetBtn = document.getElementById("zoomResetBtn");
+    const zoomValue = document.getElementById("zoomValue");
+
+    const sheetListBox = document.getElementById("sheetListBox");
+    const sheetListText = document.getElementById("sheetListText");
+    const copySheetListBtn = document.getElementById("copySheetListBtn");
+
+    const pagination = document.getElementById("pagination");
+    const prevPageBtn = document.getElementById("prevPageBtn");
+    const nextPageBtn = document.getElementById("nextPageBtn");
+    const pageIndicator = document.getElementById("pageIndicator");
+    const printBtn = document.getElementById("printBtn");
+    const themeToggle = document.getElementById("themeToggle");
+
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function applyTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      if (normalized === "dark") {
+        document.body.setAttribute("data-theme", "dark");
+        themeToggle.textContent = "☀";
+        themeToggle.title = "Увімкнути світлу тему";
+        themeToggle.setAttribute("aria-label", "Увімкнути світлу тему");
+      } else {
+        document.body.removeAttribute("data-theme");
+        themeToggle.textContent = "🌙";
+        themeToggle.title = "Увімкнути нічний режим";
+        themeToggle.setAttribute("aria-label", "Увімкнути нічний режим");
+      }
+      localStorage.setItem(THEME_KEY, normalized);
+    }
+
+    function initTheme() {
+      let savedTheme = "";
+      try {
+        savedTheme = String(localStorage.getItem(THEME_KEY) || "").trim();
+      } catch (err) {}
+
+      if (savedTheme === "dark" || savedTheme === "light") {
+        applyTheme(savedTheme);
+        return;
+      }
+
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyTheme(prefersDark ? "dark" : "light");
+    }
+
+    function toggleTheme() {
+      const current = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    }
+
+    function applyZoom() {
+      const scale = state.zoom / 100;
+      galleryZoomWrap.style.transform = `scale(${scale})`;
+      zoomRange.value = String(state.zoom);
+      zoomValue.textContent = state.zoom + "%";
+    }
+
+    function setZoom(value) {
+      const normalized = Math.max(50, Math.min(150, Number(value || 100)));
+      state.zoom = normalized;
+      applyZoom();
+    }
+
+    function stepZoom(delta) {
+      setZoom(state.zoom + delta);
+    }
+
+    function uniqueSortedValues(items, fieldName) {
+      const set = new Set();
+      items.forEach(item => {
+        const value = String(item[fieldName] || "").trim();
+        if (value) set.add(value);
+      });
+      return Array.from(set).sort((a, b) => a.localeCompare(b, "uk"));
+    }
+
+    function fillSelect(selectEl, values, keepValue = "") {
+      const currentValue = keepValue || "";
+      selectEl.innerHTML = `<option value="">Усі</option>` +
+        values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+      selectEl.value = values.includes(currentValue) ? currentValue : "";
+    }
+
+    function populateFilters() {
+      const continentValue = String(continentSelect.value || "").trim();
+      const countryValue = String(countrySelect.value || "").trim();
+      const typeValue = String(typeSelect.value || "").trim();
+      const periodValue = String(periodSelect.value || "").trim();
+      const metalValue = String(metalSelect.value || "").trim();
+      const themeValue = String(themeSelect.value || "").trim();
+      const conditionValue = String(conditionSelect.value || "").trim();
+
+      fillSelect(continentSelect, uniqueSortedValues(state.items, "Continent"), continentValue);
+
+      const itemsForCountry = state.items.filter(item => {
+        if (continentValue && String(item.Continent || "").trim() !== continentValue) return false;
+        return true;
+      });
+      fillSelect(countrySelect, uniqueSortedValues(itemsForCountry, "Country"), countryValue);
+      const actualCountryValue = String(countrySelect.value || "").trim();
+
+      const itemsForType = itemsForCountry.filter(item => {
+        if (actualCountryValue && String(item.Country || "").trim() !== actualCountryValue) return false;
+        return true;
+      });
+      fillSelect(typeSelect, uniqueSortedValues(itemsForType, "Type"), typeValue);
+      const actualTypeValue = String(typeSelect.value || "").trim();
+
+      const itemsForPeriod = itemsForType.filter(item => {
+        if (actualTypeValue && String(item.Type || "").trim() !== actualTypeValue) return false;
+        return true;
+      });
+      fillSelect(periodSelect, uniqueSortedValues(itemsForPeriod, "NominalPeriod"), periodValue);
+      const actualPeriodValue = String(periodSelect.value || "").trim();
+
+      const itemsForMetal = itemsForPeriod.filter(item => {
+        if (actualPeriodValue && String(item.NominalPeriod || "").trim() !== actualPeriodValue) return false;
+        return true;
+      });
+      fillSelect(metalSelect, uniqueSortedValues(itemsForMetal, "Metal"), metalValue);
+      const actualMetalValue = String(metalSelect.value || "").trim();
+
+      const itemsForTheme = itemsForMetal.filter(item => {
+        if (actualMetalValue && String(item.Metal || "").trim() !== actualMetalValue) return false;
+        return true;
+      });
+      fillSelect(themeSelect, uniqueSortedValues(itemsForTheme, "Theme"), themeValue);
+      const actualThemeValue = String(themeSelect.value || "").trim();
+
+      const itemsForCondition = itemsForTheme.filter(item => {
+        if (actualThemeValue && String(item.Theme || "").trim() !== actualThemeValue) return false;
+        return true;
+      });
+      fillSelect(conditionSelect, uniqueSortedValues(itemsForCondition, "Condition"), conditionValue);
+    }
+
+    function filterItems() {
+      populateFilters();
+
+      const q = String(searchInput.value || "").trim().toLowerCase();
+      const continent = String(continentSelect.value || "").trim();
+      const country = String(countrySelect.value || "").trim();
+      const type = String(typeSelect.value || "").trim();
+      const period = String(periodSelect.value || "").trim();
+      const metal = String(metalSelect.value || "").trim();
+      const theme = String(themeSelect.value || "").trim();
+      const condition = String(conditionSelect.value || "").trim();
+      const stockOnly = !!inStockOnly.checked;
+
+      let items = state.items.filter(item => {
+        if (stockOnly && Number(item.Quantity || 0) <= 0) return false;
+        if (continent && String(item.Continent || "").trim() !== continent) return false;
+        if (country && String(item.Country || "").trim() !== country) return false;
+        if (type && String(item.Type || "").trim() !== type) return false;
+        if (period && String(item.NominalPeriod || "").trim() !== period) return false;
+        if (metal && String(item.Metal || "").trim() !== metal) return false;
+        if (theme && String(item.Theme || "").trim() !== theme) return false;
+        if (condition && String(item.Condition || "").trim() !== condition) return false;
+
+        if (q) {
+          const haystack = [
+            item.ID,
+            item.TitleUA,
+            item.TitleEN,
+            item.Country,
+            item.Continent,
+            item.Type,
+            item.NominalPeriod,
+            item.KrauseNumber,
+            item.Metal,
+            item.Theme,
+            item.DescriptionUA,
+            item.Slug,
+            item.Condition
+          ].join(" ").toLowerCase();
+
+          if (!haystack.includes(q)) return false;
+        }
+
+        return true;
+      });
+
+      items.sort((a, b) => {
+        const aTitle = String(a.TitleUA || a.TitleEN || "").trim();
+        const bTitle = String(b.TitleUA || b.TitleEN || "").trim();
+        return aTitle.localeCompare(bTitle, "uk");
+      });
+
+      state.filtered = items;
+      state.page = 1;
+      renderCurrentPage();
+    }
+
+    function getPageItems() {
+      const start = (state.page - 1) * PER_PAGE;
+      return state.filtered.slice(start, start + PER_PAGE);
+    }
+
+    function buildPhoto(url, alt) {
+      const clean = String(url || "").trim();
+      if (!clean) {
+        return `<div class="sheet-photo-empty"></div>`;
+      }
+
+      return `<img class="sheet-photo"
+                   src="${esc(clean)}"
+                   alt="${esc(alt)}"
+                   loading="lazy"
+                   referrerpolicy="no-referrer"
+                   onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=&quot;sheet-photo-empty&quot;></div>';" />`;
+    }
+
+    async function fetchCoinDetail(item) {
+      const cacheKey = String(item.Slug || item.ID || "").trim();
+      if (!cacheKey) return null;
+
+      if (state.detailsCache[cacheKey]) {
+        return state.detailsCache[cacheKey];
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.set("action", "getCoin");
+
+        if (item.Slug) {
+          params.set("slug", item.Slug);
+        } else {
+          params.set("id", item.ID);
+        }
+
+        const response = await fetch(GAS_URL + "?" + params.toString() + "&_ts=" + Date.now(), {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+
+        const text = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув не JSON");
+        }
+
+        if (!data || !data.success || !data.item) {
+          throw new Error((data && data.error) || "Не вдалося завантажити монету");
+        }
+
+        state.detailsCache[cacheKey] = data.item;
+        return data.item;
+      } catch (err) {
+        console.error("Не вдалося завантажити монету:", item, err);
+        return null;
+      }
+    }
+
+    function buildSheetList(items, detailsMap = {}) {
+      if (!Array.isArray(items) || !items.length) {
+        sheetListText.value = "";
+        sheetListBox.classList.add("hidden");
+        return;
+      }
+
+      const lines = [
+        ["ID", "Назва", "Період", "Ціна"].join("\t")
+      ];
+
+      items.forEach(item => {
+        const key = String(item.Slug || item.ID || "").trim();
+        const detail = detailsMap[key] || item;
+
+        const idText = String(detail.ID || item.ID || "").trim();
+        const title = String(detail.TitleUA || detail.TitleEN || item.TitleUA || item.TitleEN || "Без назви").trim();
+        const period = String(detail.NominalPeriod || item.NominalPeriod || "").trim();
+        const price = Number(detail.PriceUAH || item.PriceUAH || 0);
+
+        lines.push([
+          idText,
+          title,
+          period,
+          price + " грн"
+        ].join("\t"));
+      });
+
+      sheetListText.value = lines.join("\n");
+      sheetListBox.classList.remove("hidden");
+    }
+
+    function renderCards(items, detailsMap = {}) {
+      galleryGrid.innerHTML = items.map(item => {
+        const key = String(item.Slug || item.ID || "").trim();
+        const detail = detailsMap[key] || item;
+
+        const title = detail.TitleUA || detail.TitleEN || item.TitleUA || item.TitleEN || "Без назви";
+        const typeText = detail.Type || item.Type || "—";
+        const idText = detail.ID || item.ID || "—";
+        const periodText = detail.NominalPeriod || item.NominalPeriod || "—";
+        const priceText = Number(detail.PriceUAH || item.PriceUAH || 0) + " грн";
+
+        const photo1 = buildPhoto(detail.PhotoMainURL || item.PhotoMainURL, title + " фото 1");
+
+        const photo2Url = String(
+          detail.PhotoExtra1URL ||
+          detail.PhotoExtra2URL ||
+          detail.PhotoExtra3URL ||
+          ""
+        ).trim();
+
+        const photo2 = buildPhoto(photo2Url, title + " фото 2");
+
+        return `
+          <article class="sheet-card">
+            <div class="sheet-photos">
+              <div class="sheet-photo-box">${photo1}</div>
+              <div class="sheet-photo-box">${photo2}</div>
+            </div>
+
+            <div class="sheet-body">
+              <div class="sheet-left">
+                <div class="sheet-id">ID: ${esc(idText)}</div>
+                <div class="sheet-title">${esc(title)}</div>
+                <div class="sheet-period">${esc(periodText)}</div>
+              </div>
+
+              <div class="sheet-top-right">
+                <div class="sheet-type">${esc(typeText)}</div>
+              </div>
+
+              <div class="sheet-bottom-right">
+                <div class="sheet-price">${esc(priceText)}</div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function renderCurrentPage() {
+      const total = state.filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+      if (state.page > totalPages) state.page = totalPages;
+
+      foundCount.textContent = String(total);
+      pageNow.textContent = String(state.page);
+      pageIndicator.textContent = "Сторінка " + state.page + " / " + totalPages;
+
+      prevPageBtn.disabled = state.page <= 1;
+      nextPageBtn.disabled = state.page >= totalPages;
+      pagination.classList.toggle("hidden", total <= PER_PAGE);
+
+      const items = getPageItems();
+
+      if (!items.length) {
+        galleryGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "За вашим запитом нічого не знайдено.";
+        sheetListBox.classList.add("hidden");
+        return;
+      }
+
+      renderCards(items, {});
+      buildSheetList(items, {});
+      messageBox.classList.add("hidden");
+      galleryGrid.classList.remove("hidden");
+      applyZoom();
+
+      const detailsArray = await Promise.allSettled(items.map(fetchCoinDetail));
+      const detailsMap = {};
+
+      detailsArray.forEach((result, index) => {
+        const key = String(items[index].Slug || items[index].ID || "").trim();
+        if (result.status === "fulfilled" && key && result.value) {
+          detailsMap[key] = result.value;
+        }
+      });
+
+      renderCards(items, detailsMap);
+      buildSheetList(items, detailsMap);
+      applyZoom();
+    }
+
+    async function loadCoins() {
+      try {
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Завантаження монет...";
+        galleryGrid.classList.add("hidden");
+
+        const response = await fetch(GAS_URL + "?action=getCoins&_ts=" + Date.now(), {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
+
+        const text = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув не JSON");
+        }
+
+        if (!data || !data.success || !Array.isArray(data.items)) {
+          throw new Error((data && data.error) || "Не вдалося завантажити монети");
+        }
+
+        state.items = data.items;
+        populateFilters();
+        filterItems();
+      } catch (err) {
+        galleryGrid.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Помилка завантаження. " + String(err.message || err);
+      }
+    }
+
+    function resetFilters() {
+      searchInput.value = "";
+      continentSelect.value = "";
+      countrySelect.value = "";
+      typeSelect.value = "";
+      periodSelect.value = "";
+      metalSelect.value = "";
+      themeSelect.value = "";
+      conditionSelect.value = "";
+      inStockOnly.checked = true;
+      populateFilters();
+      filterItems();
+    }
+
+    copySheetListBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(sheetListText.value || "");
+        copySheetListBtn.textContent = "Скопійовано";
+        setTimeout(() => {
+          copySheetListBtn.textContent = "Копіювати список";
+        }, 1200);
+      } catch (e) {
+        sheetListText.focus();
+        sheetListText.select();
+        copySheetListBtn.textContent = "Виділено";
+        setTimeout(() => {
+          copySheetListBtn.textContent = "Копіювати список";
+        }, 1200);
+      }
+    });
+
+    searchInput.addEventListener("input", filterItems);
+    continentSelect.addEventListener("change", filterItems);
+    countrySelect.addEventListener("change", filterItems);
+    typeSelect.addEventListener("change", filterItems);
+    periodSelect.addEventListener("change", filterItems);
+    metalSelect.addEventListener("change", filterItems);
+    themeSelect.addEventListener("change", filterItems);
+    conditionSelect.addEventListener("change", filterItems);
+    inStockOnly.addEventListener("change", filterItems);
+    resetFiltersBtn.addEventListener("click", resetFilters);
+
+    prevPageBtn.addEventListener("click", () => {
+      if (state.page > 1) {
+        state.page--;
+        renderCurrentPage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    nextPageBtn.addEventListener("click", () => {
+      const totalPages = Math.max(1, Math.ceil(state.filtered.length / PER_PAGE));
+      if (state.page < totalPages) {
+        state.page++;
+        renderCurrentPage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    zoomRange.addEventListener("input", () => {
+      setZoom(zoomRange.value);
+    });
+
+    zoomOutBtn.addEventListener("click", () => {
+      stepZoom(-5);
+    });
+
+    zoomInBtn.addEventListener("click", () => {
+      stepZoom(5);
+    });
+
+    zoomResetBtn.addEventListener("click", () => {
+      setZoom(100);
+    });
+
+    printBtn.addEventListener("click", () => {
+      window.print();
+    });
+
+    themeToggle.addEventListener("click", toggleTheme);
+
+    initTheme();
+    applyZoom();
+    loadCoins();
+  </script>
+</body>
+</html>
