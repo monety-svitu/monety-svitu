@@ -1468,6 +1468,12 @@
         const title = item.TitleUA || item.TitleEN || "Без назви";
         const typeLabel = item.Type === "Монета за типом" ? "Монета за типом" : "Монета";
         const nominal = item.NominalPeriod || "";
+        const periodRow = nominal
+  ? `<div class="coin-meta-row">
+       <span class="coin-meta-label">Період:</span>
+       <span class="coin-meta-value">${esc(nominal)}</span>
+     </div>`
+  : "";
         const km = item.KrauseNumber || "";
         const description = shortDescription(item.DescriptionUA);
         const sold = isSold(item);
