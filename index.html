@@ -1520,15 +1520,19 @@
               <div class="coin-title">${esc(title)}</div>
 
               <div class="coin-meta-box">
-                <div class="coin-meta-row">
-                  <span class="coin-meta-label">Період:</span>
-                  <span class="coin-meta-value">${esc(nominal || "—")}</span>
-                </div>
-                <div class="coin-meta-row">
-                  <span class="coin-meta-label">KM#:</span>
-                  <span class="coin-meta-value">${esc(km || "—")}</span>
-                </div>
-              </div>
+  <div class="coin-meta-row">
+    <span class="coin-meta-label">ID:</span>
+    <span class="coin-meta-value">${esc(item.ID || "—")}</span>
+  </div>
+  <div class="coin-meta-row">
+    <span class="coin-meta-label">Період:</span>
+    <span class="coin-meta-value">${esc(nominal || "—")}</span>
+  </div>
+  <div class="coin-meta-row">
+    <span class="coin-meta-label">KM#:</span>
+    <span class="coin-meta-value">${esc(km || "—")}</span>
+  </div>
+</div>
 
               <div class="coin-description">${esc(description || "Опис відсутній")}</div>
 
