@@ -1,218 +1,1836 @@
-<script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
-const CART_KEY = "monety_svitu_cart";
-const THEME_KEY = "monety_svitu_theme";
+const SHEET_COINS = "Coins";
+const SHEET_ORDERS = "Orders";
+const SHEET_SETTINGS = "Settings";
+const SHEET_STATS = "Stats";
+const SHEET_PRICE_TOOL = "PriceTool";
+const SHEET_ALLOWED_PHONES = "AllowedPhones";
+const RESERVE_HOURS = 24;
 
-/* ================= DOM ================= */
-const messageBox = document.getElementById("messageBox");
-const coinPage = document.getElementById("coinPage");
-const mainPhotoWrap = document.getElementById("mainPhotoWrap");
-const mainPhoto = document.getElementById("mainPhoto");
-const mainPhotoFallback = document.getElementById("mainPhotoFallback");
-const thumbs = document.getElementById("thumbs");
-const coinIdTop = document.getElementById("coinIdTop");
-const statusBadge = document.getElementById("statusBadge");
-const coinTitle = document.getElementById("coinTitle");
-const coinPrice = document.getElementById("coinPrice");
-const stockText = document.getElementById("stockText");
-const stockQty = document.getElementById("stockQty");
-const detailContinent = document.getElementById("detailContinent");
-const detailCountry = document.getElementById("detailCountry");
-const detailType = document.getElementById("detailType");
-const detailNominalPeriod = document.getElementById("detailNominalPeriod");
-const detailKM = document.getElementById("detailKM");
-const detailMetal = document.getElementById("detailMetal");
-const detailCondition = document.getElementById("detailCondition");
-const detailTheme = document.getElementById("detailTheme");
-const descriptionBlock = document.getElementById("descriptionBlock");
-const descriptionText = document.getElementById("descriptionText");
-const addToCartBtn = document.getElementById("addToCartBtn");
-const lightbox = document.getElementById("lightbox");
-const lightboxImg = document.getElementById("lightboxImg");
-const lightboxClose = document.getElementById("lightboxClose");
-const lightboxPrev = document.getElementById("lightboxPrev");
-const lightboxNext = document.getElementById("lightboxNext");
-const lightboxCounter = document.getElementById("lightboxCounter");
-const cartCountBadge = document.getElementById("cartCountBadge");
-const themeToggle = document.getElementById("themeToggle");
+const MIN_ORDER_TOTAL_UAH = 200;
+const MAX_AUTO_ORDER_TOTAL_UAH = 2000;
 
-let currentCoin = null;
-let gallery = [];
-let currentPhotoIndex = 0;
+// ID папки Google Drive, де лежать фото монет
+const PHOTO_FOLDER_ID = "1vr1Rupt34A6tNyv3iHSrY_UsVwj5EZoZ";
 
-/* ================= FIX ================= */
+// Кеш у секундах
+const CACHE_TTL_COINS = 120;
+const CACHE_TTL_COIN = 120;
 
-function setIfExists(el, value) {
-  const clean = String(value || "").trim();
-  if (clean) {
-    el.textContent = clean;
-    el.classList.remove("hidden");
-    return true;
-  } else {
-    el.textContent = "";
-    el.classList.add("hidden");
-    return false;
+
+/* =========================
+   ENTRY POINTS
+========================= */
+
+function doGet(e) {
+  try {
+    const action = getParam_(e, "action");
+
+    if (action === "getCoins") {
+      return jsonOutput_({
+        success: true,
+        items: getCoinsCached_()
+      });
+    }
+
+    if (action === "getCoin") {
+      const slug = getParam_(e, "slug");
+      const id = getParam_(e, "id");
+      const coin = getCoinDataCached_(slug, id);
+
+      if (!coin) {
+        return jsonOutput_({
+          success: false,
+          error: "Coin not found"
+        });
+      }
+
+      return jsonOutput_({
+        success: true,
+        item: coin
+      });
+    }
+
+    if (action === "trackSiteView") {
+      const value = incrementStat_("site_views_total");
+      return jsonOutput_({
+        success: true,
+        key: "site_views_total",
+        value: value
+      });
+    }
+
+    if (action === "trackCoinView") {
+      const slug = getParam_(e, "slug");
+      const id = getParam_(e, "id");
+
+      if (!slug && !id) {
+        return jsonOutput_({
+          success: false,
+          error: "Missing slug or id"
+        });
+      }
+
+      const value = incrementCoinView_(slug, id);
+
+      return jsonOutput_({
+        success: true,
+        value: value
+      });
+    }
+
+    if (action === "getStat") {
+      const key = getParam_(e, "key");
+      if (!key) {
+        return jsonOutput_({
+          success: false,
+          error: "Missing key"
+        });
+      }
+
+      return jsonOutput_({
+        success: true,
+        key: key,
+        value: getStatValue_(key)
+      });
+    }
+
+    if (action === "releaseExpiredOrders") {
+      const result = releaseExpiredOrders_();
+      return jsonOutput_({
+        success: true,
+        released: result.released,
+        restoredItems: result.restoredItems
+      });
+    }
+
+    if (action === "syncPhotoUrls") {
+      const result = syncPhotoUrls_();
+      return jsonOutput_({
+        success: true,
+        updated: result.updated,
+        cleared: result.cleared,
+        skipped: result.skipped
+      });
+    }
+
+    if (action === "cancelOrder") {
+      const orderId = getParam_(e, "orderId");
+      if (!orderId) {
+        return jsonOutput_({
+          success: false,
+          error: "Missing orderId"
+        });
+      }
+
+      const result = cancelOrderById_(orderId);
+
+      return jsonOutput_({
+        success: true,
+        cancelled: result.cancelled,
+        restoredItems: result.restoredItems,
+        orderId: result.orderId
+      });
+    }
+
+    return jsonOutput_({
+      success: false,
+      error: "Unknown action"
+    });
+
+  } catch (err) {
+    return jsonOutput_({
+      success: false,
+      error: String(err && err.message ? err.message : err)
+    });
   }
 }
 
-/* ================= THEME ================= */
+function doPost(e) {
+  try {
+    const body = parsePostBody_(e);
+    const action = String(body.action || "").trim();
 
-function applyTheme(theme) {
-  const normalized = theme === "dark" ? "dark" : "light";
-  if (normalized === "dark") {
-    document.body.setAttribute("data-theme", "dark");
-    themeToggle.textContent = "☀";
-  } else {
-    document.body.removeAttribute("data-theme");
-    themeToggle.textContent = "🌙";
+    if (action === "createOrder") {
+      const result = createOrder_(body);
+      return jsonOutput_({
+        success: true,
+        order: result
+      });
+    }
+
+    return jsonOutput_({
+      success: false,
+      error: "Unknown action"
+    });
+
+  } catch (err) {
+    return jsonOutput_({
+      success: false,
+      error: String(err && err.message ? err.message : err)
+    });
   }
-  localStorage.setItem(THEME_KEY, normalized);
 }
 
-function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY);
-  applyTheme(saved || "light");
+
+/* =========================
+   ON EDIT
+========================= */
+
+function onEdit(e) {
+  try {
+    if (!e || !e.range) return;
+
+    const sheet = e.range.getSheet();
+    if (!sheet) return;
+
+    const sheetName = sheet.getName();
+    const startRow = e.range.getRow();
+    const numRows = e.range.getNumRows();
+    const endRow = startRow + numRows - 1;
+
+    // 1) PriceTool: оновлення випадаючих списків
+    if (sheetName === SHEET_PRICE_TOOL) {
+      const startCol = e.range.getColumn();
+      const endCol = startCol + e.range.getNumColumns() - 1;
+
+      if (startCol > 2 || endCol < 2) return;
+      if (endRow < 3 || startRow > 9) return;
+
+      refreshPriceToolDropdowns_(sheet);
+      return;
+    }
+
+    // 2) Coins: копіювати формат з 2-го рядка + ставити CreatedAt, якщо порожній
+    if (sheetName === SHEET_COINS) {
+      if (endRow <= 2) return;
+
+      const formatStartRow = Math.max(startRow, 3);
+      const formatNumRows = endRow - formatStartRow + 1;
+      if (formatNumRows <= 0) return;
+
+      const lastColumn = sheet.getLastColumn();
+      if (lastColumn < 1) return;
+
+      const sourceRange = sheet.getRange(2, 1, 1, lastColumn);
+      const targetRange = sheet.getRange(formatStartRow, 1, formatNumRows, lastColumn);
+
+      sourceRange.copyTo(targetRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+
+      const headerMap = getHeaderMap_(sheet);
+      const colCreatedAt = headerMap["CreatedAt"];
+      if (!colCreatedAt) return;
+
+      const values = sheet.getRange(formatStartRow, 1, formatNumRows, lastColumn).getValues();
+      const now = new Date();
+
+      for (let i = 0; i < values.length; i++) {
+        const rowNumber = formatStartRow + i;
+        const rowValues = values[i];
+
+        const hasAnyData = rowValues.some(function(v) {
+          return String(v || "").trim() !== "";
+        });
+
+        if (!hasAnyData) continue;
+
+        const createdAtValue = rowValues[colCreatedAt - 1];
+        const hasCreatedAt = String(createdAtValue || "").trim() !== "";
+
+        if (!hasCreatedAt) {
+          sheet.getRange(rowNumber, colCreatedAt).setValue(now);
+        }
+      }
+
+      return;
+    }
+
+  } catch (err) {
+    Logger.log("onEdit error: " + err);
+  }
 }
 
-function toggleTheme() {
-  const current = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
-  applyTheme(current === "dark" ? "light" : "dark");
+
+/* =========================
+   MENU
+========================= */
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("Фото")
+    .addItem("Оновити URL фото (вибраний рядок)", "syncPhotoUrlsSelectedRowMenu_")
+    .addItem("Оновити URL фото (усі)", "syncPhotoUrlsMenu_")
+    .addToUi();
+
+  SpreadsheetApp.getUi()
+    .createMenu("Замовлення")
+    .addItem("Скасувати вибране замовлення", "cancelSelectedOrderMenu_")
+    .addItem("Запустити повернення прострочених резервів", "runReleaseExpiredOrdersMenu_")
+    .addItem("Увімкнути автоповернення резервів", "installReleaseExpiredOrdersTrigger_")
+    .addToUi();
+
+  SpreadsheetApp.getUi()
+    .createMenu("Ціни")
+    .addItem("Підготувати лист PriceTool", "bulkUpdatePricesMenu_")
+    .addItem("Застосувати з PriceTool", "applyBulkPricesFromPriceToolMenu_")
+    .addToUi();
 }
 
-/* ================= CORE ================= */
 
-function isSold(item) {
-  return Number(item.Quantity || 0) <= 0;
+/* =========================
+   PHOTO MENU
+========================= */
+
+function syncPhotoUrlsMenu_() {
+  const result = syncPhotoUrls_();
+  SpreadsheetApp.getUi().alert(
+    "Оновлення завершено.\n" +
+    "Updated: " + result.updated + "\n" +
+    "Cleared: " + result.cleared + "\n" +
+    "Skipped: " + result.skipped
+  );
 }
 
-function collectGallery(item) {
-  return [
-    item.PhotoMainURL,
-    item.PhotoExtra1URL,
-    item.PhotoExtra2URL,
-    item.PhotoExtra3URL
-  ].map(x => String(x || "").trim()).filter(x => x);
-}
+function syncPhotoUrlsSelectedRowMenu_() {
+  const sheet = SpreadsheetApp.getActiveSheet();
 
-/* ================= RENDER ================= */
-
-function renderCoin(item) {
-  currentCoin = item;
-  gallery = collectGallery(item);
-  currentPhotoIndex = 0;
-
-  const sold = isSold(item);
-  const qty = Number(item.Quantity || 0);
-
-  coinTitle.textContent = item.TitleUA || item.TitleEN || "Без назви";
-  coinPrice.textContent = (item.PriceUAH || 0) + " грн";
-
-  // ID
-  if (item.ID) {
-    coinIdTop.textContent = "ID: " + item.ID;
-    coinIdTop.classList.remove("hidden");
-  } else {
-    coinIdTop.classList.add("hidden");
+  if (!sheet || sheet.getName() !== SHEET_COINS) {
+    SpreadsheetApp.getUi().alert("Перейдіть на лист Coins і виберіть рядок монети.");
+    return;
   }
 
-  // Наявність
-  if (sold) {
-    stockText.textContent = "Немає в наявності";
-    stockText.className = "stock-text sold";
-    stockQty.classList.add("hidden");
-  } else {
-    stockText.textContent = "В наявності";
-    stockText.className = "stock-text in-stock";
+  const activeRange = sheet.getActiveRange();
+  if (!activeRange) {
+    SpreadsheetApp.getUi().alert("Виберіть рядок монети.");
+    return;
+  }
 
-    if (qty > 0) {
-      stockQty.textContent = "Кількість: " + qty + " шт";
-      stockQty.classList.remove("hidden");
-    } else {
-      stockQty.classList.add("hidden");
+  const row = activeRange.getRow();
+
+  if (row < 2) {
+    SpreadsheetApp.getUi().alert("Виберіть рядок з монетою, не заголовок.");
+    return;
+  }
+
+  const result = syncPhotoUrlsForRowManual_(row);
+
+  SpreadsheetApp.getUi().alert(
+    "Оновлення рядка завершено.\n" +
+    "Row: " + row + "\n" +
+    "Updated: " + result.updated + "\n" +
+    "Cleared: " + result.cleared + "\n" +
+    "Skipped: " + result.skipped
+  );
+}
+
+
+/* =========================
+   ORDER MENU
+========================= */
+
+function cancelSelectedOrderMenu_() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+
+  if (!sheet || sheet.getName() !== SHEET_ORDERS) {
+    SpreadsheetApp.getUi().alert("Перейдіть на лист Orders і виберіть рядок замовлення.");
+    return;
+  }
+
+  const activeRange = sheet.getActiveRange();
+  if (!activeRange) {
+    SpreadsheetApp.getUi().alert("Виберіть рядок замовлення.");
+    return;
+  }
+
+  const rowNumber = activeRange.getRow();
+  if (rowNumber < 2) {
+    SpreadsheetApp.getUi().alert("Виберіть рядок із замовленням, не заголовок.");
+    return;
+  }
+
+  const h = getHeaderMap_(sheet);
+  const colOrderId = getColumnIndex_(h, "OrderID");
+  const orderId = String(sheet.getRange(rowNumber, colOrderId).getValue() || "").trim();
+
+  if (!orderId) {
+    SpreadsheetApp.getUi().alert("У вибраному рядку немає OrderID.");
+    return;
+  }
+
+  const ui = SpreadsheetApp.getUi();
+  const answer = ui.alert(
+    "Підтвердження",
+    "Скасувати замовлення " + orderId + " і повернути монети в наявність?",
+    ui.ButtonSet.YES_NO
+  );
+
+  if (answer !== ui.Button.YES) {
+    return;
+  }
+
+  const result = cancelOrderById_(orderId);
+
+  ui.alert(
+    "Готово.\n" +
+    "OrderID: " + result.orderId + "\n" +
+    "Cancelled: " + result.cancelled + "\n" +
+    "Restored items: " + result.restoredItems
+  );
+}
+
+function runReleaseExpiredOrdersMenu_() {
+  const result = releaseExpiredOrders_();
+
+  SpreadsheetApp.getUi().alert(
+    "Перевірка завершена.\n" +
+    "Скасовано резервів: " + result.released + "\n" +
+    "Повернуто монет: " + result.restoredItems
+  );
+}
+
+function installReleaseExpiredOrdersTrigger_() {
+  const functionName = "releaseExpiredOrdersTrigger_";
+  const triggers = ScriptApp.getProjectTriggers();
+
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === functionName) {
+      ScriptApp.deleteTrigger(triggers[i]);
     }
   }
 
-  statusBadge.classList.toggle("hidden", !sold);
+  ScriptApp.newTrigger(functionName)
+    .timeBased()
+    .everyHours(6)
+    .create();
 
-  // Деталі
-  const fields = [
-    [detailContinent, item.Continent],
-    [detailCountry, item.Country],
-    [detailType, item.Type],
-    [detailNominalPeriod, item.NominalPeriod],
-    [detailKM, item.KrauseNumber],
-    [detailMetal, item.Metal],
-    [detailCondition, item.Condition],
-    [detailTheme, item.Theme],
-  ];
+  SpreadsheetApp.getUi().alert("Автоповернення резервів увімкнено. Перевірка буде 4 рази на добу.");
+}
 
-  fields.forEach(([el, val]) => {
-    const has = setIfExists(el, val);
-    const label = el.previousElementSibling;
-    if (label) label.classList.toggle("hidden", !has);
+
+/* =========================
+   PRICE TOOL MENU
+========================= */
+
+function bulkUpdatePricesMenu_() {
+  ensurePriceToolSheet_();
+  SpreadsheetApp.setActiveSheet(getSheetByName_(SHEET_PRICE_TOOL));
+  SpreadsheetApp.getUi().alert(
+    "Лист PriceTool готовий.\n" +
+    "Введіть коефіцієнт у B2, виберіть фільтри зі списків і потім запустіть:\n" +
+    "Ціни → Застосувати з PriceTool"
+  );
+}
+
+function applyBulkPricesFromPriceToolMenu_() {
+  const result = applyBulkPricesFromPriceTool_();
+
+  SpreadsheetApp.getUi().alert(
+    "Готово.\n" +
+    "Знайдено рядків: " + result.matched + "\n" +
+    "Оновлено: " + result.updated + "\n" +
+    "Пропущено: " + result.skipped
+  );
+}
+
+function ensurePriceToolSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_PRICE_TOOL);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_PRICE_TOOL);
+  }
+
+  sheet.clear();
+  sheet.getDataRange().clearDataValidations();
+
+  sheet.getRange("A1").setValue("Параметр");
+  sheet.getRange("B1").setValue("Значення");
+
+  sheet.getRange("A2").setValue("Коефіцієнт");
+  sheet.getRange("A3").setValue("Регіон");
+  sheet.getRange("A4").setValue("Країна");
+  sheet.getRange("A5").setValue("Тип");
+  sheet.getRange("A6").setValue("Період");
+  sheet.getRange("A7").setValue("Метал");
+  sheet.getRange("A8").setValue("Стан");
+  sheet.getRange("A9").setValue("Тільки в наявності");
+  sheet.getRange("A10").setValue("Результат");
+
+  sheet.getRange("B2").setNote("Напр. 1,10 = +10%, 0,90 = -10%, 1,00 = без змін");
+  sheet.getRange("B3").setValue("Усі");
+  sheet.getRange("B4").setValue("Усі");
+  sheet.getRange("B5").setValue("Усі");
+  sheet.getRange("B6").setValue("Усі");
+  sheet.getRange("B7").setValue("Усі");
+  sheet.getRange("B8").setValue("Усі");
+  sheet.getRange("B9").setValue("Так");
+
+  sheet.getRange("A1:B1").setFontWeight("bold");
+  sheet.getRange("A1:B10").setFontSize(11);
+  sheet.setColumnWidth(1, 180);
+  sheet.setColumnWidth(2, 260);
+
+  refreshPriceToolDropdowns_(sheet);
+}
+
+function refreshPriceToolDropdowns_(sheet) {
+  const current = {
+    continent: normalizePriceToolFilterValue_(sheet.getRange("B3").getValue()),
+    country: normalizePriceToolFilterValue_(sheet.getRange("B4").getValue()),
+    type: normalizePriceToolFilterValue_(sheet.getRange("B5").getValue()),
+    nominalPeriod: normalizePriceToolFilterValue_(sheet.getRange("B6").getValue()),
+    metal: normalizePriceToolFilterValue_(sheet.getRange("B7").getValue()),
+    condition: normalizePriceToolFilterValue_(sheet.getRange("B8").getValue())
+  };
+
+  const options = getBulkPriceFilterOptionsForSheet_(current);
+
+  setDropdownRule_(sheet.getRange("B3"), ["Усі"].concat(options.continents));
+  setDropdownRule_(sheet.getRange("B4"), ["Усі"].concat(options.countries));
+  setDropdownRule_(sheet.getRange("B5"), ["Усі"].concat(options.types));
+  setDropdownRule_(sheet.getRange("B6"), ["Усі"].concat(options.nominalPeriods));
+  setDropdownRule_(sheet.getRange("B7"), ["Усі"].concat(options.metals));
+  setDropdownRule_(sheet.getRange("B8"), ["Усі"].concat(options.conditions));
+  setDropdownRule_(sheet.getRange("B9"), ["Так", "Ні"]);
+
+  keepValidOrReset_(sheet.getRange("B3"), ["Усі"].concat(options.continents), "Усі");
+  keepValidOrReset_(sheet.getRange("B4"), ["Усі"].concat(options.countries), "Усі");
+  keepValidOrReset_(sheet.getRange("B5"), ["Усі"].concat(options.types), "Усі");
+  keepValidOrReset_(sheet.getRange("B6"), ["Усі"].concat(options.nominalPeriods), "Усі");
+  keepValidOrReset_(sheet.getRange("B7"), ["Усі"].concat(options.metals), "Усі");
+  keepValidOrReset_(sheet.getRange("B8"), ["Усі"].concat(options.conditions), "Усі");
+  keepValidOrReset_(sheet.getRange("B9"), ["Так", "Ні"], "Так");
+}
+
+function setDropdownRule_(range, values) {
+  const cleanValues = (values || []).filter(function(v, i, arr) {
+    const s = String(v || "").trim();
+    return s !== "" && arr.indexOf(v) === i;
   });
 
-  // Опис
-  if (item.DescriptionUA && item.DescriptionUA.trim()) {
-    descriptionText.textContent = item.DescriptionUA;
-    descriptionBlock.classList.remove("hidden");
-  } else {
-    descriptionBlock.classList.add("hidden");
-  }
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(cleanValues, true)
+    .setAllowInvalid(false)
+    .build();
 
-  // Кнопка
-  if (sold) {
-    addToCartBtn.textContent = "Немає в наявності";
-    addToCartBtn.className = "btn btn-disabled";
-    addToCartBtn.disabled = true;
-  } else {
-    addToCartBtn.textContent = "Додати в кошик";
-    addToCartBtn.className = "btn";
-    addToCartBtn.disabled = false;
-  }
-
-  renderThumbs();
-  setMainPhoto(0);
-
-  messageBox.classList.add("hidden");
-  coinPage.classList.remove("hidden");
+  range.setDataValidation(rule);
 }
 
-/* ================= LOAD ================= */
+function keepValidOrReset_(range, allowedValues, fallbackValue) {
+  const current = String(range.getValue() || "").trim();
+  const allowed = (allowedValues || []).map(function(v) {
+    return String(v || "").trim();
+  });
 
-async function loadCoin() {
-  const params = new URLSearchParams(location.search);
-  const slug = params.get("slug");
-  const id = params.get("id");
+  if (allowed.indexOf(current) === -1) {
+    range.setValue(fallbackValue);
+  }
+}
 
-  let url = GAS_URL + "?action=getCoin";
-  if (slug) url += "&slug=" + slug;
-  if (id) url += "&id=" + id;
+function normalizePriceToolFilterValue_(value) {
+  const v = String(value || "").trim();
+  if (!v || v === "Усі") return "";
+  return v;
+}
+
+function isPriceToolYes_(value) {
+  return String(value || "").trim() === "Так";
+}
+
+function getBulkPriceFilterOptionsForSheet_(selectedFilters) {
+  const sheet = getSheetByName_(SHEET_COINS);
+  const h = getHeaderMap_(sheet);
+
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+
+  if (lastRow < 2) {
+    return {
+      continents: [],
+      countries: [],
+      types: [],
+      nominalPeriods: [],
+      metals: [],
+      conditions: []
+    };
+  }
+
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+
+  const continents = new Set();
+  const countries = new Set();
+  const types = new Set();
+  const nominalPeriods = new Set();
+  const metals = new Set();
+  const conditions = new Set();
+
+  selectedFilters = selectedFilters || {};
+
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+
+    const id = h["ID"] ? String(row[h["ID"] - 1] || "").trim() : "";
+    const titleUA = h["TitleUA"] ? String(row[h["TitleUA"] - 1] || "").trim() : "";
+    const titleEN = h["TitleEN"] ? String(row[h["TitleEN"] - 1] || "").trim() : "";
+
+    if (!id) continue;
+    if (!titleUA && !titleEN) continue;
+
+    const continent = h["Continent"] ? String(row[h["Continent"] - 1] || "").trim() : "";
+    const country = h["Country"] ? String(row[h["Country"] - 1] || "").trim() : "";
+    const type = h["Type"] ? String(row[h["Type"] - 1] || "").trim() : "";
+    const nominalPeriod = h["NominalPeriod"] ? String(row[h["NominalPeriod"] - 1] || "").trim() : "";
+    const metal = h["Metal"] ? String(row[h["Metal"] - 1] || "").trim() : "";
+    const condition = h["Condition"] ? String(row[h["Condition"] - 1] || "").trim() : "";
+
+    if (selectedFilters.continent && continent !== selectedFilters.continent) continue;
+    if (selectedFilters.country && country !== selectedFilters.country) continue;
+    if (selectedFilters.type && type !== selectedFilters.type) continue;
+    if (selectedFilters.nominalPeriod && nominalPeriod !== selectedFilters.nominalPeriod) continue;
+    if (selectedFilters.metal && metal !== selectedFilters.metal) continue;
+    if (selectedFilters.condition && condition !== selectedFilters.condition) continue;
+
+    if (continent) continents.add(continent);
+    if (country) countries.add(country);
+    if (type) types.add(type);
+    if (nominalPeriod) nominalPeriods.add(nominalPeriod);
+    if (metal) metals.add(metal);
+    if (condition) conditions.add(condition);
+  }
+
+  function sorted(setObj) {
+    return Array.from(setObj).sort(function(a, b) {
+      return a.localeCompare(b, "uk");
+    });
+  }
+
+  return {
+    continents: sorted(continents),
+    countries: sorted(countries),
+    types: sorted(types),
+    nominalPeriods: sorted(nominalPeriods),
+    metals: sorted(metals),
+    conditions: sorted(conditions)
+  };
+}
+
+function applyBulkPricesFromPriceTool_() {
+  const toolSheet = getSheetByName_(SHEET_PRICE_TOOL);
+
+  const coefficient = Number(String(toolSheet.getRange("B2").getValue() || "").replace(",", ".").trim());
+  if (!isFinite(coefficient) || coefficient <= 0) {
+    throw new Error("У PriceTool!B2 невірний коефіцієнт.");
+  }
+
+  const options = {
+    coefficient: coefficient,
+    continent: normalizePriceToolFilterValue_(toolSheet.getRange("B3").getValue()),
+    country: normalizePriceToolFilterValue_(toolSheet.getRange("B4").getValue()),
+    type: normalizePriceToolFilterValue_(toolSheet.getRange("B5").getValue()),
+    nominalPeriod: normalizePriceToolFilterValue_(toolSheet.getRange("B6").getValue()),
+    metal: normalizePriceToolFilterValue_(toolSheet.getRange("B7").getValue()),
+    condition: normalizePriceToolFilterValue_(toolSheet.getRange("B8").getValue()),
+    onlyInStock: isPriceToolYes_(toolSheet.getRange("B9").getValue())
+  };
+
+  const preview = previewBulkUpdatePrices_(options);
+
+  if (preview.count === 0) {
+    toolSheet.getRange("B10").setValue("Нічого не знайдено");
+    return {
+      matched: 0,
+      updated: 0,
+      skipped: 0
+    };
+  }
+
+  const result = bulkUpdatePricesByFilters_(options);
+
+  toolSheet.getRange("B10").setValue(
+    "Знайдено: " + preview.count +
+    " | Оновлено: " + result.updated +
+    " | Пропущено: " + result.skipped
+  );
+
+  return {
+    matched: preview.count,
+    updated: result.updated,
+    skipped: result.skipped
+  };
+}
+
+
+/* =========================
+   MAIN ACTIONS
+========================= */
+
+function getCoinsCached_() {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = "coins_all_v2";
+  const cached = cache.get(cacheKey);
+
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
+  const items = getCoins_();
+  cache.put(cacheKey, JSON.stringify(items), CACHE_TTL_COINS);
+  return items;
+}
+
+function getCoins_() {
+  const sheet = getSheetByName_(SHEET_COINS);
+  const h = getHeaderMap_(sheet);
+
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+
+  if (lastRow < 2) return [];
+
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+  const items = [];
+
+  const colId = h["ID"];
+  const colTitleUA = h["TitleUA"];
+  const colTitleEN = h["TitleEN"];
+
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+
+    const id = colId ? String(row[colId - 1] || "").trim() : "";
+    const titleUA = colTitleUA ? String(row[colTitleUA - 1] || "").trim() : "";
+    const titleEN = colTitleEN ? String(row[colTitleEN - 1] || "").trim() : "";
+
+    if (!id) continue;
+    if (!titleUA && !titleEN) continue;
+
+    const item = rowToCoinListObject_(row, h, i + 2);
+    items.push(item);
+  }
+
+  return items;
+}
+
+function getCoinDataCached_(slug, id) {
+  const slugStr = String(slug || "").trim();
+  const idStr = String(id || "").trim();
+
+  const cache = CacheService.getScriptCache();
+  const cacheKey = slugStr
+    ? "coin_slug_v2_" + slugStr
+    : "coin_id_v2_" + idStr;
+
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
+  const coin = getCoinData_(slugStr, idStr);
+  if (coin) {
+    cache.put(cacheKey, JSON.stringify(coin), CACHE_TTL_COIN);
+  }
+
+  return coin;
+}
+
+function createOrder_(body) {
+  const lastName = String(body.lastName || "").trim();
+  const customerName = String(body.customerName || "").trim();
+  const phone = String(body.phone || "").trim();
+  const normalizedPhone = normalizePhoneUa_(phone);
+  const email = String(body.email || "").trim();
+  const messenger = String(body.messenger || phone || "").trim();
+  const comment = String(body.comment || "").trim();
+  const items = normalizeOrderItems_(body.items);
+
+  if (!lastName) throw new Error("Last name is required");
+  if (!customerName) throw new Error("Customer name is required");
+  if (!phone) throw new Error("Phone is required");
+  if (!items.length) throw new Error("Order items are empty");
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
 
   try {
-    const res = await fetch(url);
-    const data = await res.json();
+    const coinsSheet = getSheetByName_(SHEET_COINS);
+    const ordersSheet = getSheetByName_(SHEET_ORDERS);
 
-    if (!data.success || !data.item) throw new Error();
+    const coinsHeader = getHeaderMap_(coinsSheet);
+    const ordersHeader = getHeaderMap_(ordersSheet);
 
-    renderCoin(data.item);
-  } catch {
-    messageBox.textContent = "Помилка завантаження";
+    const colQuantity = getColumnIndex_(coinsHeader, "Quantity");
+    const colUpdatedAt = getColumnIndex_(coinsHeader, "UpdatedAt");
+
+    let totalUAH = 0;
+    const finalItems = [];
+    const preparedItems = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const req = items[i];
+      const found = findCoinRowBySlugOrId_(req.slug, req.id);
+
+      if (!found) {
+        throw new Error("Coin not found: " + (req.slug || req.id || "unknown"));
+      }
+
+      const coin = rowToCoinObject_(found.rowValues, found.headerMap, found.rowNumber);
+
+      if (coin.Quantity < req.qty) {
+        throw new Error("Not enough quantity for: " + (coin.TitleUA || coin.TitleEN || coin.ID));
+      }
+
+      totalUAH += Number(coin.PriceUAH || 0) * Number(req.qty || 0);
+
+      finalItems.push({
+        id: coin.ID,
+        slug: coin.Slug,
+        title: coin.TitleUA || coin.TitleEN || "",
+        priceUAH: Number(coin.PriceUAH || 0),
+        qty: Number(req.qty || 0)
+      });
+
+      preparedItems.push({
+        req: req,
+        coin: coin,
+        found: found
+      });
+    }
+
+    if (totalUAH < MIN_ORDER_TOTAL_UAH) {
+      throw new Error("Мінімальна сума замовлення — " + MIN_ORDER_TOTAL_UAH + " грн.");
+    }
+
+    if (
+      totalUAH > MAX_AUTO_ORDER_TOTAL_UAH &&
+      !isPhoneAllowedForBigOrders_(normalizedPhone)
+    ) {
+      throw new Error(
+        "Замовлення понад " + MAX_AUTO_ORDER_TOTAL_UAH + " грн доступні лише для погоджених номерів."
+      );
+    }
+
+    for (let i = 0; i < preparedItems.length; i++) {
+      const prepared = preparedItems[i];
+      const req = prepared.req;
+      const found = prepared.found;
+
+      const currentQty = Number(found.rowValues[colQuantity - 1] || 0);
+      const newQty = currentQty - Number(req.qty || 0);
+
+      if (newQty < 0) {
+        throw new Error("Quantity became negative for: " + (req.slug || req.id || "unknown"));
+      }
+
+      coinsSheet.getRange(found.rowNumber, colQuantity).setValue(newQty);
+      coinsSheet.getRange(found.rowNumber, colUpdatedAt).setValue(new Date());
+    }
+
+    const now = new Date();
+    const reservedUntil = new Date(now.getTime() + RESERVE_HOURS * 60 * 60 * 1000);
+    const orderId = generateOrderId_(now);
+    const itemsText = buildOrderItemsText_(finalItems);
+
+    const row = new Array(ordersSheet.getLastColumn()).fill("");
+
+    setCellByHeader_(row, ordersHeader, "OrderID", orderId);
+    setCellByHeader_(row, ordersHeader, "CreatedAt", now);
+    setCellByHeader_(row, ordersHeader, "Status", "reserved");
+    setCellByHeader_(row, ordersHeader, "ReservedUntil", reservedUntil);
+    setCellIfHeaderExists_(row, ordersHeader, "LastName", lastName);
+    setCellByHeader_(row, ordersHeader, "CustomerName", customerName);
+    setCellByHeader_(row, ordersHeader, "Phone", phone);
+    setCellByHeader_(row, ordersHeader, "Email", email);
+    setCellByHeader_(row, ordersHeader, "Messenger", messenger);
+    setCellByHeader_(row, ordersHeader, "Comment", comment);
+    setCellByHeader_(row, ordersHeader, "ItemsJSON", JSON.stringify(finalItems));
+    setCellIfHeaderExists_(row, ordersHeader, "ItemsText", itemsText);
+    setCellByHeader_(row, ordersHeader, "TotalUAH", totalUAH);
+
+    ordersSheet.appendRow(row);
+
+    clearCoinsCaches_();
+    clearCoinCachesByItems_(finalItems);
+
+    return {
+      OrderID: orderId,
+      CreatedAt: now,
+      Status: "reserved",
+      ReservedUntil: reservedUntil,
+      LastName: lastName,
+      CustomerName: customerName,
+      Phone: phone,
+      Email: email,
+      Messenger: messenger,
+      Comment: comment,
+      Items: finalItems,
+      ItemsText: itemsText,
+      TotalUAH: totalUAH
+    };
+
+  } finally {
+    lock.releaseLock();
   }
 }
 
-/* ================= INIT ================= */
+function releaseExpiredOrders_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
 
-addToCartBtn.addEventListener("click", () => {
-  if (!currentCoin || isSold(currentCoin)) return;
-  const cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-  cart.push({ title: currentCoin.TitleUA, price: currentCoin.PriceUAH });
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  cartCountBadge.textContent = cart.length;
-});
+  try {
+    const ordersSheet = getSheetByName_(SHEET_ORDERS);
+    const coinsSheet = getSheetByName_(SHEET_COINS);
 
-themeToggle.addEventListener("click", toggleTheme);
+    const oh = getHeaderMap_(ordersSheet);
+    const ch = getHeaderMap_(coinsSheet);
 
-initTheme();
-loadCoin();
-</script>
+    const ordersLastRow = ordersSheet.getLastRow();
+    if (ordersLastRow < 2) {
+      return { released: 0, restoredItems: 0 };
+    }
+
+    const ordersValues = ordersSheet.getRange(2, 1, ordersLastRow - 1, ordersSheet.getLastColumn()).getValues();
+
+    const colStatus = getColumnIndex_(oh, "Status");
+    const colReservedUntil = getColumnIndex_(oh, "ReservedUntil");
+    const colItemsJSON = getColumnIndex_(oh, "ItemsJSON");
+
+    const coinsColQuantity = getColumnIndex_(ch, "Quantity");
+    const coinsColUpdatedAt = getColumnIndex_(ch, "UpdatedAt");
+
+    let released = 0;
+    let restoredItems = 0;
+    const now = new Date();
+    const changedItems = [];
+
+    for (let i = 0; i < ordersValues.length; i++) {
+      const row = ordersValues[i];
+      const rowNumber = i + 2;
+
+      const status = String(row[colStatus - 1] || "").trim();
+      const reservedUntil = row[colReservedUntil - 1];
+
+      if (status !== "reserved") continue;
+      if (!reservedUntil) continue;
+
+      const reserveDate = new Date(reservedUntil);
+      if (isNaN(reserveDate.getTime())) continue;
+      if (reserveDate.getTime() > now.getTime()) continue;
+
+      const itemsJson = String(row[colItemsJSON - 1] || "").trim();
+      if (!itemsJson) continue;
+
+      let items;
+      try {
+        items = JSON.parse(itemsJson);
+      } catch (e) {
+        continue;
+      }
+
+      if (!Array.isArray(items)) continue;
+
+      for (let j = 0; j < items.length; j++) {
+        const item = items[j];
+        const found = findCoinRowBySlugOrId_(item.slug, item.id);
+        if (!found) continue;
+
+        const currentQty = Number(found.rowValues[coinsColQuantity - 1] || 0);
+        const addQty = Number(item.qty || 0);
+        const newQty = currentQty + addQty;
+
+        coinsSheet.getRange(found.rowNumber, coinsColQuantity).setValue(newQty);
+        coinsSheet.getRange(found.rowNumber, coinsColUpdatedAt).setValue(now);
+
+        restoredItems += addQty;
+        changedItems.push({
+          id: String(item.id || "").trim(),
+          slug: String(item.slug || "").trim()
+        });
+      }
+
+      ordersSheet.getRange(rowNumber, colStatus).setValue("cancelled");
+      released++;
+    }
+
+    if (released > 0 || restoredItems > 0) {
+      clearCoinsCaches_();
+      clearCoinCachesByItems_(changedItems);
+    }
+
+    return {
+      released: released,
+      restoredItems: restoredItems
+    };
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function releaseExpiredOrdersTrigger_() {
+  releaseExpiredOrders_();
+}
+
+function cancelOrderById_(orderId) {
+  const orderIdStr = String(orderId || "").trim();
+  if (!orderIdStr) {
+    throw new Error("OrderID is required");
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const ordersSheet = getSheetByName_(SHEET_ORDERS);
+    const coinsSheet = getSheetByName_(SHEET_COINS);
+
+    const oh = getHeaderMap_(ordersSheet);
+    const ch = getHeaderMap_(coinsSheet);
+
+    const ordersLastRow = ordersSheet.getLastRow();
+    if (ordersLastRow < 2) {
+      throw new Error("Orders sheet is empty");
+    }
+
+    const ordersValues = ordersSheet.getRange(2, 1, ordersLastRow - 1, ordersSheet.getLastColumn()).getValues();
+
+    const colOrderId = getColumnIndex_(oh, "OrderID");
+    const colStatus = getColumnIndex_(oh, "Status");
+    const colItemsJSON = getColumnIndex_(oh, "ItemsJSON");
+
+    const coinsColQuantity = getColumnIndex_(ch, "Quantity");
+    const coinsColUpdatedAt = getColumnIndex_(ch, "UpdatedAt");
+
+    let targetRowNumber = 0;
+    let targetRow = null;
+
+    for (let i = 0; i < ordersValues.length; i++) {
+      const row = ordersValues[i];
+      const currentOrderId = String(row[colOrderId - 1] || "").trim();
+
+      if (currentOrderId === orderIdStr) {
+        targetRowNumber = i + 2;
+        targetRow = row;
+        break;
+      }
+    }
+
+    if (!targetRowNumber || !targetRow) {
+      throw new Error("Order not found: " + orderIdStr);
+    }
+
+    const status = String(targetRow[colStatus - 1] || "").trim();
+    if (status !== "reserved") {
+      throw new Error("Only reserved orders can be cancelled. Current status: " + status);
+    }
+
+    const itemsJson = String(targetRow[colItemsJSON - 1] || "").trim();
+    if (!itemsJson) {
+      throw new Error("ItemsJSON is empty for order: " + orderIdStr);
+    }
+
+    let items;
+    try {
+      items = JSON.parse(itemsJson);
+    } catch (err) {
+      throw new Error("Invalid ItemsJSON for order: " + orderIdStr);
+    }
+
+    if (!Array.isArray(items) || !items.length) {
+      throw new Error("Order has no items: " + orderIdStr);
+    }
+
+    const now = new Date();
+    let restoredItems = 0;
+    const changedItems = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const found = findCoinRowBySlugOrId_(item.slug, item.id);
+
+      if (!found) continue;
+
+      const currentQty = Number(found.rowValues[coinsColQuantity - 1] || 0);
+      const addQty = Number(item.qty || 0);
+      const newQty = currentQty + addQty;
+
+      coinsSheet.getRange(found.rowNumber, coinsColQuantity).setValue(newQty);
+      coinsSheet.getRange(found.rowNumber, coinsColUpdatedAt).setValue(now);
+
+      restoredItems += addQty;
+      changedItems.push({
+        id: String(item.id || "").trim(),
+        slug: String(item.slug || "").trim()
+      });
+    }
+
+    ordersSheet.getRange(targetRowNumber, colStatus).setValue("cancelled");
+
+    clearCoinsCaches_();
+    clearCoinCachesByItems_(changedItems);
+
+    return {
+      cancelled: 1,
+      restoredItems: restoredItems,
+      orderId: orderIdStr
+    };
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function previewBulkUpdatePrices_(options) {
+  const sheet = getSheetByName_(SHEET_COINS);
+  const h = getHeaderMap_(sheet);
+
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+  if (lastRow < 2) return { count: 0 };
+
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+
+  let count = 0;
+
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+    if (!isCoinRowMatchingFilters_(row, h, options)) continue;
+    count++;
+  }
+
+  return { count: count };
+}
+
+function bulkUpdatePricesByFilters_(options) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const sheet = getSheetByName_(SHEET_COINS);
+    const h = getHeaderMap_(sheet);
+
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    if (lastRow < 2) return { updated: 0, skipped: 0 };
+
+    const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+
+    const colPrice = getColumnIndex_(h, "PriceUAH");
+    const colUpdatedAt = getColumnIndex_(h, "UpdatedAt");
+
+    let updated = 0;
+    let skipped = 0;
+    const now = new Date();
+    const changedItems = [];
+
+    for (let i = 0; i < values.length; i++) {
+      const row = values[i];
+      const rowNumber = i + 2;
+
+      if (!isCoinRowMatchingFilters_(row, h, options)) {
+        skipped++;
+        continue;
+      }
+
+      const oldPrice = Number(row[colPrice - 1] || 0);
+      if (!isFinite(oldPrice) || oldPrice <= 0) {
+        skipped++;
+        continue;
+      }
+
+      let newPrice = oldPrice * Number(options.coefficient || 1);
+      newPrice = Math.round(newPrice);
+
+      if (newPrice < 1) newPrice = 1;
+
+      if (newPrice === oldPrice) {
+        skipped++;
+        continue;
+      }
+
+      sheet.getRange(rowNumber, colPrice).setValue(newPrice);
+      sheet.getRange(rowNumber, colUpdatedAt).setValue(now);
+
+      updated++;
+
+      changedItems.push({
+        id: h["ID"] ? String(row[h["ID"] - 1] || "").trim() : "",
+        slug: h["Slug"] ? String(row[h["Slug"] - 1] || "").trim() : ""
+      });
+    }
+
+    if (updated > 0) {
+      clearCoinsCaches_();
+      clearCoinCachesByItems_(changedItems);
+    }
+
+    return {
+      updated: updated,
+      skipped: skipped
+    };
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function isCoinRowMatchingFilters_(row, h, options) {
+  const id = h["ID"] ? String(row[h["ID"] - 1] || "").trim() : "";
+  const titleUA = h["TitleUA"] ? String(row[h["TitleUA"] - 1] || "").trim() : "";
+  const titleEN = h["TitleEN"] ? String(row[h["TitleEN"] - 1] || "").trim() : "";
+
+  if (!id) return false;
+  if (!titleUA && !titleEN) return false;
+
+  const continent = h["Continent"] ? String(row[h["Continent"] - 1] || "").trim() : "";
+  const country = h["Country"] ? String(row[h["Country"] - 1] || "").trim() : "";
+  const type = h["Type"] ? String(row[h["Type"] - 1] || "").trim() : "";
+  const nominalPeriod = h["NominalPeriod"] ? String(row[h["NominalPeriod"] - 1] || "").trim() : "";
+  const metal = h["Metal"] ? String(row[h["Metal"] - 1] || "").trim() : "";
+  const condition = h["Condition"] ? String(row[h["Condition"] - 1] || "").trim() : "";
+  const quantity = h["Quantity"] ? Number(row[h["Quantity"] - 1] || 0) : 0;
+
+  if (options.onlyInStock && quantity <= 0) return false;
+
+  if (options.continent && continent !== options.continent) return false;
+  if (options.country && country !== options.country) return false;
+  if (options.type && type !== options.type) return false;
+  if (options.nominalPeriod && nominalPeriod !== options.nominalPeriod) return false;
+  if (options.metal && metal !== options.metal) return false;
+  if (options.condition && condition !== options.condition) return false;
+
+  return true;
+}
+
+function syncPhotoUrls_() {
+  const sheet = getSheetByName_(SHEET_COINS);
+  const h = getHeaderMap_(sheet);
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { updated: 0, cleared: 0, skipped: 0 };
+  }
+
+  const lastColumn = sheet.getLastColumn();
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+
+  const colId = getColumnIndex_(h, "ID");
+  const colMain = getColumnIndex_(h, "PhotoMainURL");
+  const colExtra1 = getColumnIndex_(h, "PhotoExtra1URL");
+  const colExtra2 = getColumnIndex_(h, "PhotoExtra2URL");
+  const colExtra3 = getColumnIndex_(h, "PhotoExtra3URL");
+  const colUpdatedAt = getColumnIndex_(h, "UpdatedAt");
+
+  const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
+  const fileMap = buildFileMap_(folder);
+
+  let updated = 0;
+  let cleared = 0;
+  let skipped = 0;
+  const changedItems = [];
+
+  for (let i = 0; i < values.length; i++) {
+    const rowNumber = i + 2;
+    const row = values[i];
+    const id = String(row[colId - 1] || "").trim();
+
+    if (!id) {
+      skipped++;
+      continue;
+    }
+
+    const f1 = getCoinPhotoFile_(fileMap, id, 1);
+    const f2 = getCoinPhotoFile_(fileMap, id, 2);
+    const f3 = getCoinPhotoFile_(fileMap, id, 3);
+    const f4 = getCoinPhotoFile_(fileMap, id, 4);
+
+    const url1 = f1 ? makeDriveImageUrl_(f1.id) : "";
+    const url2 = f2 ? makeDriveImageUrl_(f2.id) : "";
+    const url3 = f3 ? makeDriveImageUrl_(f3.id) : "";
+    const url4 = f4 ? makeDriveImageUrl_(f4.id) : "";
+
+    const old1 = String(row[colMain - 1] || "").trim();
+    const old2 = String(row[colExtra1 - 1] || "").trim();
+    const old3 = String(row[colExtra2 - 1] || "").trim();
+    const old4 = String(row[colExtra3 - 1] || "").trim();
+
+    let changed = false;
+
+    if (old1 !== url1) {
+      sheet.getRange(rowNumber, colMain).setValue(url1);
+      changed = true;
+      if (!url1 && old1) cleared++;
+    }
+
+    if (old2 !== url2) {
+      sheet.getRange(rowNumber, colExtra1).setValue(url2);
+      changed = true;
+      if (!url2 && old2) cleared++;
+    }
+
+    if (old3 !== url3) {
+      sheet.getRange(rowNumber, colExtra2).setValue(url3);
+      changed = true;
+      if (!url3 && old3) cleared++;
+    }
+
+    if (old4 !== url4) {
+      sheet.getRange(rowNumber, colExtra3).setValue(url4);
+      changed = true;
+      if (!url4 && old4) cleared++;
+    }
+
+    if (changed) {
+      sheet.getRange(rowNumber, colUpdatedAt).setValue(new Date());
+      updated++;
+      changedItems.push({ id: id });
+    }
+  }
+
+  if (updated > 0 || cleared > 0) {
+    clearCoinsCaches_();
+    clearCoinCachesByItems_(changedItems);
+  }
+
+  return { updated: updated, cleared: cleared, skipped: skipped };
+}
+
+function syncPhotoUrlsForRowManual_(rowNumber) {
+  const sheet = getSheetByName_(SHEET_COINS);
+  const h = getHeaderMap_(sheet);
+
+  const colId = getColumnIndex_(h, "ID");
+  const colSlug = h["Slug"] || 0;
+  const colMain = getColumnIndex_(h, "PhotoMainURL");
+  const colExtra1 = getColumnIndex_(h, "PhotoExtra1URL");
+  const colExtra2 = getColumnIndex_(h, "PhotoExtra2URL");
+  const colExtra3 = getColumnIndex_(h, "PhotoExtra3URL");
+  const colUpdatedAt = getColumnIndex_(h, "UpdatedAt");
+
+  const lastColumn = sheet.getLastColumn();
+  const row = sheet.getRange(rowNumber, 1, 1, lastColumn).getValues()[0];
+
+  const id = String(row[colId - 1] || "").trim();
+  const slug = colSlug ? String(row[colSlug - 1] || "").trim() : "";
+
+  if (!id) {
+    return { updated: 0, cleared: 0, skipped: 1 };
+  }
+
+  const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
+  const fileMap = buildFileMap_(folder);
+
+  const f1 = getCoinPhotoFile_(fileMap, id, 1);
+  const f2 = getCoinPhotoFile_(fileMap, id, 2);
+  const f3 = getCoinPhotoFile_(fileMap, id, 3);
+  const f4 = getCoinPhotoFile_(fileMap, id, 4);
+
+  const url1 = f1 ? makeDriveImageUrl_(f1.id) : "";
+  const url2 = f2 ? makeDriveImageUrl_(f2.id) : "";
+  const url3 = f3 ? makeDriveImageUrl_(f3.id) : "";
+  const url4 = f4 ? makeDriveImageUrl_(f4.id) : "";
+
+  const old1 = String(row[colMain - 1] || "").trim();
+  const old2 = String(row[colExtra1 - 1] || "").trim();
+  const old3 = String(row[colExtra2 - 1] || "").trim();
+  const old4 = String(row[colExtra3 - 1] || "").trim();
+
+  let updated = 0;
+  let cleared = 0;
+  let changed = false;
+
+  if (old1 !== url1) {
+    sheet.getRange(rowNumber, colMain).setValue(url1);
+    changed = true;
+    updated++;
+    if (!url1 && old1) cleared++;
+  }
+
+  if (old2 !== url2) {
+    sheet.getRange(rowNumber, colExtra1).setValue(url2);
+    changed = true;
+    updated++;
+    if (!url2 && old2) cleared++;
+  }
+
+  if (old3 !== url3) {
+    sheet.getRange(rowNumber, colExtra2).setValue(url3);
+    changed = true;
+    updated++;
+    if (!url3 && old3) cleared++;
+  }
+
+  if (old4 !== url4) {
+    sheet.getRange(rowNumber, colExtra3).setValue(url4);
+    changed = true;
+    updated++;
+    if (!url4 && old4) cleared++;
+  }
+
+  if (changed) {
+    sheet.getRange(rowNumber, colUpdatedAt).setValue(new Date());
+    clearCoinsCaches_();
+    clearCoinCachesByItems_([{ id: id, slug: slug }]);
+  }
+
+  return {
+    updated: updated,
+    cleared: cleared,
+    skipped: 0
+  };
+}
+
+
+/* =========================
+   STATS HELPERS
+========================= */
+
+function incrementStat_(key) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const sheet = getSheetByName_(SHEET_STATS);
+    const rowNumber = findStatRow_(sheet, key);
+    const now = new Date();
+
+    if (rowNumber) {
+      const currentValue = Number(sheet.getRange(rowNumber, 2).getValue() || 0);
+      const newValue = currentValue + 1;
+      sheet.getRange(rowNumber, 2).setValue(newValue);
+      sheet.getRange(rowNumber, 3).setValue(now);
+      return newValue;
+    }
+
+    sheet.appendRow([key, 1, now]);
+    return 1;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function getStatValue_(key) {
+  const sheet = getSheetByName_(SHEET_STATS);
+  const rowNumber = findStatRow_(sheet, key);
+  if (!rowNumber) return 0;
+  return Number(sheet.getRange(rowNumber, 2).getValue() || 0);
+}
+
+function findStatRow_(sheet, key) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 0;
+
+  const values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  const keyStr = String(key || "").trim();
+
+  for (let i = 0; i < values.length; i++) {
+    const rowKey = String(values[i][0] || "").trim();
+    if (rowKey === keyStr) return i + 2;
+  }
+
+  return 0;
+}
+
+function incrementCoinView_(slug, id) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const found = findCoinRowBySlugOrId_(slug, id);
+    if (!found) {
+      throw new Error("Coin not found");
+    }
+
+    const sheet = getSheetByName_(SHEET_COINS);
+    const headerMap = found.headerMap;
+    const colViews = getColumnIndex_(headerMap, "Views");
+    const currentViews = Number(found.rowValues[colViews - 1] || 0);
+    const newViews = currentViews + 1;
+
+    sheet.getRange(found.rowNumber, colViews).setValue(newViews);
+
+    const rowSlug = headerMap["Slug"] ? String(found.rowValues[headerMap["Slug"] - 1] || "").trim() : "";
+    const rowId = headerMap["ID"] ? String(found.rowValues[headerMap["ID"] - 1] || "").trim() : "";
+
+    clearCoinCachesByItems_([{ id: rowId, slug: rowSlug }]);
+    clearCoinsCaches_();
+
+    return newViews;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/* =========================
+   COIN HELPERS
+========================= */
+
+function getCoinData_(slug, id) {
+  const found = findCoinRowBySlugOrId_(slug, id);
+  if (!found) return null;
+  return rowToCoinObject_(found.rowValues, found.headerMap, found.rowNumber);
+}
+
+function rowToCoinListObject_(row, h, rowNumber) {
+  function val(name) {
+    const col = h[name];
+    if (!col) return "";
+    return row[col - 1];
+  }
+
+  return {
+    ID: String(val("ID") || "").trim(),
+    Type: String(val("Type") || "").trim(),
+    BoxNo: String(val("BoxNo") || "").trim(),
+    Continent: String(val("Continent") || "").trim(),
+    Country: String(val("Country") || "").trim(),
+    TitleUA: String(val("TitleUA") || "").trim(),
+    TitleEN: String(val("TitleEN") || "").trim(),
+    NominalPeriod: String(val("NominalPeriod") || "").trim(),
+    KrauseNumber: String(val("KrauseNumber") || "").trim(),
+    PriceUAH: Number(val("PriceUAH") || 0),
+    CurrencyBase: String(val("CurrencyBase") || "").trim(),
+
+    PhotoMainURL: String(val("PhotoMainURL") || "").trim(),
+    PhotoExtra1URL: String(val("PhotoExtra1URL") || "").trim(),
+    PhotoExtra2URL: String(val("PhotoExtra2URL") || "").trim(),
+    PhotoExtra3URL: String(val("PhotoExtra3URL") || "").trim(),
+
+    YoutubeID: String(val("YoutubeID") || "").trim(),
+    Metal: String(val("Metal") || "").trim(),
+    Theme: String(val("Theme") || "").trim(),
+    Quantity: Number(val("Quantity") || 0),
+    Slug: String(val("Slug") || "").trim(),
+    Condition: String(val("Condition") || "").trim(),
+    DescriptionUA: String(val("DescriptionUA") || "").trim(),
+    AdminNote: String(val("AdminNote") || "").trim(),
+    Views: Number(val("Views") || 0),
+
+    CreatedAt: val("CreatedAt") || "",
+    UpdatedAt: val("UpdatedAt") || "",
+
+    _rowNumber: rowNumber
+  };
+}
+
+function rowToCoinObject_(row, h, rowNumber) {
+  function val(name) {
+    const col = h[name];
+    if (!col) return "";
+    return row[col - 1];
+  }
+
+  return {
+    ID: String(val("ID") || "").trim(),
+    Type: String(val("Type") || "").trim(),
+    BoxNo: String(val("BoxNo") || "").trim(),
+    Continent: String(val("Continent") || "").trim(),
+    Country: String(val("Country") || "").trim(),
+    TitleUA: String(val("TitleUA") || "").trim(),
+    TitleEN: String(val("TitleEN") || "").trim(),
+    NominalPeriod: String(val("NominalPeriod") || "").trim(),
+    KrauseNumber: String(val("KrauseNumber") || "").trim(),
+    PriceUAH: Number(val("PriceUAH") || 0),
+    CurrencyBase: String(val("CurrencyBase") || "").trim(),
+
+    PhotoMainURL: String(val("PhotoMainURL") || "").trim(),
+    PhotoExtra1URL: String(val("PhotoExtra1URL") || "").trim(),
+    PhotoExtra2URL: String(val("PhotoExtra2URL") || "").trim(),
+    PhotoExtra3URL: String(val("PhotoExtra3URL") || "").trim(),
+
+    YoutubeID: String(val("YoutubeID") || "").trim(),
+    Metal: String(val("Metal") || "").trim(),
+    Theme: String(val("Theme") || "").trim(),
+    Quantity: Number(val("Quantity") || 0),
+    Slug: String(val("Slug") || "").trim(),
+    CreatedAt: val("CreatedAt") || "",
+    UpdatedAt: val("UpdatedAt") || "",
+    Condition: String(val("Condition") || "").trim(),
+    Views: Number(val("Views") || 0),
+
+    DescriptionUA: String(val("DescriptionUA") || "").trim(),
+    AdminNote: String(val("AdminNote") || "").trim(),
+
+    _rowNumber: rowNumber
+  };
+}
+
+function findCoinRowBySlugOrId_(slug, id) {
+  const sheet = getSheetByName_(SHEET_COINS);
+  const headerMap = getHeaderMap_(sheet);
+
+  const colId = getColumnIndex_(headerMap, "ID");
+  const colSlug = getColumnIndex_(headerMap, "Slug");
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+
+  const lastColumn = sheet.getLastColumn();
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+
+  const slugStr = String(slug || "").trim();
+  const idStr = String(id || "").trim();
+
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+    const rowId = String(row[colId - 1] || "").trim();
+    const rowSlug = String(row[colSlug - 1] || "").trim();
+
+    if (slugStr && rowSlug === slugStr) {
+      return {
+        rowNumber: i + 2,
+        rowValues: row,
+        headerMap: headerMap
+      };
+    }
+
+    if (idStr && rowId === idStr) {
+      return {
+        rowNumber: i + 2,
+        rowValues: row,
+        headerMap: headerMap
+      };
+    }
+  }
+
+  return null;
+}
+
+
+/* =========================
+   DRIVE HELPERS
+========================= */
+
+function buildFileMap_(folder) {
+  const files = folder.getFiles();
+  const map = {};
+
+  while (files.hasNext()) {
+    const file = files.next();
+    const name = String(file.getName() || "").trim();
+    if (!name) continue;
+
+    map[name] = {
+      id: file.getId(),
+      name: name
+    };
+  }
+
+  return map;
+}
+
+function getCoinPhotoFile_(fileMap, id, index) {
+  const base = "COIN_" + id + "_" + index;
+  return fileMap[base + ".webp"] || fileMap[base + ".jpg"] || null;
+}
+
+function makeDriveImageUrl_(fileId) {
+  const id = String(fileId || "").trim();
+  if (!id) return "";
+  return "https://lh3.googleusercontent.com/d/" + encodeURIComponent(id) + "=w1200";
+}
+
+
+/* =========================
+   CACHE HELPERS
+========================= */
+
+function clearCoinsCaches_() {
+  const cache = CacheService.getScriptCache();
+  cache.remove("coins_all_v2");
+}
+
+function clearCoinCachesByItems_(items) {
+  const cache = CacheService.getScriptCache();
+  if (!Array.isArray(items) || !items.length) return;
+
+  const keys = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i] || {};
+    const slug = String(item.slug || "").trim();
+    const id = String(item.id || "").trim();
+
+    if (slug) keys.push("coin_slug_v2_" + slug);
+    if (id) keys.push("coin_id_v2_" + id);
+  }
+
+  if (keys.length) {
+    cache.removeAll(keys);
+  }
+}
+
+
+/* =========================
+   GENERIC HELPERS
+========================= */
+
+function getSheetByName_(name) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  if (!sheet) throw new Error("Sheet not found: " + name);
+  return sheet;
+}
+
+function getHeaderMap_(sheet) {
+  const lastColumn = sheet.getLastColumn();
+  if (lastColumn < 1) throw new Error("Sheet has no columns: " + sheet.getName());
+
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const map = {};
+
+  headers.forEach(function(header, index) {
+    const key = String(header || "").trim();
+    if (key) map[key] = index + 1;
+  });
+
+  return map;
+}
+
+function getColumnIndex_(headerMap, columnName) {
+  const index = headerMap[columnName];
+  if (!index) throw new Error("Column not found: " + columnName);
+  return index;
+}
+
+function setCellByHeader_(rowArray, headerMap, columnName, value) {
+  const idx = getColumnIndex_(headerMap, columnName);
+  rowArray[idx - 1] = value;
+}
+
+function setCellIfHeaderExists_(rowArray, headerMap, columnName, value) {
+  const idx = headerMap[columnName];
+  if (!idx) return;
+  rowArray[idx - 1] = value;
+}
+
+function getParam_(e, name) {
+  if (!e || !e.parameter) return "";
+  return String(e.parameter[name] || "").trim();
+}
+
+function parsePostBody_(e) {
+  if (!e || !e.postData || !e.postData.contents) {
+    throw new Error("Empty POST body");
+  }
+
+  const text = e.postData.contents;
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    throw new Error("Invalid JSON in POST body");
+  }
+
+  return data;
+}
+
+function jsonOutput_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function normalizePhoneUa_(value) {
+  let phone = String(value || "").replace(/\D+/g, "").trim();
+
+  if (!phone) return "";
+
+  if (phone.startsWith("380")) return phone;
+  if (phone.startsWith("80")) return "3" + phone;
+  if (phone.startsWith("0")) return "38" + phone;
+
+  return phone;
+}
+
+function isPhoneAllowedForBigOrders_(phone) {
+  const normalizedPhone = normalizePhoneUa_(phone);
+  if (!normalizedPhone) return false;
+
+  const sheet = getSheetByName_(SHEET_ALLOWED_PHONES);
+  const h = getHeaderMap_(sheet);
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return false;
+
+  const lastColumn = sheet.getLastColumn();
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+
+  const colPhone = getColumnIndex_(h, "Phone");
+  const colActive = getColumnIndex_(h, "Active");
+
+  for (let i = 0; i < values.length; i++) {
+    const row = values[i];
+
+    const rowPhone = normalizePhoneUa_(String(row[colPhone - 1] || "").trim());
+    const rowActiveRaw = row[colActive - 1];
+
+    const isActive =
+      rowActiveRaw === true ||
+      String(rowActiveRaw || "").trim().toUpperCase() === "TRUE" ||
+      String(rowActiveRaw || "").trim().toUpperCase() === "YES" ||
+      String(rowActiveRaw || "").trim() === "1";
+
+    if (!isActive) continue;
+    if (rowPhone === normalizedPhone) return true;
+  }
+
+  return false;
+}
+
+function normalizeOrderItems_(items) {
+  if (!Array.isArray(items)) return [];
+
+  const map = {};
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i] || {};
+    const slug = String(item.slug || "").trim();
+    const id = String(item.id || "").trim();
+    const qty = Number(item.qty || 0);
+
+    if ((!slug && !id) || qty <= 0) continue;
+
+    const key = slug ? "slug:" + slug : "id:" + id;
+
+    if (!map[key]) {
+      map[key] = {
+        slug: slug,
+        id: id,
+        qty: 0
+      };
+    }
+
+    map[key].qty += qty;
+  }
+
+  return Object.keys(map).map(function(key) {
+    return map[key];
+  });
+}
+
+function buildOrderItemsText_(items) {
+  if (!Array.isArray(items) || !items.length) return "";
+
+  return items.map(function(item) {
+    const id = String(item.id || "").trim();
+    const title = String(item.title || "").trim() || "Без назви";
+    const price = Number(item.priceUAH || 0);
+    const qty = Number(item.qty || 0);
+    const sum = price * qty;
+
+    const leftPart = id ? (id + ". " + title) : title;
+
+    return leftPart + ", " + price + " грн, " + qty + " шт, " + sum + " грн";
+  }).join("\n");
+}
+
+function generateOrderId_(dateObj) {
+  const stamp = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "yyyyMMdd-HHmmss");
+  const rnd = Math.floor(Math.random() * 900 + 100);
+  return "MS-" + stamp + "-" + rnd;
+}
+Я нічого не міняв
+Це код повністю.
+В таблиці вставив стовпчик TitleUA+
+Перевір, якщо потрібно допиши, перепиши повністю,
+Акуратно, нічого не ламай!
