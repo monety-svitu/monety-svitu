@@ -1,1836 +1,1202 @@
-const SHEET_COINS = "Coins";
-const SHEET_ORDERS = "Orders";
-const SHEET_SETTINGS = "Settings";
-const SHEET_STATS = "Stats";
-const SHEET_PRICE_TOOL = "PriceTool";
-const SHEET_ALLOWED_PHONES = "AllowedPhones";
-const RESERVE_HOURS = 24;
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Монета — Монети Світу</title>
+  <link rel="icon" type="image/svg+xml" href="/monety-svitu/favicon.svg" />
+  <meta name="description" content="Сторінка монети. Фото, ціна, опис, стан." />
+  <style>
+    * { box-sizing: border-box; }
 
-const MIN_ORDER_TOTAL_UAH = 200;
-const MAX_AUTO_ORDER_TOTAL_UAH = 2000;
-
-// ID папки Google Drive, де лежать фото монет
-const PHOTO_FOLDER_ID = "1vr1Rupt34A6tNyv3iHSrY_UsVwj5EZoZ";
-
-// Кеш у секундах
-const CACHE_TTL_COINS = 120;
-const CACHE_TTL_COIN = 120;
-
-
-/* =========================
-   ENTRY POINTS
-========================= */
-
-function doGet(e) {
-  try {
-    const action = getParam_(e, "action");
-
-    if (action === "getCoins") {
-      return jsonOutput_({
-        success: true,
-        items: getCoinsCached_()
-      });
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --card-soft: #fafbfc;
+      --header-bg: #ffffff;
+      --line: #e4e7eb;
+      --line-strong: #dddddd;
+      --line-soft: #edf1f4;
+      --text: #1f2937;
+      --text-strong: #111827;
+      --text-soft: #444444;
+      --muted: #6b7280;
+      --muted-soft: #8a94a6;
+      --primary: #2f6fdd;
+      --primary-hover: #255fc2;
+      --danger: #c62828;
+      --success: #2e7d32;
+      --shadow: 0 3px 12px rgba(0,0,0,0.05);
+      --radius: 18px;
+      --theme-btn-bg: #eef2f6;
+      --theme-btn-hover: #e5ebf1;
+      --theme-btn-color: #1f2937;
+      --input-bg: #ffffff;
+      --input-text: #1f2937;
+      --lightbox-bg: rgba(0,0,0,0.88);
+      --lightbox-img-bg: #ffffff;
+      --lightbox-btn-bg: rgba(255,255,255,0.92);
+      --lightbox-btn-color: #111111;
+      --lightbox-counter-bg: rgba(0,0,0,0.35);
+      --badge-bg: #eef3fb;
+      --badge-border: #d7e3f4;
+      --badge-text: #344054;
     }
 
-    if (action === "getCoin") {
-      const slug = getParam_(e, "slug");
-      const id = getParam_(e, "id");
-      const coin = getCoinDataCached_(slug, id);
+    body[data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --card-soft: #172131;
+      --header-bg: #111827;
+      --line: #243244;
+      --line-strong: #2a3a50;
+      --line-soft: #223041;
+      --text: #e5edf7;
+      --text-strong: #f8fafc;
+      --text-soft: #d7e0ea;
+      --muted: #aab7c8;
+      --muted-soft: #90a0b5;
+      --primary: #5b8cff;
+      --primary-hover: #79a0ff;
+      --danger: #ff6b6b;
+      --success: #6edb8f;
+      --shadow: 0 6px 18px rgba(0,0,0,0.28);
+      --theme-btn-bg: #1b2636;
+      --theme-btn-hover: #233247;
+      --theme-btn-color: #e5edf7;
+      --input-bg: #0f172a;
+      --input-text: #e5edf7;
+      --lightbox-bg: rgba(2,6,23,0.94);
+      --lightbox-img-bg: #0f172a;
+      --lightbox-btn-bg: rgba(15,23,42,0.92);
+      --lightbox-btn-color: #f8fafc;
+      --lightbox-counter-bg: rgba(15,23,42,0.78);
+      --badge-bg: #182233;
+      --badge-border: #314257;
+      --badge-text: #dbe6f3;
+    }
 
-      if (!coin) {
-        return jsonOutput_({
-          success: false,
-          error: "Coin not found"
-        });
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background-color 0.18s ease, color 0.18s ease;
+    }
+
+    header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--line-strong);
+      padding: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .header-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--text-strong);
+}
+
+.logo-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  flex: 0 0 34px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+    .brand h1 {
+      margin: 0 0 4px;
+      font-size: 26px;
+      color: var(--text-strong);
+    }
+
+    .brand .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--theme-btn-bg);
+      color: var(--theme-btn-color);
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      background: var(--theme-btn-hover);
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--primary);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .cart-top-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(31, 111, 235, 0.25);
+    }
+
+    .cart-top-link:hover {
+      background: var(--primary-hover);
+    }
+
+    .cart-top-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .cart-count-badge {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .message {
+      background: var(--card);
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+
+    .trust-box {
+      background: var(--card);
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      padding: 15px 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .trust-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 7px;
+      color: var(--text-strong);
+    }
+
+    .trust-text {
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text-soft);
+    }
+
+    .coin-layout {
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .gallery-card,
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .gallery-inner,
+    .info-inner {
+      padding: 16px;
+    }
+
+    .main-photo-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: var(--card);
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: zoom-in;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .main-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: var(--card);
+    }
+
+    .no-photo {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .thumbs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(84px, 96px));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .thumb-btn {
+      border: 1px solid var(--line-soft);
+      background: var(--card);
+      padding: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      aspect-ratio: 1 / 1;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.18s ease;
+    }
+
+    .thumb-btn.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(47,111,221,0.10);
+    }
+
+    .thumb-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: var(--card);
+    }
+
+    .thumb-btn .thumb-no-photo {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 8px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: var(--danger);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(198,40,40,0.22);
+    }
+
+    .coin-id-top {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--badge-text);
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      border-radius: 999px;
+      padding: 7px 12px;
+      margin-bottom: 14px;
+    }
+
+    .coin-title {
+      font-size: 31px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      color: var(--text-strong);
+    }
+
+    .coin-price {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.08;
+      margin-bottom: 14px;
+      color: var(--primary);
+    }
+
+    .stock-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .stock-text {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .stock-text.in-stock {
+      color: var(--success);
+    }
+
+    .stock-text.sold {
+      color: var(--danger);
+    }
+
+    .stock-qty {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 8px 14px;
+      margin-top: 8px;
+      margin-bottom: 18px;
+      padding: 12px 13px;
+      background: var(--card-soft);
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.42;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .details-label {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .details-value {
+      color: var(--text);
+      word-break: break-word;
+      font-weight: 600;
+    }
+
+    .description-block {
+      margin-top: 4px;
+      margin-bottom: 18px;
+      padding: 13px 14px;
+      background: var(--card-soft);
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .description-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 7px;
+      color: var(--muted);
+    }
+
+    .description-text {
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      text-decoration: none;
+      background: var(--primary);
+      color: #fff;
+      padding: 11px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.15s ease, transform 0.08s ease;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background: var(--theme-btn-bg);
+      color: var(--theme-btn-color);
+      border: 1px solid var(--line);
+    }
+
+    .btn-secondary:hover {
+      background: var(--theme-btn-hover);
+    }
+
+    .btn-disabled {
+      background: #6b7280;
+      color: #fff;
+      cursor: not-allowed;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: var(--lightbox-bg);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox-inner {
+      position: relative;
+      max-width: 95vw;
+      max-height: 95vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox-img {
+      max-width: 95vw;
+      max-height: 90vh;
+      display: block;
+      object-fit: contain;
+      background: var(--lightbox-img-bg);
+      border-radius: 10px;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 999px;
+      background: var(--lightbox-btn-bg);
+      color: var(--lightbox-btn-color);
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      z-index: 3;
+    }
+
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 999px;
+      background: var(--lightbox-btn-bg);
+      color: var(--lightbox-btn-color);
+      font-size: 28px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      z-index: 2;
+    }
+
+    .lightbox-nav:hover {
+      background: var(--card);
+    }
+
+    .lightbox-prev {
+      left: -64px;
+    }
+
+    .lightbox-next {
+      right: -64px;
+    }
+
+    .lightbox-counter {
+      position: absolute;
+      left: 50%;
+      bottom: -34px;
+      transform: translateX(-50%);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      background: var(--lightbox-counter-bg);
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .coin-layout {
+        grid-template-columns: 1fr;
       }
 
-      return jsonOutput_({
-        success: true,
-        item: coin
-      });
-    }
-
-    if (action === "trackSiteView") {
-      const value = incrementStat_("site_views_total");
-      return jsonOutput_({
-        success: true,
-        key: "site_views_total",
-        value: value
-      });
-    }
-
-    if (action === "trackCoinView") {
-      const slug = getParam_(e, "slug");
-      const id = getParam_(e, "id");
-
-      if (!slug && !id) {
-        return jsonOutput_({
-          success: false,
-          error: "Missing slug or id"
-        });
+      .coin-id-top {
+        font-size: 12px;
+        padding: 6px 10px;
+        margin-bottom: 12px;
       }
 
-      const value = incrementCoinView_(slug, id);
-
-      return jsonOutput_({
-        success: true,
-        value: value
-      });
-    }
-
-    if (action === "getStat") {
-      const key = getParam_(e, "key");
-      if (!key) {
-        return jsonOutput_({
-          success: false,
-          error: "Missing key"
-        });
+      .coin-title {
+        font-size: 25px;
       }
 
-      return jsonOutput_({
-        success: true,
-        key: key,
-        value: getStatValue_(key)
-      });
-    }
-
-    if (action === "releaseExpiredOrders") {
-      const result = releaseExpiredOrders_();
-      return jsonOutput_({
-        success: true,
-        released: result.released,
-        restoredItems: result.restoredItems
-      });
-    }
-
-    if (action === "syncPhotoUrls") {
-      const result = syncPhotoUrls_();
-      return jsonOutput_({
-        success: true,
-        updated: result.updated,
-        cleared: result.cleared,
-        skipped: result.skipped
-      });
-    }
-
-    if (action === "cancelOrder") {
-      const orderId = getParam_(e, "orderId");
-      if (!orderId) {
-        return jsonOutput_({
-          success: false,
-          error: "Missing orderId"
-        });
+      .coin-price {
+        font-size: 26px;
       }
 
-      const result = cancelOrderById_(orderId);
-
-      return jsonOutput_({
-        success: true,
-        cancelled: result.cancelled,
-        restoredItems: result.restoredItems,
-        orderId: result.orderId
-      });
-    }
-
-    return jsonOutput_({
-      success: false,
-      error: "Unknown action"
-    });
-
-  } catch (err) {
-    return jsonOutput_({
-      success: false,
-      error: String(err && err.message ? err.message : err)
-    });
-  }
-}
-
-function doPost(e) {
-  try {
-    const body = parsePostBody_(e);
-    const action = String(body.action || "").trim();
-
-    if (action === "createOrder") {
-      const result = createOrder_(body);
-      return jsonOutput_({
-        success: true,
-        order: result
-      });
-    }
-
-    return jsonOutput_({
-      success: false,
-      error: "Unknown action"
-    });
-
-  } catch (err) {
-    return jsonOutput_({
-      success: false,
-      error: String(err && err.message ? err.message : err)
-    });
-  }
-}
-
-
-/* =========================
-   ON EDIT
-========================= */
-
-function onEdit(e) {
-  try {
-    if (!e || !e.range) return;
-
-    const sheet = e.range.getSheet();
-    if (!sheet) return;
-
-    const sheetName = sheet.getName();
-    const startRow = e.range.getRow();
-    const numRows = e.range.getNumRows();
-    const endRow = startRow + numRows - 1;
-
-    // 1) PriceTool: оновлення випадаючих списків
-    if (sheetName === SHEET_PRICE_TOOL) {
-      const startCol = e.range.getColumn();
-      const endCol = startCol + e.range.getNumColumns() - 1;
-
-      if (startCol > 2 || endCol < 2) return;
-      if (endRow < 3 || startRow > 9) return;
-
-      refreshPriceToolDropdowns_(sheet);
-      return;
-    }
-
-    // 2) Coins: копіювати формат з 2-го рядка + ставити CreatedAt, якщо порожній
-    if (sheetName === SHEET_COINS) {
-      if (endRow <= 2) return;
-
-      const formatStartRow = Math.max(startRow, 3);
-      const formatNumRows = endRow - formatStartRow + 1;
-      if (formatNumRows <= 0) return;
-
-      const lastColumn = sheet.getLastColumn();
-      if (lastColumn < 1) return;
-
-      const sourceRange = sheet.getRange(2, 1, 1, lastColumn);
-      const targetRange = sheet.getRange(formatStartRow, 1, formatNumRows, lastColumn);
-
-      sourceRange.copyTo(targetRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
-
-      const headerMap = getHeaderMap_(sheet);
-      const colCreatedAt = headerMap["CreatedAt"];
-      if (!colCreatedAt) return;
-
-      const values = sheet.getRange(formatStartRow, 1, formatNumRows, lastColumn).getValues();
-      const now = new Date();
-
-      for (let i = 0; i < values.length; i++) {
-        const rowNumber = formatStartRow + i;
-        const rowValues = values[i];
-
-        const hasAnyData = rowValues.some(function(v) {
-          return String(v || "").trim() !== "";
-        });
-
-        if (!hasAnyData) continue;
-
-        const createdAtValue = rowValues[colCreatedAt - 1];
-        const hasCreatedAt = String(createdAtValue || "").trim() !== "";
-
-        if (!hasCreatedAt) {
-          sheet.getRange(rowNumber, colCreatedAt).setValue(now);
-        }
+      .details {
+        grid-template-columns: 1fr;
+        gap: 4px 0;
       }
 
-      return;
-    }
-
-  } catch (err) {
-    Logger.log("onEdit error: " + err);
-  }
-}
-
-
-/* =========================
-   MENU
-========================= */
-
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu("Фото")
-    .addItem("Оновити URL фото (вибраний рядок)", "syncPhotoUrlsSelectedRowMenu_")
-    .addItem("Оновити URL фото (усі)", "syncPhotoUrlsMenu_")
-    .addToUi();
-
-  SpreadsheetApp.getUi()
-    .createMenu("Замовлення")
-    .addItem("Скасувати вибране замовлення", "cancelSelectedOrderMenu_")
-    .addItem("Запустити повернення прострочених резервів", "runReleaseExpiredOrdersMenu_")
-    .addItem("Увімкнути автоповернення резервів", "installReleaseExpiredOrdersTrigger_")
-    .addToUi();
-
-  SpreadsheetApp.getUi()
-    .createMenu("Ціни")
-    .addItem("Підготувати лист PriceTool", "bulkUpdatePricesMenu_")
-    .addItem("Застосувати з PriceTool", "applyBulkPricesFromPriceToolMenu_")
-    .addToUi();
-}
-
-
-/* =========================
-   PHOTO MENU
-========================= */
-
-function syncPhotoUrlsMenu_() {
-  const result = syncPhotoUrls_();
-  SpreadsheetApp.getUi().alert(
-    "Оновлення завершено.\n" +
-    "Updated: " + result.updated + "\n" +
-    "Cleared: " + result.cleared + "\n" +
-    "Skipped: " + result.skipped
-  );
-}
-
-function syncPhotoUrlsSelectedRowMenu_() {
-  const sheet = SpreadsheetApp.getActiveSheet();
-
-  if (!sheet || sheet.getName() !== SHEET_COINS) {
-    SpreadsheetApp.getUi().alert("Перейдіть на лист Coins і виберіть рядок монети.");
-    return;
-  }
-
-  const activeRange = sheet.getActiveRange();
-  if (!activeRange) {
-    SpreadsheetApp.getUi().alert("Виберіть рядок монети.");
-    return;
-  }
-
-  const row = activeRange.getRow();
-
-  if (row < 2) {
-    SpreadsheetApp.getUi().alert("Виберіть рядок з монетою, не заголовок.");
-    return;
-  }
-
-  const result = syncPhotoUrlsForRowManual_(row);
-
-  SpreadsheetApp.getUi().alert(
-    "Оновлення рядка завершено.\n" +
-    "Row: " + row + "\n" +
-    "Updated: " + result.updated + "\n" +
-    "Cleared: " + result.cleared + "\n" +
-    "Skipped: " + result.skipped
-  );
-}
-
-
-/* =========================
-   ORDER MENU
-========================= */
-
-function cancelSelectedOrderMenu_() {
-  const sheet = SpreadsheetApp.getActiveSheet();
-
-  if (!sheet || sheet.getName() !== SHEET_ORDERS) {
-    SpreadsheetApp.getUi().alert("Перейдіть на лист Orders і виберіть рядок замовлення.");
-    return;
-  }
-
-  const activeRange = sheet.getActiveRange();
-  if (!activeRange) {
-    SpreadsheetApp.getUi().alert("Виберіть рядок замовлення.");
-    return;
-  }
-
-  const rowNumber = activeRange.getRow();
-  if (rowNumber < 2) {
-    SpreadsheetApp.getUi().alert("Виберіть рядок із замовленням, не заголовок.");
-    return;
-  }
-
-  const h = getHeaderMap_(sheet);
-  const colOrderId = getColumnIndex_(h, "OrderID");
-  const orderId = String(sheet.getRange(rowNumber, colOrderId).getValue() || "").trim();
-
-  if (!orderId) {
-    SpreadsheetApp.getUi().alert("У вибраному рядку немає OrderID.");
-    return;
-  }
-
-  const ui = SpreadsheetApp.getUi();
-  const answer = ui.alert(
-    "Підтвердження",
-    "Скасувати замовлення " + orderId + " і повернути монети в наявність?",
-    ui.ButtonSet.YES_NO
-  );
-
-  if (answer !== ui.Button.YES) {
-    return;
-  }
-
-  const result = cancelOrderById_(orderId);
-
-  ui.alert(
-    "Готово.\n" +
-    "OrderID: " + result.orderId + "\n" +
-    "Cancelled: " + result.cancelled + "\n" +
-    "Restored items: " + result.restoredItems
-  );
-}
-
-function runReleaseExpiredOrdersMenu_() {
-  const result = releaseExpiredOrders_();
-
-  SpreadsheetApp.getUi().alert(
-    "Перевірка завершена.\n" +
-    "Скасовано резервів: " + result.released + "\n" +
-    "Повернуто монет: " + result.restoredItems
-  );
-}
-
-function installReleaseExpiredOrdersTrigger_() {
-  const functionName = "releaseExpiredOrdersTrigger_";
-  const triggers = ScriptApp.getProjectTriggers();
-
-  for (let i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === functionName) {
-      ScriptApp.deleteTrigger(triggers[i]);
-    }
-  }
-
-  ScriptApp.newTrigger(functionName)
-    .timeBased()
-    .everyHours(6)
-    .create();
-
-  SpreadsheetApp.getUi().alert("Автоповернення резервів увімкнено. Перевірка буде 4 рази на добу.");
-}
-
-
-/* =========================
-   PRICE TOOL MENU
-========================= */
-
-function bulkUpdatePricesMenu_() {
-  ensurePriceToolSheet_();
-  SpreadsheetApp.setActiveSheet(getSheetByName_(SHEET_PRICE_TOOL));
-  SpreadsheetApp.getUi().alert(
-    "Лист PriceTool готовий.\n" +
-    "Введіть коефіцієнт у B2, виберіть фільтри зі списків і потім запустіть:\n" +
-    "Ціни → Застосувати з PriceTool"
-  );
-}
-
-function applyBulkPricesFromPriceToolMenu_() {
-  const result = applyBulkPricesFromPriceTool_();
-
-  SpreadsheetApp.getUi().alert(
-    "Готово.\n" +
-    "Знайдено рядків: " + result.matched + "\n" +
-    "Оновлено: " + result.updated + "\n" +
-    "Пропущено: " + result.skipped
-  );
-}
-
-function ensurePriceToolSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_PRICE_TOOL);
-
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_PRICE_TOOL);
-  }
-
-  sheet.clear();
-  sheet.getDataRange().clearDataValidations();
-
-  sheet.getRange("A1").setValue("Параметр");
-  sheet.getRange("B1").setValue("Значення");
-
-  sheet.getRange("A2").setValue("Коефіцієнт");
-  sheet.getRange("A3").setValue("Регіон");
-  sheet.getRange("A4").setValue("Країна");
-  sheet.getRange("A5").setValue("Тип");
-  sheet.getRange("A6").setValue("Період");
-  sheet.getRange("A7").setValue("Метал");
-  sheet.getRange("A8").setValue("Стан");
-  sheet.getRange("A9").setValue("Тільки в наявності");
-  sheet.getRange("A10").setValue("Результат");
-
-  sheet.getRange("B2").setNote("Напр. 1,10 = +10%, 0,90 = -10%, 1,00 = без змін");
-  sheet.getRange("B3").setValue("Усі");
-  sheet.getRange("B4").setValue("Усі");
-  sheet.getRange("B5").setValue("Усі");
-  sheet.getRange("B6").setValue("Усі");
-  sheet.getRange("B7").setValue("Усі");
-  sheet.getRange("B8").setValue("Усі");
-  sheet.getRange("B9").setValue("Так");
-
-  sheet.getRange("A1:B1").setFontWeight("bold");
-  sheet.getRange("A1:B10").setFontSize(11);
-  sheet.setColumnWidth(1, 180);
-  sheet.setColumnWidth(2, 260);
-
-  refreshPriceToolDropdowns_(sheet);
-}
-
-function refreshPriceToolDropdowns_(sheet) {
-  const current = {
-    continent: normalizePriceToolFilterValue_(sheet.getRange("B3").getValue()),
-    country: normalizePriceToolFilterValue_(sheet.getRange("B4").getValue()),
-    type: normalizePriceToolFilterValue_(sheet.getRange("B5").getValue()),
-    nominalPeriod: normalizePriceToolFilterValue_(sheet.getRange("B6").getValue()),
-    metal: normalizePriceToolFilterValue_(sheet.getRange("B7").getValue()),
-    condition: normalizePriceToolFilterValue_(sheet.getRange("B8").getValue())
-  };
-
-  const options = getBulkPriceFilterOptionsForSheet_(current);
-
-  setDropdownRule_(sheet.getRange("B3"), ["Усі"].concat(options.continents));
-  setDropdownRule_(sheet.getRange("B4"), ["Усі"].concat(options.countries));
-  setDropdownRule_(sheet.getRange("B5"), ["Усі"].concat(options.types));
-  setDropdownRule_(sheet.getRange("B6"), ["Усі"].concat(options.nominalPeriods));
-  setDropdownRule_(sheet.getRange("B7"), ["Усі"].concat(options.metals));
-  setDropdownRule_(sheet.getRange("B8"), ["Усі"].concat(options.conditions));
-  setDropdownRule_(sheet.getRange("B9"), ["Так", "Ні"]);
-
-  keepValidOrReset_(sheet.getRange("B3"), ["Усі"].concat(options.continents), "Усі");
-  keepValidOrReset_(sheet.getRange("B4"), ["Усі"].concat(options.countries), "Усі");
-  keepValidOrReset_(sheet.getRange("B5"), ["Усі"].concat(options.types), "Усі");
-  keepValidOrReset_(sheet.getRange("B6"), ["Усі"].concat(options.nominalPeriods), "Усі");
-  keepValidOrReset_(sheet.getRange("B7"), ["Усі"].concat(options.metals), "Усі");
-  keepValidOrReset_(sheet.getRange("B8"), ["Усі"].concat(options.conditions), "Усі");
-  keepValidOrReset_(sheet.getRange("B9"), ["Так", "Ні"], "Так");
-}
-
-function setDropdownRule_(range, values) {
-  const cleanValues = (values || []).filter(function(v, i, arr) {
-    const s = String(v || "").trim();
-    return s !== "" && arr.indexOf(v) === i;
-  });
-
-  const rule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(cleanValues, true)
-    .setAllowInvalid(false)
-    .build();
-
-  range.setDataValidation(rule);
-}
-
-function keepValidOrReset_(range, allowedValues, fallbackValue) {
-  const current = String(range.getValue() || "").trim();
-  const allowed = (allowedValues || []).map(function(v) {
-    return String(v || "").trim();
-  });
-
-  if (allowed.indexOf(current) === -1) {
-    range.setValue(fallbackValue);
-  }
-}
-
-function normalizePriceToolFilterValue_(value) {
-  const v = String(value || "").trim();
-  if (!v || v === "Усі") return "";
-  return v;
-}
-
-function isPriceToolYes_(value) {
-  return String(value || "").trim() === "Так";
-}
-
-function getBulkPriceFilterOptionsForSheet_(selectedFilters) {
-  const sheet = getSheetByName_(SHEET_COINS);
-  const h = getHeaderMap_(sheet);
-
-  const lastRow = sheet.getLastRow();
-  const lastColumn = sheet.getLastColumn();
-
-  if (lastRow < 2) {
-    return {
-      continents: [],
-      countries: [],
-      types: [],
-      nominalPeriods: [],
-      metals: [],
-      conditions: []
-    };
-  }
-
-  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-
-  const continents = new Set();
-  const countries = new Set();
-  const types = new Set();
-  const nominalPeriods = new Set();
-  const metals = new Set();
-  const conditions = new Set();
-
-  selectedFilters = selectedFilters || {};
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-
-    const id = h["ID"] ? String(row[h["ID"] - 1] || "").trim() : "";
-    const titleUA = h["TitleUA"] ? String(row[h["TitleUA"] - 1] || "").trim() : "";
-    const titleEN = h["TitleEN"] ? String(row[h["TitleEN"] - 1] || "").trim() : "";
-
-    if (!id) continue;
-    if (!titleUA && !titleEN) continue;
-
-    const continent = h["Continent"] ? String(row[h["Continent"] - 1] || "").trim() : "";
-    const country = h["Country"] ? String(row[h["Country"] - 1] || "").trim() : "";
-    const type = h["Type"] ? String(row[h["Type"] - 1] || "").trim() : "";
-    const nominalPeriod = h["NominalPeriod"] ? String(row[h["NominalPeriod"] - 1] || "").trim() : "";
-    const metal = h["Metal"] ? String(row[h["Metal"] - 1] || "").trim() : "";
-    const condition = h["Condition"] ? String(row[h["Condition"] - 1] || "").trim() : "";
-
-    if (selectedFilters.continent && continent !== selectedFilters.continent) continue;
-    if (selectedFilters.country && country !== selectedFilters.country) continue;
-    if (selectedFilters.type && type !== selectedFilters.type) continue;
-    if (selectedFilters.nominalPeriod && nominalPeriod !== selectedFilters.nominalPeriod) continue;
-    if (selectedFilters.metal && metal !== selectedFilters.metal) continue;
-    if (selectedFilters.condition && condition !== selectedFilters.condition) continue;
-
-    if (continent) continents.add(continent);
-    if (country) countries.add(country);
-    if (type) types.add(type);
-    if (nominalPeriod) nominalPeriods.add(nominalPeriod);
-    if (metal) metals.add(metal);
-    if (condition) conditions.add(condition);
-  }
-
-  function sorted(setObj) {
-    return Array.from(setObj).sort(function(a, b) {
-      return a.localeCompare(b, "uk");
-    });
-  }
-
-  return {
-    continents: sorted(continents),
-    countries: sorted(countries),
-    types: sorted(types),
-    nominalPeriods: sorted(nominalPeriods),
-    metals: sorted(metals),
-    conditions: sorted(conditions)
-  };
-}
-
-function applyBulkPricesFromPriceTool_() {
-  const toolSheet = getSheetByName_(SHEET_PRICE_TOOL);
-
-  const coefficient = Number(String(toolSheet.getRange("B2").getValue() || "").replace(",", ".").trim());
-  if (!isFinite(coefficient) || coefficient <= 0) {
-    throw new Error("У PriceTool!B2 невірний коефіцієнт.");
-  }
-
-  const options = {
-    coefficient: coefficient,
-    continent: normalizePriceToolFilterValue_(toolSheet.getRange("B3").getValue()),
-    country: normalizePriceToolFilterValue_(toolSheet.getRange("B4").getValue()),
-    type: normalizePriceToolFilterValue_(toolSheet.getRange("B5").getValue()),
-    nominalPeriod: normalizePriceToolFilterValue_(toolSheet.getRange("B6").getValue()),
-    metal: normalizePriceToolFilterValue_(toolSheet.getRange("B7").getValue()),
-    condition: normalizePriceToolFilterValue_(toolSheet.getRange("B8").getValue()),
-    onlyInStock: isPriceToolYes_(toolSheet.getRange("B9").getValue())
-  };
-
-  const preview = previewBulkUpdatePrices_(options);
-
-  if (preview.count === 0) {
-    toolSheet.getRange("B10").setValue("Нічого не знайдено");
-    return {
-      matched: 0,
-      updated: 0,
-      skipped: 0
-    };
-  }
-
-  const result = bulkUpdatePricesByFilters_(options);
-
-  toolSheet.getRange("B10").setValue(
-    "Знайдено: " + preview.count +
-    " | Оновлено: " + result.updated +
-    " | Пропущено: " + result.skipped
-  );
-
-  return {
-    matched: preview.count,
-    updated: result.updated,
-    skipped: result.skipped
-  };
-}
-
-
-/* =========================
-   MAIN ACTIONS
-========================= */
-
-function getCoinsCached_() {
-  const cache = CacheService.getScriptCache();
-  const cacheKey = "coins_all_v2";
-  const cached = cache.get(cacheKey);
-
-  if (cached) {
-    return JSON.parse(cached);
-  }
-
-  const items = getCoins_();
-  cache.put(cacheKey, JSON.stringify(items), CACHE_TTL_COINS);
-  return items;
-}
-
-function getCoins_() {
-  const sheet = getSheetByName_(SHEET_COINS);
-  const h = getHeaderMap_(sheet);
-
-  const lastRow = sheet.getLastRow();
-  const lastColumn = sheet.getLastColumn();
-
-  if (lastRow < 2) return [];
-
-  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-  const items = [];
-
-  const colId = h["ID"];
-  const colTitleUA = h["TitleUA"];
-  const colTitleEN = h["TitleEN"];
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-
-    const id = colId ? String(row[colId - 1] || "").trim() : "";
-    const titleUA = colTitleUA ? String(row[colTitleUA - 1] || "").trim() : "";
-    const titleEN = colTitleEN ? String(row[colTitleEN - 1] || "").trim() : "";
-
-    if (!id) continue;
-    if (!titleUA && !titleEN) continue;
-
-    const item = rowToCoinListObject_(row, h, i + 2);
-    items.push(item);
-  }
-
-  return items;
-}
-
-function getCoinDataCached_(slug, id) {
-  const slugStr = String(slug || "").trim();
-  const idStr = String(id || "").trim();
-
-  const cache = CacheService.getScriptCache();
-  const cacheKey = slugStr
-    ? "coin_slug_v2_" + slugStr
-    : "coin_id_v2_" + idStr;
-
-  const cached = cache.get(cacheKey);
-  if (cached) {
-    return JSON.parse(cached);
-  }
-
-  const coin = getCoinData_(slugStr, idStr);
-  if (coin) {
-    cache.put(cacheKey, JSON.stringify(coin), CACHE_TTL_COIN);
-  }
-
-  return coin;
-}
-
-function createOrder_(body) {
-  const lastName = String(body.lastName || "").trim();
-  const customerName = String(body.customerName || "").trim();
-  const phone = String(body.phone || "").trim();
-  const normalizedPhone = normalizePhoneUa_(phone);
-  const email = String(body.email || "").trim();
-  const messenger = String(body.messenger || phone || "").trim();
-  const comment = String(body.comment || "").trim();
-  const items = normalizeOrderItems_(body.items);
-
-  if (!lastName) throw new Error("Last name is required");
-  if (!customerName) throw new Error("Customer name is required");
-  if (!phone) throw new Error("Phone is required");
-  if (!items.length) throw new Error("Order items are empty");
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    const coinsSheet = getSheetByName_(SHEET_COINS);
-    const ordersSheet = getSheetByName_(SHEET_ORDERS);
-
-    const coinsHeader = getHeaderMap_(coinsSheet);
-    const ordersHeader = getHeaderMap_(ordersSheet);
-
-    const colQuantity = getColumnIndex_(coinsHeader, "Quantity");
-    const colUpdatedAt = getColumnIndex_(coinsHeader, "UpdatedAt");
-
-    let totalUAH = 0;
-    const finalItems = [];
-    const preparedItems = [];
-
-    for (let i = 0; i < items.length; i++) {
-      const req = items[i];
-      const found = findCoinRowBySlugOrId_(req.slug, req.id);
-
-      if (!found) {
-        throw new Error("Coin not found: " + (req.slug || req.id || "unknown"));
+      .details-label {
+        margin-top: 6px;
       }
 
-      const coin = rowToCoinObject_(found.rowValues, found.headerMap, found.rowNumber);
-
-      if (coin.Quantity < req.qty) {
-        throw new Error("Not enough quantity for: " + (coin.TitleUA || coin.TitleEN || coin.ID));
+      .lightbox-prev {
+        left: 8px;
       }
 
-      totalUAH += Number(coin.PriceUAH || 0) * Number(req.qty || 0);
-
-      finalItems.push({
-        id: coin.ID,
-        slug: coin.Slug,
-        title: coin.TitleUA || coin.TitleEN || "",
-        priceUAH: Number(coin.PriceUAH || 0),
-        qty: Number(req.qty || 0)
-      });
-
-      preparedItems.push({
-        req: req,
-        coin: coin,
-        found: found
-      });
-    }
-
-    if (totalUAH < MIN_ORDER_TOTAL_UAH) {
-      throw new Error("Мінімальна сума замовлення — " + MIN_ORDER_TOTAL_UAH + " грн.");
-    }
-
-    if (
-      totalUAH > MAX_AUTO_ORDER_TOTAL_UAH &&
-      !isPhoneAllowedForBigOrders_(normalizedPhone)
-    ) {
-      throw new Error(
-        "Замовлення понад " + MAX_AUTO_ORDER_TOTAL_UAH + " грн доступні лише для погоджених номерів."
-      );
-    }
-
-    for (let i = 0; i < preparedItems.length; i++) {
-      const prepared = preparedItems[i];
-      const req = prepared.req;
-      const found = prepared.found;
-
-      const currentQty = Number(found.rowValues[colQuantity - 1] || 0);
-      const newQty = currentQty - Number(req.qty || 0);
-
-      if (newQty < 0) {
-        throw new Error("Quantity became negative for: " + (req.slug || req.id || "unknown"));
+      .lightbox-next {
+        right: 8px;
       }
 
-      coinsSheet.getRange(found.rowNumber, colQuantity).setValue(newQty);
-      coinsSheet.getRange(found.rowNumber, colUpdatedAt).setValue(new Date());
+      .lightbox-nav {
+        width: 42px;
+        height: 42px;
+        font-size: 24px;
+      }
+
+      .lightbox-counter {
+        bottom: 8px;
+      }
     }
 
-    const now = new Date();
-    const reservedUntil = new Date(now.getTime() + RESERVE_HOURS * 60 * 60 * 1000);
-    const orderId = generateOrderId_(now);
-    const itemsText = buildOrderItemsText_(finalItems);
+    @media (max-width: 640px) {
+      .header-wrap {
+        flex-wrap: wrap;
+      }
 
-    const row = new Array(ordersSheet.getLastColumn()).fill("");
+      .header-right {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrap">
+     <a class="brand-wrap" href="index.html">
+  <img class="logo-mark" src="/monety-svitu/logo.png" alt="Логотип Монети Світу" />
+  <div class="brand-text">
+    <h1>Монети Світу</h1>
+    <div class="subtitle">Сторінка монети</div>
+  </div>
+</a>
 
-    setCellByHeader_(row, ordersHeader, "OrderID", orderId);
-    setCellByHeader_(row, ordersHeader, "CreatedAt", now);
-    setCellByHeader_(row, ordersHeader, "Status", "reserved");
-    setCellByHeader_(row, ordersHeader, "ReservedUntil", reservedUntil);
-    setCellIfHeaderExists_(row, ordersHeader, "LastName", lastName);
-    setCellByHeader_(row, ordersHeader, "CustomerName", customerName);
-    setCellByHeader_(row, ordersHeader, "Phone", phone);
-    setCellByHeader_(row, ordersHeader, "Email", email);
-    setCellByHeader_(row, ordersHeader, "Messenger", messenger);
-    setCellByHeader_(row, ordersHeader, "Comment", comment);
-    setCellByHeader_(row, ordersHeader, "ItemsJSON", JSON.stringify(finalItems));
-    setCellIfHeaderExists_(row, ordersHeader, "ItemsText", itemsText);
-    setCellByHeader_(row, ordersHeader, "TotalUAH", totalUAH);
+      <div class="header-right">
+        <button id="themeToggle" class="theme-toggle" type="button" title="Перемкнути тему" aria-label="Перемкнути тему">🌙</button>
+        <a class="back-link" href="index.html">← Назад до каталогу</a>
+        <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
+          <span class="cart-top-icon">🛒</span>
+          <span>Кошик</span>
+          <span id="cartCountBadge" class="cart-count-badge">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
 
-    ordersSheet.appendRow(row);
+  <main>
+    <section class="trust-box">
+      <div class="trust-title">Ви переглядаєте лот із каталогу «Монети Світу»</div>
+      <div class="trust-text">
+        На сторінці доступні фото, опис і основна інформація про монету. Якщо лот у наявності, його можна додати в кошик і перейти до оформлення замовлення.
+      </div>
+    </section>
 
-    clearCoinsCaches_();
-    clearCoinCachesByItems_(finalItems);
+    <div id="messageBox" class="message">Завантаження монети...</div>
 
-    return {
-      OrderID: orderId,
-      CreatedAt: now,
-      Status: "reserved",
-      ReservedUntil: reservedUntil,
-      LastName: lastName,
-      CustomerName: customerName,
-      Phone: phone,
-      Email: email,
-      Messenger: messenger,
-      Comment: comment,
-      Items: finalItems,
-      ItemsText: itemsText,
-      TotalUAH: totalUAH
-    };
+    <div id="coinPage" class="coin-layout hidden">
+      <section class="gallery-card">
+        <div class="gallery-inner">
+          <div id="mainPhotoWrap" class="main-photo-wrap">
+            <img id="mainPhoto" class="main-photo hidden" alt="Фото монети" />
+            <div id="mainPhotoFallback" class="no-photo">Немає фото</div>
+          </div>
 
-  } finally {
-    lock.releaseLock();
-  }
-}
+          <div id="thumbs" class="thumbs hidden"></div>
+        </div>
+      </section>
 
-function releaseExpiredOrders_() {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
+      <section class="info-card">
+        <div class="info-inner">
+          <div id="coinIdTop" class="coin-id-top hidden"></div>
+          <div id="statusBadge" class="status-badge hidden">ПРОДАНО</div>
 
-  try {
-    const ordersSheet = getSheetByName_(SHEET_ORDERS);
-    const coinsSheet = getSheetByName_(SHEET_COINS);
+          <div id="coinTitle" class="coin-title">—</div>
+          <div id="coinPrice" class="coin-price">—</div>
 
-    const oh = getHeaderMap_(ordersSheet);
-    const ch = getHeaderMap_(coinsSheet);
+          <div class="stock-row">
+            <div id="stockText" class="stock-text">—</div>
+            <div id="stockQty" class="stock-qty">—</div>
+          </div>
 
-    const ordersLastRow = ordersSheet.getLastRow();
-    if (ordersLastRow < 2) {
-      return { released: 0, restoredItems: 0 };
+          <div class="details">
+            <div class="details-label">Регіон</div>
+            <div id="detailContinent" class="details-value">—</div>
+
+            <div class="details-label">Країна</div>
+            <div id="detailCountry" class="details-value">—</div>
+
+            <div class="details-label">Тип</div>
+            <div id="detailType" class="details-value">—</div>
+
+            <div class="details-label">Період</div>
+            <div id="detailNominalPeriod" class="details-value">—</div>
+
+            <div class="details-label">KM#</div>
+            <div id="detailKM" class="details-value">—</div>
+
+            <div class="details-label">Метал</div>
+            <div id="detailMetal" class="details-value">—</div>
+
+            <div class="details-label">Стан</div>
+            <div id="detailCondition" class="details-value">—</div>
+
+            <div class="details-label">Тема</div>
+            <div id="detailTheme" class="details-value">—</div>
+          </div>
+
+          <div id="descriptionBlock" class="description-block hidden">
+            <div class="description-title">Опис</div>
+            <div id="descriptionText" class="description-text"></div>
+          </div>
+
+          <div class="actions">
+            <button id="addToCartBtn" class="btn" type="button">Додати в кошик</button>
+            <a class="btn btn-secondary" href="index.html">Повернутись у каталог</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="lightbox" class="lightbox">
+    <div class="lightbox-inner">
+      <button id="lightboxClose" class="lightbox-close" type="button">×</button>
+      <button id="lightboxPrev" class="lightbox-nav lightbox-prev hidden" type="button" aria-label="Попереднє фото">‹</button>
+      <img id="lightboxImg" class="lightbox-img" alt="Збільшене фото монети" />
+      <button id="lightboxNext" class="lightbox-nav lightbox-next hidden" type="button" aria-label="Наступне фото">›</button>
+      <div id="lightboxCounter" class="lightbox-counter hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
+    const CART_KEY = "monety_svitu_cart";
+    const THEME_KEY = "monety_svitu_theme";
+
+    const messageBox = document.getElementById("messageBox");
+    const coinPage = document.getElementById("coinPage");
+    const mainPhotoWrap = document.getElementById("mainPhotoWrap");
+    const mainPhoto = document.getElementById("mainPhoto");
+    const mainPhotoFallback = document.getElementById("mainPhotoFallback");
+    const thumbs = document.getElementById("thumbs");
+    const coinIdTop = document.getElementById("coinIdTop");
+    const statusBadge = document.getElementById("statusBadge");
+    const coinTitle = document.getElementById("coinTitle");
+    const coinPrice = document.getElementById("coinPrice");
+    const stockText = document.getElementById("stockText");
+    const stockQty = document.getElementById("stockQty");
+    const detailContinent = document.getElementById("detailContinent");
+    const detailCountry = document.getElementById("detailCountry");
+    const detailType = document.getElementById("detailType");
+    const detailNominalPeriod = document.getElementById("detailNominalPeriod");
+    const detailKM = document.getElementById("detailKM");
+    const detailMetal = document.getElementById("detailMetal");
+    const detailCondition = document.getElementById("detailCondition");
+    const detailTheme = document.getElementById("detailTheme");
+    const descriptionBlock = document.getElementById("descriptionBlock");
+    const descriptionText = document.getElementById("descriptionText");
+    const addToCartBtn = document.getElementById("addToCartBtn");
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxClose = document.getElementById("lightboxClose");
+    const lightboxPrev = document.getElementById("lightboxPrev");
+    const lightboxNext = document.getElementById("lightboxNext");
+    const lightboxCounter = document.getElementById("lightboxCounter");
+    const cartCountBadge = document.getElementById("cartCountBadge");
+    const themeToggle = document.getElementById("themeToggle");
+
+    let currentCoin = null;
+    let gallery = [];
+    let currentPhotoIndex = 0;
+
+    function applyTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      if (normalized === "dark") {
+        document.body.setAttribute("data-theme", "dark");
+        themeToggle.textContent = "☀";
+        themeToggle.title = "Увімкнути світлу тему";
+        themeToggle.setAttribute("aria-label", "Увімкнути світлу тему");
+      } else {
+        document.body.removeAttribute("data-theme");
+        themeToggle.textContent = "🌙";
+        themeToggle.title = "Увімкнути нічний режим";
+        themeToggle.setAttribute("aria-label", "Увімкнути нічний режим");
+      }
+      localStorage.setItem(THEME_KEY, normalized);
     }
 
-    const ordersValues = ordersSheet.getRange(2, 1, ordersLastRow - 1, ordersSheet.getLastColumn()).getValues();
-
-    const colStatus = getColumnIndex_(oh, "Status");
-    const colReservedUntil = getColumnIndex_(oh, "ReservedUntil");
-    const colItemsJSON = getColumnIndex_(oh, "ItemsJSON");
-
-    const coinsColQuantity = getColumnIndex_(ch, "Quantity");
-    const coinsColUpdatedAt = getColumnIndex_(ch, "UpdatedAt");
-
-    let released = 0;
-    let restoredItems = 0;
-    const now = new Date();
-    const changedItems = [];
-
-    for (let i = 0; i < ordersValues.length; i++) {
-      const row = ordersValues[i];
-      const rowNumber = i + 2;
-
-      const status = String(row[colStatus - 1] || "").trim();
-      const reservedUntil = row[colReservedUntil - 1];
-
-      if (status !== "reserved") continue;
-      if (!reservedUntil) continue;
-
-      const reserveDate = new Date(reservedUntil);
-      if (isNaN(reserveDate.getTime())) continue;
-      if (reserveDate.getTime() > now.getTime()) continue;
-
-      const itemsJson = String(row[colItemsJSON - 1] || "").trim();
-      if (!itemsJson) continue;
-
-      let items;
+    function initTheme() {
+      let savedTheme = "";
       try {
-        items = JSON.parse(itemsJson);
-      } catch (e) {
-        continue;
+        savedTheme = String(localStorage.getItem(THEME_KEY) || "").trim();
+      } catch (err) {
       }
 
-      if (!Array.isArray(items)) continue;
+      if (savedTheme === "dark" || savedTheme === "light") {
+        applyTheme(savedTheme);
+        return;
+      }
 
-      for (let j = 0; j < items.length; j++) {
-        const item = items[j];
-        const found = findCoinRowBySlugOrId_(item.slug, item.id);
-        if (!found) continue;
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyTheme(prefersDark ? "dark" : "light");
+    }
 
-        const currentQty = Number(found.rowValues[coinsColQuantity - 1] || 0);
-        const addQty = Number(item.qty || 0);
-        const newQty = currentQty + addQty;
+    function toggleTheme() {
+      const current = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    }
 
-        coinsSheet.getRange(found.rowNumber, coinsColQuantity).setValue(newQty);
-        coinsSheet.getRange(found.rowNumber, coinsColUpdatedAt).setValue(now);
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get(name) || "").trim();
+    }
 
-        restoredItems += addQty;
-        changedItems.push({
-          id: String(item.id || "").trim(),
-          slug: String(item.slug || "").trim()
+    function getCoinUrl() {
+      const slug = getQueryParam("slug");
+      const id = getQueryParam("id");
+      if (slug) return GAS_URL + "?action=getCoin&slug=" + encodeURIComponent(slug) + "&_ts=" + Date.now();
+      if (id) return GAS_URL + "?action=getCoin&id=" + encodeURIComponent(id) + "&_ts=" + Date.now();
+      return "";
+    }
+
+    async function trackCoinView() {
+      try {
+        const slug = getQueryParam("slug");
+        const id = getQueryParam("id");
+
+        if (!slug && !id) return;
+
+        let url = GAS_URL + "?action=trackCoinView&_ts=" + Date.now();
+        if (slug) url += "&slug=" + encodeURIComponent(slug);
+        if (id) url += "&id=" + encodeURIComponent(id);
+
+        await fetch(url, {
+          method: "GET",
+          cache: "no-store"
+        });
+      } catch (err) {
+      }
+    }
+
+    function getCart() {
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function updateCartBadge() {
+      const cart = getCart();
+      const totalQty = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      cartCountBadge.textContent = String(totalQty);
+    }
+
+    function isSold(item) {
+      return Number(item.Quantity || 0) <= 0;
+    }
+
+    function collectGallery(item) {
+      const result = [];
+      [
+        item.PhotoMainURL,
+        item.PhotoExtra1URL,
+        item.PhotoExtra2URL,
+        item.PhotoExtra3URL
+      ].forEach(url => {
+        const clean = String(url || "").trim();
+        if (clean && !result.includes(clean)) result.push(clean);
+      });
+      return result;
+    }
+
+    function setMainPhoto(index) {
+      if (!gallery.length) {
+        mainPhoto.classList.add("hidden");
+        mainPhotoFallback.classList.remove("hidden");
+        mainPhoto.removeAttribute("src");
+        return;
+      }
+
+      currentPhotoIndex = index;
+      mainPhoto.src = gallery[index];
+      mainPhoto.classList.remove("hidden");
+      mainPhotoFallback.classList.add("hidden");
+
+      document.querySelectorAll(".thumb-btn").forEach((btn, i) => {
+        btn.classList.toggle("active", i === index);
+      });
+
+      updateLightboxUi();
+    }
+
+    function renderThumbs() {
+      if (gallery.length <= 1) {
+        thumbs.classList.add("hidden");
+        thumbs.innerHTML = "";
+        return;
+      }
+
+      thumbs.innerHTML = gallery.map((url, index) => `
+        <button class="thumb-btn ${index === currentPhotoIndex ? "active" : ""}" type="button" data-index="${index}">
+          <img src="${url}" alt="Прев’ю ${index + 1}" loading="lazy"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="thumb-no-photo" style="display:none;">Немає фото</div>
+        </button>
+      `).join("");
+
+      thumbs.classList.remove("hidden");
+
+      thumbs.querySelectorAll(".thumb-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const index = Number(btn.dataset.index || 0);
+          setMainPhoto(index);
+        });
+      });
+    }
+
+    function addCurrentCoinToCart() {
+      if (!currentCoin || isSold(currentCoin)) return;
+
+      const cart = getCart();
+      const slug = String(currentCoin.Slug || "").trim();
+      const id = String(currentCoin.ID || "").trim();
+      const stockQty = Number(currentCoin.Quantity || 0);
+
+      const existing = cart.find(item =>
+        (slug && item.slug === slug) || (!slug && id && item.id === id)
+      );
+
+      if (existing) {
+        const nextQty = Number(existing.qty || 0) + 1;
+        if (nextQty > stockQty) {
+          addToCartBtn.textContent = "Максимум у кошику";
+          setTimeout(() => {
+            if (!isSold(currentCoin)) addToCartBtn.textContent = "Додати в кошик";
+          }, 1200);
+          return;
+        }
+        existing.qty = nextQty;
+      } else {
+        cart.push({
+          id: id,
+          slug: slug,
+          qty: 1,
+          title: currentCoin.TitleUA || currentCoin.TitleEN || "",
+          priceUAH: Number(currentCoin.PriceUAH || 0),
+          photo: String(currentCoin.PhotoMainURL || "").trim()
         });
       }
 
-      ordersSheet.getRange(rowNumber, colStatus).setValue("cancelled");
-      released++;
+      saveCart(cart);
+      updateCartBadge();
+      addToCartBtn.textContent = "Додано в кошик";
+      setTimeout(() => {
+        if (!isSold(currentCoin)) addToCartBtn.textContent = "Додати в кошик";
+      }, 1200);
     }
 
-    if (released > 0 || restoredItems > 0) {
-      clearCoinsCaches_();
-      clearCoinCachesByItems_(changedItems);
+    function renderCoin(item) {
+      currentCoin = item;
+      gallery = collectGallery(item);
+      currentPhotoIndex = 0;
+
+      const sold = isSold(item);
+      const title = item.TitleUA || item.TitleEN || "Без назви";
+      const price = Number(item.PriceUAH || 0);
+      const qty = Number(item.Quantity || 0);
+
+      document.title = title + " — Монети Світу";
+
+      if (item.ID) {
+        coinIdTop.textContent = "ID: " + item.ID;
+        coinIdTop.classList.remove("hidden");
+      } else {
+        coinIdTop.classList.add("hidden");
+      }
+
+      coinTitle.textContent = title;
+      coinPrice.textContent = price + " грн";
+
+      stockText.textContent = sold ? "Немає в наявності" : "В наявності";
+      stockText.className = "stock-text " + (sold ? "sold" : "in-stock");
+      stockQty.textContent = sold ? "Кількість: 0 шт" : "Кількість: " + qty + " шт";
+
+      statusBadge.classList.toggle("hidden", !sold);
+
+      detailContinent.textContent = item.Continent || "—";
+      detailCountry.textContent = item.Country || "—";
+      detailType.textContent = item.Type || "—";
+      detailNominalPeriod.textContent = item.NominalPeriod || "—";
+      detailKM.textContent = item.KrauseNumber || "—";
+      detailMetal.textContent = item.Metal || "—";
+      detailCondition.textContent = item.Condition || "—";
+      detailTheme.textContent = item.Theme || "—";
+
+      if (item.DescriptionUA) {
+        descriptionText.textContent = item.DescriptionUA;
+        descriptionBlock.classList.remove("hidden");
+      } else {
+        descriptionBlock.classList.add("hidden");
+      }
+
+      if (sold) {
+        addToCartBtn.textContent = "Немає в наявності";
+        addToCartBtn.className = "btn btn-disabled";
+        addToCartBtn.disabled = true;
+      } else {
+        addToCartBtn.textContent = "Додати в кошик";
+        addToCartBtn.className = "btn";
+        addToCartBtn.disabled = false;
+      }
+
+      renderThumbs();
+      setMainPhoto(0);
+
+      messageBox.classList.add("hidden");
+      coinPage.classList.remove("hidden");
     }
 
-    return {
-      released: released,
-      restoredItems: restoredItems
-    };
+    async function loadCoin() {
+      try {
+        const url = getCoinUrl();
+        if (!url) throw new Error("Не передано slug або id");
 
-  } finally {
-    lock.releaseLock();
-  }
-}
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Завантаження монети...";
+        coinPage.classList.add("hidden");
 
-function releaseExpiredOrdersTrigger_() {
-  releaseExpiredOrders_();
-}
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          cache: "no-store"
+        });
 
-function cancelOrderById_(orderId) {
-  const orderIdStr = String(orderId || "").trim();
-  if (!orderIdStr) {
-    throw new Error("OrderID is required");
-  }
+        const text = await response.text();
+        let data;
 
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Сервер повернув не JSON");
+        }
 
-  try {
-    const ordersSheet = getSheetByName_(SHEET_ORDERS);
-    const coinsSheet = getSheetByName_(SHEET_COINS);
+        if (!data || !data.success || !data.item) {
+          throw new Error((data && data.error) || "Монету не знайдено");
+        }
 
-    const oh = getHeaderMap_(ordersSheet);
-    const ch = getHeaderMap_(coinsSheet);
-
-    const ordersLastRow = ordersSheet.getLastRow();
-    if (ordersLastRow < 2) {
-      throw new Error("Orders sheet is empty");
-    }
-
-    const ordersValues = ordersSheet.getRange(2, 1, ordersLastRow - 1, ordersSheet.getLastColumn()).getValues();
-
-    const colOrderId = getColumnIndex_(oh, "OrderID");
-    const colStatus = getColumnIndex_(oh, "Status");
-    const colItemsJSON = getColumnIndex_(oh, "ItemsJSON");
-
-    const coinsColQuantity = getColumnIndex_(ch, "Quantity");
-    const coinsColUpdatedAt = getColumnIndex_(ch, "UpdatedAt");
-
-    let targetRowNumber = 0;
-    let targetRow = null;
-
-    for (let i = 0; i < ordersValues.length; i++) {
-      const row = ordersValues[i];
-      const currentOrderId = String(row[colOrderId - 1] || "").trim();
-
-      if (currentOrderId === orderIdStr) {
-        targetRowNumber = i + 2;
-        targetRow = row;
-        break;
+        renderCoin(data.item);
+        trackCoinView();
+      } catch (err) {
+        coinPage.classList.add("hidden");
+        messageBox.classList.remove("hidden");
+        messageBox.textContent = "Помилка завантаження монети. " + String(err.message || err);
       }
     }
 
-    if (!targetRowNumber || !targetRow) {
-      throw new Error("Order not found: " + orderIdStr);
-    }
+    function updateLightboxUi() {
+      const hasMany = gallery.length > 1;
 
-    const status = String(targetRow[colStatus - 1] || "").trim();
-    if (status !== "reserved") {
-      throw new Error("Only reserved orders can be cancelled. Current status: " + status);
-    }
+      lightboxPrev.classList.toggle("hidden", !hasMany);
+      lightboxNext.classList.toggle("hidden", !hasMany);
+      lightboxCounter.classList.toggle("hidden", !gallery.length);
 
-    const itemsJson = String(targetRow[colItemsJSON - 1] || "").trim();
-    if (!itemsJson) {
-      throw new Error("ItemsJSON is empty for order: " + orderIdStr);
-    }
-
-    let items;
-    try {
-      items = JSON.parse(itemsJson);
-    } catch (err) {
-      throw new Error("Invalid ItemsJSON for order: " + orderIdStr);
-    }
-
-    if (!Array.isArray(items) || !items.length) {
-      throw new Error("Order has no items: " + orderIdStr);
-    }
-
-    const now = new Date();
-    let restoredItems = 0;
-    const changedItems = [];
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const found = findCoinRowBySlugOrId_(item.slug, item.id);
-
-      if (!found) continue;
-
-      const currentQty = Number(found.rowValues[coinsColQuantity - 1] || 0);
-      const addQty = Number(item.qty || 0);
-      const newQty = currentQty + addQty;
-
-      coinsSheet.getRange(found.rowNumber, coinsColQuantity).setValue(newQty);
-      coinsSheet.getRange(found.rowNumber, coinsColUpdatedAt).setValue(now);
-
-      restoredItems += addQty;
-      changedItems.push({
-        id: String(item.id || "").trim(),
-        slug: String(item.slug || "").trim()
-      });
-    }
-
-    ordersSheet.getRange(targetRowNumber, colStatus).setValue("cancelled");
-
-    clearCoinsCaches_();
-    clearCoinCachesByItems_(changedItems);
-
-    return {
-      cancelled: 1,
-      restoredItems: restoredItems,
-      orderId: orderIdStr
-    };
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function previewBulkUpdatePrices_(options) {
-  const sheet = getSheetByName_(SHEET_COINS);
-  const h = getHeaderMap_(sheet);
-
-  const lastRow = sheet.getLastRow();
-  const lastColumn = sheet.getLastColumn();
-  if (lastRow < 2) return { count: 0 };
-
-  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-
-  let count = 0;
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-    if (!isCoinRowMatchingFilters_(row, h, options)) continue;
-    count++;
-  }
-
-  return { count: count };
-}
-
-function bulkUpdatePricesByFilters_(options) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    const sheet = getSheetByName_(SHEET_COINS);
-    const h = getHeaderMap_(sheet);
-
-    const lastRow = sheet.getLastRow();
-    const lastColumn = sheet.getLastColumn();
-    if (lastRow < 2) return { updated: 0, skipped: 0 };
-
-    const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-
-    const colPrice = getColumnIndex_(h, "PriceUAH");
-    const colUpdatedAt = getColumnIndex_(h, "UpdatedAt");
-
-    let updated = 0;
-    let skipped = 0;
-    const now = new Date();
-    const changedItems = [];
-
-    for (let i = 0; i < values.length; i++) {
-      const row = values[i];
-      const rowNumber = i + 2;
-
-      if (!isCoinRowMatchingFilters_(row, h, options)) {
-        skipped++;
-        continue;
+      if (gallery.length) {
+        lightboxCounter.textContent = (currentPhotoIndex + 1) + " / " + gallery.length;
+      } else {
+        lightboxCounter.textContent = "";
       }
 
-      const oldPrice = Number(row[colPrice - 1] || 0);
-      if (!isFinite(oldPrice) || oldPrice <= 0) {
-        skipped++;
-        continue;
+      if (lightbox.classList.contains("open") && gallery[currentPhotoIndex]) {
+        lightboxImg.src = gallery[currentPhotoIndex];
+      }
+    }
+
+    function openLightbox(index = currentPhotoIndex) {
+      if (!gallery.length || !gallery[index]) return;
+      currentPhotoIndex = index;
+      lightbox.classList.add("open");
+      updateLightboxUi();
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("open");
+      lightboxImg.removeAttribute("src");
+    }
+
+    function showPrevPhoto() {
+      if (gallery.length <= 1) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + gallery.length) % gallery.length;
+      setMainPhoto(currentPhotoIndex);
+      if (lightbox.classList.contains("open")) updateLightboxUi();
+    }
+
+    function showNextPhoto() {
+      if (gallery.length <= 1) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % gallery.length;
+      setMainPhoto(currentPhotoIndex);
+      if (lightbox.classList.contains("open")) updateLightboxUi();
+    }
+
+    mainPhotoWrap.addEventListener("click", () => {
+      openLightbox(currentPhotoIndex);
+    });
+
+    lightboxClose.addEventListener("click", closeLightbox);
+    lightboxPrev.addEventListener("click", showPrevPhoto);
+    lightboxNext.addEventListener("click", showNextPhoto);
+
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeLightbox();
       }
 
-      let newPrice = oldPrice * Number(options.coefficient || 1);
-      newPrice = Math.round(newPrice);
+      if (!lightbox.classList.contains("open")) return;
 
-      if (newPrice < 1) newPrice = 1;
-
-      if (newPrice === oldPrice) {
-        skipped++;
-        continue;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        showPrevPhoto();
       }
 
-      sheet.getRange(rowNumber, colPrice).setValue(newPrice);
-      sheet.getRange(rowNumber, colUpdatedAt).setValue(now);
-
-      updated++;
-
-      changedItems.push({
-        id: h["ID"] ? String(row[h["ID"] - 1] || "").trim() : "",
-        slug: h["Slug"] ? String(row[h["Slug"] - 1] || "").trim() : ""
-      });
-    }
-
-    if (updated > 0) {
-      clearCoinsCaches_();
-      clearCoinCachesByItems_(changedItems);
-    }
-
-    return {
-      updated: updated,
-      skipped: skipped
-    };
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function isCoinRowMatchingFilters_(row, h, options) {
-  const id = h["ID"] ? String(row[h["ID"] - 1] || "").trim() : "";
-  const titleUA = h["TitleUA"] ? String(row[h["TitleUA"] - 1] || "").trim() : "";
-  const titleEN = h["TitleEN"] ? String(row[h["TitleEN"] - 1] || "").trim() : "";
-
-  if (!id) return false;
-  if (!titleUA && !titleEN) return false;
-
-  const continent = h["Continent"] ? String(row[h["Continent"] - 1] || "").trim() : "";
-  const country = h["Country"] ? String(row[h["Country"] - 1] || "").trim() : "";
-  const type = h["Type"] ? String(row[h["Type"] - 1] || "").trim() : "";
-  const nominalPeriod = h["NominalPeriod"] ? String(row[h["NominalPeriod"] - 1] || "").trim() : "";
-  const metal = h["Metal"] ? String(row[h["Metal"] - 1] || "").trim() : "";
-  const condition = h["Condition"] ? String(row[h["Condition"] - 1] || "").trim() : "";
-  const quantity = h["Quantity"] ? Number(row[h["Quantity"] - 1] || 0) : 0;
-
-  if (options.onlyInStock && quantity <= 0) return false;
-
-  if (options.continent && continent !== options.continent) return false;
-  if (options.country && country !== options.country) return false;
-  if (options.type && type !== options.type) return false;
-  if (options.nominalPeriod && nominalPeriod !== options.nominalPeriod) return false;
-  if (options.metal && metal !== options.metal) return false;
-  if (options.condition && condition !== options.condition) return false;
-
-  return true;
-}
-
-function syncPhotoUrls_() {
-  const sheet = getSheetByName_(SHEET_COINS);
-  const h = getHeaderMap_(sheet);
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) {
-    return { updated: 0, cleared: 0, skipped: 0 };
-  }
-
-  const lastColumn = sheet.getLastColumn();
-  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-
-  const colId = getColumnIndex_(h, "ID");
-  const colMain = getColumnIndex_(h, "PhotoMainURL");
-  const colExtra1 = getColumnIndex_(h, "PhotoExtra1URL");
-  const colExtra2 = getColumnIndex_(h, "PhotoExtra2URL");
-  const colExtra3 = getColumnIndex_(h, "PhotoExtra3URL");
-  const colUpdatedAt = getColumnIndex_(h, "UpdatedAt");
-
-  const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
-  const fileMap = buildFileMap_(folder);
-
-  let updated = 0;
-  let cleared = 0;
-  let skipped = 0;
-  const changedItems = [];
-
-  for (let i = 0; i < values.length; i++) {
-    const rowNumber = i + 2;
-    const row = values[i];
-    const id = String(row[colId - 1] || "").trim();
-
-    if (!id) {
-      skipped++;
-      continue;
-    }
-
-    const f1 = getCoinPhotoFile_(fileMap, id, 1);
-    const f2 = getCoinPhotoFile_(fileMap, id, 2);
-    const f3 = getCoinPhotoFile_(fileMap, id, 3);
-    const f4 = getCoinPhotoFile_(fileMap, id, 4);
-
-    const url1 = f1 ? makeDriveImageUrl_(f1.id) : "";
-    const url2 = f2 ? makeDriveImageUrl_(f2.id) : "";
-    const url3 = f3 ? makeDriveImageUrl_(f3.id) : "";
-    const url4 = f4 ? makeDriveImageUrl_(f4.id) : "";
-
-    const old1 = String(row[colMain - 1] || "").trim();
-    const old2 = String(row[colExtra1 - 1] || "").trim();
-    const old3 = String(row[colExtra2 - 1] || "").trim();
-    const old4 = String(row[colExtra3 - 1] || "").trim();
-
-    let changed = false;
-
-    if (old1 !== url1) {
-      sheet.getRange(rowNumber, colMain).setValue(url1);
-      changed = true;
-      if (!url1 && old1) cleared++;
-    }
-
-    if (old2 !== url2) {
-      sheet.getRange(rowNumber, colExtra1).setValue(url2);
-      changed = true;
-      if (!url2 && old2) cleared++;
-    }
-
-    if (old3 !== url3) {
-      sheet.getRange(rowNumber, colExtra2).setValue(url3);
-      changed = true;
-      if (!url3 && old3) cleared++;
-    }
-
-    if (old4 !== url4) {
-      sheet.getRange(rowNumber, colExtra3).setValue(url4);
-      changed = true;
-      if (!url4 && old4) cleared++;
-    }
-
-    if (changed) {
-      sheet.getRange(rowNumber, colUpdatedAt).setValue(new Date());
-      updated++;
-      changedItems.push({ id: id });
-    }
-  }
-
-  if (updated > 0 || cleared > 0) {
-    clearCoinsCaches_();
-    clearCoinCachesByItems_(changedItems);
-  }
-
-  return { updated: updated, cleared: cleared, skipped: skipped };
-}
-
-function syncPhotoUrlsForRowManual_(rowNumber) {
-  const sheet = getSheetByName_(SHEET_COINS);
-  const h = getHeaderMap_(sheet);
-
-  const colId = getColumnIndex_(h, "ID");
-  const colSlug = h["Slug"] || 0;
-  const colMain = getColumnIndex_(h, "PhotoMainURL");
-  const colExtra1 = getColumnIndex_(h, "PhotoExtra1URL");
-  const colExtra2 = getColumnIndex_(h, "PhotoExtra2URL");
-  const colExtra3 = getColumnIndex_(h, "PhotoExtra3URL");
-  const colUpdatedAt = getColumnIndex_(h, "UpdatedAt");
-
-  const lastColumn = sheet.getLastColumn();
-  const row = sheet.getRange(rowNumber, 1, 1, lastColumn).getValues()[0];
-
-  const id = String(row[colId - 1] || "").trim();
-  const slug = colSlug ? String(row[colSlug - 1] || "").trim() : "";
-
-  if (!id) {
-    return { updated: 0, cleared: 0, skipped: 1 };
-  }
-
-  const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
-  const fileMap = buildFileMap_(folder);
-
-  const f1 = getCoinPhotoFile_(fileMap, id, 1);
-  const f2 = getCoinPhotoFile_(fileMap, id, 2);
-  const f3 = getCoinPhotoFile_(fileMap, id, 3);
-  const f4 = getCoinPhotoFile_(fileMap, id, 4);
-
-  const url1 = f1 ? makeDriveImageUrl_(f1.id) : "";
-  const url2 = f2 ? makeDriveImageUrl_(f2.id) : "";
-  const url3 = f3 ? makeDriveImageUrl_(f3.id) : "";
-  const url4 = f4 ? makeDriveImageUrl_(f4.id) : "";
-
-  const old1 = String(row[colMain - 1] || "").trim();
-  const old2 = String(row[colExtra1 - 1] || "").trim();
-  const old3 = String(row[colExtra2 - 1] || "").trim();
-  const old4 = String(row[colExtra3 - 1] || "").trim();
-
-  let updated = 0;
-  let cleared = 0;
-  let changed = false;
-
-  if (old1 !== url1) {
-    sheet.getRange(rowNumber, colMain).setValue(url1);
-    changed = true;
-    updated++;
-    if (!url1 && old1) cleared++;
-  }
-
-  if (old2 !== url2) {
-    sheet.getRange(rowNumber, colExtra1).setValue(url2);
-    changed = true;
-    updated++;
-    if (!url2 && old2) cleared++;
-  }
-
-  if (old3 !== url3) {
-    sheet.getRange(rowNumber, colExtra2).setValue(url3);
-    changed = true;
-    updated++;
-    if (!url3 && old3) cleared++;
-  }
-
-  if (old4 !== url4) {
-    sheet.getRange(rowNumber, colExtra3).setValue(url4);
-    changed = true;
-    updated++;
-    if (!url4 && old4) cleared++;
-  }
-
-  if (changed) {
-    sheet.getRange(rowNumber, colUpdatedAt).setValue(new Date());
-    clearCoinsCaches_();
-    clearCoinCachesByItems_([{ id: id, slug: slug }]);
-  }
-
-  return {
-    updated: updated,
-    cleared: cleared,
-    skipped: 0
-  };
-}
-
-
-/* =========================
-   STATS HELPERS
-========================= */
-
-function incrementStat_(key) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    const sheet = getSheetByName_(SHEET_STATS);
-    const rowNumber = findStatRow_(sheet, key);
-    const now = new Date();
-
-    if (rowNumber) {
-      const currentValue = Number(sheet.getRange(rowNumber, 2).getValue() || 0);
-      const newValue = currentValue + 1;
-      sheet.getRange(rowNumber, 2).setValue(newValue);
-      sheet.getRange(rowNumber, 3).setValue(now);
-      return newValue;
-    }
-
-    sheet.appendRow([key, 1, now]);
-    return 1;
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function getStatValue_(key) {
-  const sheet = getSheetByName_(SHEET_STATS);
-  const rowNumber = findStatRow_(sheet, key);
-  if (!rowNumber) return 0;
-  return Number(sheet.getRange(rowNumber, 2).getValue() || 0);
-}
-
-function findStatRow_(sheet, key) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return 0;
-
-  const values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-  const keyStr = String(key || "").trim();
-
-  for (let i = 0; i < values.length; i++) {
-    const rowKey = String(values[i][0] || "").trim();
-    if (rowKey === keyStr) return i + 2;
-  }
-
-  return 0;
-}
-
-function incrementCoinView_(slug, id) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    const found = findCoinRowBySlugOrId_(slug, id);
-    if (!found) {
-      throw new Error("Coin not found");
-    }
-
-    const sheet = getSheetByName_(SHEET_COINS);
-    const headerMap = found.headerMap;
-    const colViews = getColumnIndex_(headerMap, "Views");
-    const currentViews = Number(found.rowValues[colViews - 1] || 0);
-    const newViews = currentViews + 1;
-
-    sheet.getRange(found.rowNumber, colViews).setValue(newViews);
-
-    const rowSlug = headerMap["Slug"] ? String(found.rowValues[headerMap["Slug"] - 1] || "").trim() : "";
-    const rowId = headerMap["ID"] ? String(found.rowValues[headerMap["ID"] - 1] || "").trim() : "";
-
-    clearCoinCachesByItems_([{ id: rowId, slug: rowSlug }]);
-    clearCoinsCaches_();
-
-    return newViews;
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-
-/* =========================
-   COIN HELPERS
-========================= */
-
-function getCoinData_(slug, id) {
-  const found = findCoinRowBySlugOrId_(slug, id);
-  if (!found) return null;
-  return rowToCoinObject_(found.rowValues, found.headerMap, found.rowNumber);
-}
-
-function rowToCoinListObject_(row, h, rowNumber) {
-  function val(name) {
-    const col = h[name];
-    if (!col) return "";
-    return row[col - 1];
-  }
-
-  return {
-    ID: String(val("ID") || "").trim(),
-    Type: String(val("Type") || "").trim(),
-    BoxNo: String(val("BoxNo") || "").trim(),
-    Continent: String(val("Continent") || "").trim(),
-    Country: String(val("Country") || "").trim(),
-    TitleUA: String(val("TitleUA") || "").trim(),
-    TitleEN: String(val("TitleEN") || "").trim(),
-    NominalPeriod: String(val("NominalPeriod") || "").trim(),
-    KrauseNumber: String(val("KrauseNumber") || "").trim(),
-    PriceUAH: Number(val("PriceUAH") || 0),
-    CurrencyBase: String(val("CurrencyBase") || "").trim(),
-
-    PhotoMainURL: String(val("PhotoMainURL") || "").trim(),
-    PhotoExtra1URL: String(val("PhotoExtra1URL") || "").trim(),
-    PhotoExtra2URL: String(val("PhotoExtra2URL") || "").trim(),
-    PhotoExtra3URL: String(val("PhotoExtra3URL") || "").trim(),
-
-    YoutubeID: String(val("YoutubeID") || "").trim(),
-    Metal: String(val("Metal") || "").trim(),
-    Theme: String(val("Theme") || "").trim(),
-    Quantity: Number(val("Quantity") || 0),
-    Slug: String(val("Slug") || "").trim(),
-    Condition: String(val("Condition") || "").trim(),
-    DescriptionUA: String(val("DescriptionUA") || "").trim(),
-    AdminNote: String(val("AdminNote") || "").trim(),
-    Views: Number(val("Views") || 0),
-
-    CreatedAt: val("CreatedAt") || "",
-    UpdatedAt: val("UpdatedAt") || "",
-
-    _rowNumber: rowNumber
-  };
-}
-
-function rowToCoinObject_(row, h, rowNumber) {
-  function val(name) {
-    const col = h[name];
-    if (!col) return "";
-    return row[col - 1];
-  }
-
-  return {
-    ID: String(val("ID") || "").trim(),
-    Type: String(val("Type") || "").trim(),
-    BoxNo: String(val("BoxNo") || "").trim(),
-    Continent: String(val("Continent") || "").trim(),
-    Country: String(val("Country") || "").trim(),
-    TitleUA: String(val("TitleUA") || "").trim(),
-    TitleEN: String(val("TitleEN") || "").trim(),
-    NominalPeriod: String(val("NominalPeriod") || "").trim(),
-    KrauseNumber: String(val("KrauseNumber") || "").trim(),
-    PriceUAH: Number(val("PriceUAH") || 0),
-    CurrencyBase: String(val("CurrencyBase") || "").trim(),
-
-    PhotoMainURL: String(val("PhotoMainURL") || "").trim(),
-    PhotoExtra1URL: String(val("PhotoExtra1URL") || "").trim(),
-    PhotoExtra2URL: String(val("PhotoExtra2URL") || "").trim(),
-    PhotoExtra3URL: String(val("PhotoExtra3URL") || "").trim(),
-
-    YoutubeID: String(val("YoutubeID") || "").trim(),
-    Metal: String(val("Metal") || "").trim(),
-    Theme: String(val("Theme") || "").trim(),
-    Quantity: Number(val("Quantity") || 0),
-    Slug: String(val("Slug") || "").trim(),
-    CreatedAt: val("CreatedAt") || "",
-    UpdatedAt: val("UpdatedAt") || "",
-    Condition: String(val("Condition") || "").trim(),
-    Views: Number(val("Views") || 0),
-
-    DescriptionUA: String(val("DescriptionUA") || "").trim(),
-    AdminNote: String(val("AdminNote") || "").trim(),
-
-    _rowNumber: rowNumber
-  };
-}
-
-function findCoinRowBySlugOrId_(slug, id) {
-  const sheet = getSheetByName_(SHEET_COINS);
-  const headerMap = getHeaderMap_(sheet);
-
-  const colId = getColumnIndex_(headerMap, "ID");
-  const colSlug = getColumnIndex_(headerMap, "Slug");
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return null;
-
-  const lastColumn = sheet.getLastColumn();
-  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-
-  const slugStr = String(slug || "").trim();
-  const idStr = String(id || "").trim();
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-    const rowId = String(row[colId - 1] || "").trim();
-    const rowSlug = String(row[colSlug - 1] || "").trim();
-
-    if (slugStr && rowSlug === slugStr) {
-      return {
-        rowNumber: i + 2,
-        rowValues: row,
-        headerMap: headerMap
-      };
-    }
-
-    if (idStr && rowId === idStr) {
-      return {
-        rowNumber: i + 2,
-        rowValues: row,
-        headerMap: headerMap
-      };
-    }
-  }
-
-  return null;
-}
-
-
-/* =========================
-   DRIVE HELPERS
-========================= */
-
-function buildFileMap_(folder) {
-  const files = folder.getFiles();
-  const map = {};
-
-  while (files.hasNext()) {
-    const file = files.next();
-    const name = String(file.getName() || "").trim();
-    if (!name) continue;
-
-    map[name] = {
-      id: file.getId(),
-      name: name
-    };
-  }
-
-  return map;
-}
-
-function getCoinPhotoFile_(fileMap, id, index) {
-  const base = "COIN_" + id + "_" + index;
-  return fileMap[base + ".webp"] || fileMap[base + ".jpg"] || null;
-}
-
-function makeDriveImageUrl_(fileId) {
-  const id = String(fileId || "").trim();
-  if (!id) return "";
-  return "https://lh3.googleusercontent.com/d/" + encodeURIComponent(id) + "=w1200";
-}
-
-
-/* =========================
-   CACHE HELPERS
-========================= */
-
-function clearCoinsCaches_() {
-  const cache = CacheService.getScriptCache();
-  cache.remove("coins_all_v2");
-}
-
-function clearCoinCachesByItems_(items) {
-  const cache = CacheService.getScriptCache();
-  if (!Array.isArray(items) || !items.length) return;
-
-  const keys = [];
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i] || {};
-    const slug = String(item.slug || "").trim();
-    const id = String(item.id || "").trim();
-
-    if (slug) keys.push("coin_slug_v2_" + slug);
-    if (id) keys.push("coin_id_v2_" + id);
-  }
-
-  if (keys.length) {
-    cache.removeAll(keys);
-  }
-}
-
-
-/* =========================
-   GENERIC HELPERS
-========================= */
-
-function getSheetByName_(name) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
-  if (!sheet) throw new Error("Sheet not found: " + name);
-  return sheet;
-}
-
-function getHeaderMap_(sheet) {
-  const lastColumn = sheet.getLastColumn();
-  if (lastColumn < 1) throw new Error("Sheet has no columns: " + sheet.getName());
-
-  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
-  const map = {};
-
-  headers.forEach(function(header, index) {
-    const key = String(header || "").trim();
-    if (key) map[key] = index + 1;
-  });
-
-  return map;
-}
-
-function getColumnIndex_(headerMap, columnName) {
-  const index = headerMap[columnName];
-  if (!index) throw new Error("Column not found: " + columnName);
-  return index;
-}
-
-function setCellByHeader_(rowArray, headerMap, columnName, value) {
-  const idx = getColumnIndex_(headerMap, columnName);
-  rowArray[idx - 1] = value;
-}
-
-function setCellIfHeaderExists_(rowArray, headerMap, columnName, value) {
-  const idx = headerMap[columnName];
-  if (!idx) return;
-  rowArray[idx - 1] = value;
-}
-
-function getParam_(e, name) {
-  if (!e || !e.parameter) return "";
-  return String(e.parameter[name] || "").trim();
-}
-
-function parsePostBody_(e) {
-  if (!e || !e.postData || !e.postData.contents) {
-    throw new Error("Empty POST body");
-  }
-
-  const text = e.postData.contents;
-  let data;
-
-  try {
-    data = JSON.parse(text);
-  } catch (err) {
-    throw new Error("Invalid JSON in POST body");
-  }
-
-  return data;
-}
-
-function jsonOutput_(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function normalizePhoneUa_(value) {
-  let phone = String(value || "").replace(/\D+/g, "").trim();
-
-  if (!phone) return "";
-
-  if (phone.startsWith("380")) return phone;
-  if (phone.startsWith("80")) return "3" + phone;
-  if (phone.startsWith("0")) return "38" + phone;
-
-  return phone;
-}
-
-function isPhoneAllowedForBigOrders_(phone) {
-  const normalizedPhone = normalizePhoneUa_(phone);
-  if (!normalizedPhone) return false;
-
-  const sheet = getSheetByName_(SHEET_ALLOWED_PHONES);
-  const h = getHeaderMap_(sheet);
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return false;
-
-  const lastColumn = sheet.getLastColumn();
-  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-
-  const colPhone = getColumnIndex_(h, "Phone");
-  const colActive = getColumnIndex_(h, "Active");
-
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
-
-    const rowPhone = normalizePhoneUa_(String(row[colPhone - 1] || "").trim());
-    const rowActiveRaw = row[colActive - 1];
-
-    const isActive =
-      rowActiveRaw === true ||
-      String(rowActiveRaw || "").trim().toUpperCase() === "TRUE" ||
-      String(rowActiveRaw || "").trim().toUpperCase() === "YES" ||
-      String(rowActiveRaw || "").trim() === "1";
-
-    if (!isActive) continue;
-    if (rowPhone === normalizedPhone) return true;
-  }
-
-  return false;
-}
-
-function normalizeOrderItems_(items) {
-  if (!Array.isArray(items)) return [];
-
-  const map = {};
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i] || {};
-    const slug = String(item.slug || "").trim();
-    const id = String(item.id || "").trim();
-    const qty = Number(item.qty || 0);
-
-    if ((!slug && !id) || qty <= 0) continue;
-
-    const key = slug ? "slug:" + slug : "id:" + id;
-
-    if (!map[key]) {
-      map[key] = {
-        slug: slug,
-        id: id,
-        qty: 0
-      };
-    }
-
-    map[key].qty += qty;
-  }
-
-  return Object.keys(map).map(function(key) {
-    return map[key];
-  });
-}
-
-function buildOrderItemsText_(items) {
-  if (!Array.isArray(items) || !items.length) return "";
-
-  return items.map(function(item) {
-    const id = String(item.id || "").trim();
-    const title = String(item.title || "").trim() || "Без назви";
-    const price = Number(item.priceUAH || 0);
-    const qty = Number(item.qty || 0);
-    const sum = price * qty;
-
-    const leftPart = id ? (id + ". " + title) : title;
-
-    return leftPart + ", " + price + " грн, " + qty + " шт, " + sum + " грн";
-  }).join("\n");
-}
-
-function generateOrderId_(dateObj) {
-  const stamp = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "yyyyMMdd-HHmmss");
-  const rnd = Math.floor(Math.random() * 900 + 100);
-  return "MS-" + stamp + "-" + rnd;
-}
-Я нічого не міняв
-Це код повністю.
-В таблиці вставив стовпчик TitleUA+
-Перевір, якщо потрібно допиши, перепиши повністю,
-Акуратно, нічого не ламай!
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        showNextPhoto();
+      }
+    });
+
+    addToCartBtn.addEventListener("click", addCurrentCoinToCart);
+    themeToggle.addEventListener("click", toggleTheme);
+
+    initTheme();
+    updateCartBadge();
+    loadCoin();
+  </script>
+</body>
+</html>
