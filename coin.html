@@ -1,1202 +1,156 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Монета — Монети Світу</title>
-  <link rel="icon" type="image/svg+xml" href="/monety-svitu/favicon.svg" />
-  <meta name="description" content="Сторінка монети. Фото, ціна, опис, стан." />
-  <style>
-    * { box-sizing: border-box; }
+<!-- ВСТАВ СЮДИ СВІЙ HTML БЕЗ ЗМІН ДО <script> -->
 
-    :root {
-      --bg: #f5f6f8;
-      --card: #ffffff;
-      --card-soft: #fafbfc;
-      --header-bg: #ffffff;
-      --line: #e4e7eb;
-      --line-strong: #dddddd;
-      --line-soft: #edf1f4;
-      --text: #1f2937;
-      --text-strong: #111827;
-      --text-soft: #444444;
-      --muted: #6b7280;
-      --muted-soft: #8a94a6;
-      --primary: #2f6fdd;
-      --primary-hover: #255fc2;
-      --danger: #c62828;
-      --success: #2e7d32;
-      --shadow: 0 3px 12px rgba(0,0,0,0.05);
-      --radius: 18px;
-      --theme-btn-bg: #eef2f6;
-      --theme-btn-hover: #e5ebf1;
-      --theme-btn-color: #1f2937;
-      --input-bg: #ffffff;
-      --input-text: #1f2937;
-      --lightbox-bg: rgba(0,0,0,0.88);
-      --lightbox-img-bg: #ffffff;
-      --lightbox-btn-bg: rgba(255,255,255,0.92);
-      --lightbox-btn-color: #111111;
-      --lightbox-counter-bg: rgba(0,0,0,0.35);
-      --badge-bg: #eef3fb;
-      --badge-border: #d7e3f4;
-      --badge-text: #344054;
-    }
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
+const CART_KEY = "monety_svitu_cart";
 
-    body[data-theme="dark"] {
-      --bg: #0f172a;
-      --card: #111827;
-      --card-soft: #172131;
-      --header-bg: #111827;
-      --line: #243244;
-      --line-strong: #2a3a50;
-      --line-soft: #223041;
-      --text: #e5edf7;
-      --text-strong: #f8fafc;
-      --text-soft: #d7e0ea;
-      --muted: #aab7c8;
-      --muted-soft: #90a0b5;
-      --primary: #5b8cff;
-      --primary-hover: #79a0ff;
-      --danger: #ff6b6b;
-      --success: #6edb8f;
-      --shadow: 0 6px 18px rgba(0,0,0,0.28);
-      --theme-btn-bg: #1b2636;
-      --theme-btn-hover: #233247;
-      --theme-btn-color: #e5edf7;
-      --input-bg: #0f172a;
-      --input-text: #e5edf7;
-      --lightbox-bg: rgba(2,6,23,0.94);
-      --lightbox-img-bg: #0f172a;
-      --lightbox-btn-bg: rgba(15,23,42,0.92);
-      --lightbox-btn-color: #f8fafc;
-      --lightbox-counter-bg: rgba(15,23,42,0.78);
-      --badge-bg: #182233;
-      --badge-border: #314257;
-      --badge-text: #dbe6f3;
-    }
+/* ===================== ДОПОМІЖНІ ===================== */
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      transition: background-color 0.18s ease, color 0.18s ease;
-    }
+function setIfExists(valueEl, labelEl, value) {
+  const clean = String(value || "").trim();
 
-    header {
-      background: var(--header-bg);
-      border-bottom: 1px solid var(--line-strong);
-      padding: 16px;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      transition: background-color 0.18s ease, border-color 0.18s ease;
-    }
-
-    .header-wrap {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  text-decoration: none;
-  color: var(--text-strong);
+  if (clean) {
+    valueEl.textContent = clean;
+    valueEl.classList.remove("hidden");
+    labelEl.classList.remove("hidden");
+    return true;
+  } else {
+    valueEl.textContent = "";
+    valueEl.classList.add("hidden");
+    labelEl.classList.add("hidden");
+    return false;
+  }
 }
 
-.logo-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  object-fit: cover;
-  display: block;
-  flex: 0 0 34px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+function isSold(item) {
+  return Number(item.Quantity || 0) <= 0;
 }
 
-.brand-text {
-  min-width: 0;
+function collectGallery(item) {
+  const arr = [
+    item.PhotoMainURL,
+    item.PhotoExtra1URL,
+    item.PhotoExtra2URL,
+    item.PhotoExtra3URL
+  ];
+  return arr.map(x => String(x || "").trim()).filter(x => x);
 }
 
-    .brand h1 {
-      margin: 0 0 4px;
-      font-size: 26px;
-      color: var(--text-strong);
-    }
-
-    .brand .subtitle {
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-left: auto;
-      flex-wrap: wrap;
-    }
-
-    .theme-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 46px;
-      height: 42px;
-      padding: 0 12px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--theme-btn-bg);
-      color: var(--theme-btn-color);
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: 700;
-      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-    }
-
-    .theme-toggle:hover {
-      background: var(--theme-btn-hover);
-    }
-
-    .back-link {
-      text-decoration: none;
-      color: var(--primary);
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .cart-top-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      background: var(--primary);
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 14px;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(31, 111, 235, 0.25);
-    }
-
-    .cart-top-link:hover {
-      background: var(--primary-hover);
-    }
-
-    .cart-top-icon {
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .cart-count-badge {
-      min-width: 22px;
-      height: 22px;
-      padding: 0 6px;
-      border-radius: 999px;
-      background: #fff;
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-    }
-
-    main {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 24px 16px 48px;
-    }
-
-    .message {
-      background: var(--card);
-      border: 1px solid var(--line-strong);
-      border-radius: 14px;
-      padding: 24px;
-      text-align: center;
-      color: var(--muted);
-      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
-    }
-
-    .trust-box {
-      background: var(--card);
-      border: 1px solid var(--line-strong);
-      border-radius: 16px;
-      padding: 15px 18px;
-      margin-bottom: 18px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-      transition: background-color 0.18s ease, border-color 0.18s ease;
-    }
-
-    .trust-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 7px;
-      color: var(--text-strong);
-    }
-
-    .trust-text {
-      font-size: 14px;
-      line-height: 1.55;
-      color: var(--text-soft);
-    }
-
-    .coin-layout {
-      display: grid;
-      grid-template-columns: 1.02fr 0.98fr;
-      gap: 22px;
-      align-items: start;
-    }
-
-    .gallery-card,
-    .info-card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      transition: background-color 0.18s ease, border-color 0.18s ease;
-    }
-
-    .gallery-inner,
-    .info-inner {
-      padding: 16px;
-    }
-
-    .main-photo-wrap {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      background: var(--card);
-      border: 1px solid var(--line-soft);
-      border-radius: 14px;
-      overflow: hidden;
-      cursor: zoom-in;
-      transition: background-color 0.18s ease, border-color 0.18s ease;
-    }
-
-    .main-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      background: var(--card);
-    }
-
-    .no-photo {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      font-size: 14px;
-      text-align: center;
-      padding: 12px;
-    }
-
-    .thumbs {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(84px, 96px));
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .thumb-btn {
-      border: 1px solid var(--line-soft);
-      background: var(--card);
-      padding: 0;
-      border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      aspect-ratio: 1 / 1;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.18s ease;
-    }
-
-    .thumb-btn.active {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(47,111,221,0.10);
-    }
-
-    .thumb-btn img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      background: var(--card);
-    }
-
-    .thumb-btn .thumb-no-photo {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: var(--muted);
-      padding: 8px;
-    }
-
-    .status-badge {
-      display: inline-block;
-      background: var(--danger);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 7px 12px;
-      border-radius: 999px;
-      letter-spacing: 0.4px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 8px rgba(198,40,40,0.22);
-    }
-
-    .coin-id-top {
-      display: inline-block;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--badge-text);
-      background: var(--badge-bg);
-      border: 1px solid var(--badge-border);
-      border-radius: 999px;
-      padding: 7px 12px;
-      margin-bottom: 14px;
-    }
-
-    .coin-title {
-      font-size: 31px;
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 14px;
-      color: var(--text-strong);
-    }
-
-    .coin-price {
-      font-size: 30px;
-      font-weight: 800;
-      line-height: 1.08;
-      margin-bottom: 14px;
-      color: var(--primary);
-    }
-
-    .stock-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 18px;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--line-soft);
-    }
-
-    .stock-text {
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .stock-text.in-stock {
-      color: var(--success);
-    }
-
-    .stock-text.sold {
-      color: var(--danger);
-    }
-
-    .stock-qty {
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .details {
-      display: grid;
-      grid-template-columns: 150px 1fr;
-      gap: 8px 14px;
-      margin-top: 8px;
-      margin-bottom: 18px;
-      padding: 12px 13px;
-      background: var(--card-soft);
-      border: 1px solid var(--line-soft);
-      border-radius: 14px;
-      font-size: 14px;
-      line-height: 1.42;
-      transition: background-color 0.18s ease, border-color 0.18s ease;
-    }
-
-    .details-label {
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .details-value {
-      color: var(--text);
-      word-break: break-word;
-      font-weight: 600;
-    }
-
-    .description-block {
-      margin-top: 4px;
-      margin-bottom: 18px;
-      padding: 13px 14px;
-      background: var(--card-soft);
-      border: 1px solid var(--line-soft);
-      border-radius: 14px;
-      transition: background-color 0.18s ease, border-color 0.18s ease;
-    }
-
-    .description-title {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 7px;
-      color: var(--muted);
-    }
-
-    .description-text {
-      font-size: 15px;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      color: var(--text);
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 4px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      text-decoration: none;
-      background: var(--primary);
-      color: #fff;
-      padding: 11px 16px;
-      border-radius: 12px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      font-size: 15px;
-      transition: background 0.15s ease, transform 0.08s ease;
-    }
-
-    .btn:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn:active {
-      transform: translateY(1px);
-    }
-
-    .btn-secondary {
-      background: var(--theme-btn-bg);
-      color: var(--theme-btn-color);
-      border: 1px solid var(--line);
-    }
-
-    .btn-secondary:hover {
-      background: var(--theme-btn-hover);
-    }
-
-    .btn-disabled {
-      background: #6b7280;
-      color: #fff;
-      cursor: not-allowed;
-    }
-
-    .lightbox {
-      position: fixed;
-      inset: 0;
-      background: var(--lightbox-bg);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 1000;
-    }
-
-    .lightbox.open {
-      display: flex;
-    }
-
-    .lightbox-inner {
-      position: relative;
-      max-width: 95vw;
-      max-height: 95vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .lightbox-img {
-      max-width: 95vw;
-      max-height: 90vh;
-      display: block;
-      object-fit: contain;
-      background: var(--lightbox-img-bg);
-      border-radius: 10px;
-    }
-
-    .lightbox-close {
-      position: absolute;
-      top: -12px;
-      right: -12px;
-      width: 36px;
-      height: 36px;
-      border: none;
-      border-radius: 999px;
-      background: var(--lightbox-btn-bg);
-      color: var(--lightbox-btn-color);
-      font-size: 20px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-      z-index: 3;
-    }
-
-    .lightbox-nav {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 48px;
-      height: 48px;
-      border: none;
-      border-radius: 999px;
-      background: var(--lightbox-btn-bg);
-      color: var(--lightbox-btn-color);
-      font-size: 28px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-      z-index: 2;
-    }
-
-    .lightbox-nav:hover {
-      background: var(--card);
-    }
-
-    .lightbox-prev {
-      left: -64px;
-    }
-
-    .lightbox-next {
-      right: -64px;
-    }
-
-    .lightbox-counter {
-      position: absolute;
-      left: 50%;
-      bottom: -34px;
-      transform: translateX(-50%);
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      background: var(--lightbox-counter-bg);
-      padding: 6px 10px;
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+/* ===================== ОСНОВНИЙ РЕНДЕР ===================== */
+
+function renderCoin(item) {
+  const sold = isSold(item);
+  const qty = Number(item.Quantity || 0);
+
+  // Назва і ціна
+  coinTitle.textContent = item.TitleUA || item.TitleEN || "Без назви";
+  coinPrice.textContent = (item.PriceUAH || 0) + " грн";
+
+  // ID
+  if (item.ID) {
+    coinIdTop.textContent = "ID: " + item.ID;
+    coinIdTop.classList.remove("hidden");
+  } else {
+    coinIdTop.classList.add("hidden");
+  }
+
+  // Наявність
+  if (sold) {
+    stockText.textContent = "Немає в наявності";
+    stockText.className = "stock-text sold";
+    stockQty.classList.add("hidden");
+  } else {
+    stockText.textContent = "В наявності";
+    stockText.className = "stock-text in-stock";
+
+    if (qty > 0) {
+      stockQty.textContent = "Кількість: " + qty + " шт";
+      stockQty.classList.remove("hidden");
+    } else {
+      stockQty.classList.add("hidden");
+    }
+  }
+
+  statusBadge.classList.toggle("hidden", !sold);
+
+  /* ===== ДЕТАЛІ ===== */
+
+  const labels = document.querySelectorAll(".details-label");
+  const values = document.querySelectorAll(".details-value");
+
+  setIfExists(values[0], labels[0], item.Continent);
+  setIfExists(values[1], labels[1], item.Country);
+  setIfExists(values[2], labels[2], item.Type);
+  setIfExists(values[3], labels[3], item.NominalPeriod);
+  setIfExists(values[4], labels[4], item.KrauseNumber);
+  setIfExists(values[5], labels[5], item.Metal);
+  setIfExists(values[6], labels[6], item.Condition);
+  setIfExists(values[7], labels[7], item.Theme);
+
+  /* ===== ОПИС ===== */
+
+  if (item.DescriptionUA && item.DescriptionUA.trim()) {
+    descriptionText.textContent = item.DescriptionUA;
+    descriptionBlock.classList.remove("hidden");
+  } else {
+    descriptionBlock.classList.add("hidden");
+  }
+
+  /* ===== КНОПКА ===== */
+
+  if (sold) {
+    addToCartBtn.textContent = "Немає в наявності";
+    addToCartBtn.className = "btn btn-disabled";
+    addToCartBtn.disabled = true;
+  } else {
+    addToCartBtn.textContent = "Додати в кошик";
+    addToCartBtn.className = "btn";
+    addToCartBtn.disabled = false;
+  }
+
+  /* ===== ГАЛЕРЕЯ ===== */
+
+  const gallery = collectGallery(item);
+
+  if (!gallery.length) {
+    mainPhoto.classList.add("hidden");
+    mainPhotoFallback.classList.remove("hidden");
+  } else {
+    mainPhoto.src = gallery[0];
+    mainPhoto.classList.remove("hidden");
+    mainPhotoFallback.classList.add("hidden");
+  }
+
+  /* ===== ФІНАЛ ===== */
+
+  messageBox.classList.add("hidden");
+  coinPage.classList.remove("hidden");
+}
+
+/* ===================== ЗАВАНТАЖЕННЯ ===================== */
+
+async function loadCoin() {
+  const params = new URLSearchParams(location.search);
+  const slug = params.get("slug");
+  const id = params.get("id");
+
+  let url = GAS_URL + "?action=getCoin";
+  if (slug) url += "&slug=" + slug;
+  if (id) url += "&id=" + id;
 
-    @media (max-width: 900px) {
-      .coin-layout {
-        grid-template-columns: 1fr;
-      }
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
 
-      .coin-id-top {
-        font-size: 12px;
-        padding: 6px 10px;
-        margin-bottom: 12px;
-      }
-
-      .coin-title {
-        font-size: 25px;
-      }
-
-      .coin-price {
-        font-size: 26px;
-      }
-
-      .details {
-        grid-template-columns: 1fr;
-        gap: 4px 0;
-      }
-
-      .details-label {
-        margin-top: 6px;
-      }
-
-      .lightbox-prev {
-        left: 8px;
-      }
-
-      .lightbox-next {
-        right: 8px;
-      }
-
-      .lightbox-nav {
-        width: 42px;
-        height: 42px;
-        font-size: 24px;
-      }
-
-      .lightbox-counter {
-        bottom: 8px;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .header-wrap {
-        flex-wrap: wrap;
-      }
-
-      .header-right {
-        width: 100%;
-        justify-content: flex-end;
-      }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="header-wrap">
-     <a class="brand-wrap" href="index.html">
-  <img class="logo-mark" src="/monety-svitu/logo.png" alt="Логотип Монети Світу" />
-  <div class="brand-text">
-    <h1>Монети Світу</h1>
-    <div class="subtitle">Сторінка монети</div>
-  </div>
-</a>
-
-      <div class="header-right">
-        <button id="themeToggle" class="theme-toggle" type="button" title="Перемкнути тему" aria-label="Перемкнути тему">🌙</button>
-        <a class="back-link" href="index.html">← Назад до каталогу</a>
-        <a class="cart-top-link" href="cart.html" title="Перейти в кошик">
-          <span class="cart-top-icon">🛒</span>
-          <span>Кошик</span>
-          <span id="cartCountBadge" class="cart-count-badge">0</span>
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <section class="trust-box">
-      <div class="trust-title">Ви переглядаєте лот із каталогу «Монети Світу»</div>
-      <div class="trust-text">
-        На сторінці доступні фото, опис і основна інформація про монету. Якщо лот у наявності, його можна додати в кошик і перейти до оформлення замовлення.
-      </div>
-    </section>
-
-    <div id="messageBox" class="message">Завантаження монети...</div>
-
-    <div id="coinPage" class="coin-layout hidden">
-      <section class="gallery-card">
-        <div class="gallery-inner">
-          <div id="mainPhotoWrap" class="main-photo-wrap">
-            <img id="mainPhoto" class="main-photo hidden" alt="Фото монети" />
-            <div id="mainPhotoFallback" class="no-photo">Немає фото</div>
-          </div>
-
-          <div id="thumbs" class="thumbs hidden"></div>
-        </div>
-      </section>
-
-      <section class="info-card">
-        <div class="info-inner">
-          <div id="coinIdTop" class="coin-id-top hidden"></div>
-          <div id="statusBadge" class="status-badge hidden">ПРОДАНО</div>
-
-          <div id="coinTitle" class="coin-title">—</div>
-          <div id="coinPrice" class="coin-price">—</div>
-
-          <div class="stock-row">
-            <div id="stockText" class="stock-text">—</div>
-            <div id="stockQty" class="stock-qty">—</div>
-          </div>
-
-          <div class="details">
-            <div class="details-label">Регіон</div>
-            <div id="detailContinent" class="details-value">—</div>
-
-            <div class="details-label">Країна</div>
-            <div id="detailCountry" class="details-value">—</div>
-
-            <div class="details-label">Тип</div>
-            <div id="detailType" class="details-value">—</div>
-
-            <div class="details-label">Період</div>
-            <div id="detailNominalPeriod" class="details-value">—</div>
-
-            <div class="details-label">KM#</div>
-            <div id="detailKM" class="details-value">—</div>
-
-            <div class="details-label">Метал</div>
-            <div id="detailMetal" class="details-value">—</div>
-
-            <div class="details-label">Стан</div>
-            <div id="detailCondition" class="details-value">—</div>
-
-            <div class="details-label">Тема</div>
-            <div id="detailTheme" class="details-value">—</div>
-          </div>
-
-          <div id="descriptionBlock" class="description-block hidden">
-            <div class="description-title">Опис</div>
-            <div id="descriptionText" class="description-text"></div>
-          </div>
-
-          <div class="actions">
-            <button id="addToCartBtn" class="btn" type="button">Додати в кошик</button>
-            <a class="btn btn-secondary" href="index.html">Повернутись у каталог</a>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <div id="lightbox" class="lightbox">
-    <div class="lightbox-inner">
-      <button id="lightboxClose" class="lightbox-close" type="button">×</button>
-      <button id="lightboxPrev" class="lightbox-nav lightbox-prev hidden" type="button" aria-label="Попереднє фото">‹</button>
-      <img id="lightboxImg" class="lightbox-img" alt="Збільшене фото монети" />
-      <button id="lightboxNext" class="lightbox-nav lightbox-next hidden" type="button" aria-label="Наступне фото">›</button>
-      <div id="lightboxCounter" class="lightbox-counter hidden"></div>
-    </div>
-  </div>
-
-  <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbz5_6OXxWfgneNng-nebgCw3DVFjambKs1cUuDHQ_cD4O-mB6PLp6wXf-2Ed4iBUFW-/exec";
-    const CART_KEY = "monety_svitu_cart";
-    const THEME_KEY = "monety_svitu_theme";
-
-    const messageBox = document.getElementById("messageBox");
-    const coinPage = document.getElementById("coinPage");
-    const mainPhotoWrap = document.getElementById("mainPhotoWrap");
-    const mainPhoto = document.getElementById("mainPhoto");
-    const mainPhotoFallback = document.getElementById("mainPhotoFallback");
-    const thumbs = document.getElementById("thumbs");
-    const coinIdTop = document.getElementById("coinIdTop");
-    const statusBadge = document.getElementById("statusBadge");
-    const coinTitle = document.getElementById("coinTitle");
-    const coinPrice = document.getElementById("coinPrice");
-    const stockText = document.getElementById("stockText");
-    const stockQty = document.getElementById("stockQty");
-    const detailContinent = document.getElementById("detailContinent");
-    const detailCountry = document.getElementById("detailCountry");
-    const detailType = document.getElementById("detailType");
-    const detailNominalPeriod = document.getElementById("detailNominalPeriod");
-    const detailKM = document.getElementById("detailKM");
-    const detailMetal = document.getElementById("detailMetal");
-    const detailCondition = document.getElementById("detailCondition");
-    const detailTheme = document.getElementById("detailTheme");
-    const descriptionBlock = document.getElementById("descriptionBlock");
-    const descriptionText = document.getElementById("descriptionText");
-    const addToCartBtn = document.getElementById("addToCartBtn");
-    const lightbox = document.getElementById("lightbox");
-    const lightboxImg = document.getElementById("lightboxImg");
-    const lightboxClose = document.getElementById("lightboxClose");
-    const lightboxPrev = document.getElementById("lightboxPrev");
-    const lightboxNext = document.getElementById("lightboxNext");
-    const lightboxCounter = document.getElementById("lightboxCounter");
-    const cartCountBadge = document.getElementById("cartCountBadge");
-    const themeToggle = document.getElementById("themeToggle");
-
-    let currentCoin = null;
-    let gallery = [];
-    let currentPhotoIndex = 0;
-
-    function applyTheme(theme) {
-      const normalized = theme === "dark" ? "dark" : "light";
-      if (normalized === "dark") {
-        document.body.setAttribute("data-theme", "dark");
-        themeToggle.textContent = "☀";
-        themeToggle.title = "Увімкнути світлу тему";
-        themeToggle.setAttribute("aria-label", "Увімкнути світлу тему");
-      } else {
-        document.body.removeAttribute("data-theme");
-        themeToggle.textContent = "🌙";
-        themeToggle.title = "Увімкнути нічний режим";
-        themeToggle.setAttribute("aria-label", "Увімкнути нічний режим");
-      }
-      localStorage.setItem(THEME_KEY, normalized);
-    }
-
-    function initTheme() {
-      let savedTheme = "";
-      try {
-        savedTheme = String(localStorage.getItem(THEME_KEY) || "").trim();
-      } catch (err) {
-      }
-
-      if (savedTheme === "dark" || savedTheme === "light") {
-        applyTheme(savedTheme);
-        return;
-      }
-
-      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-      applyTheme(prefersDark ? "dark" : "light");
-    }
-
-    function toggleTheme() {
-      const current = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
-      applyTheme(current === "dark" ? "light" : "dark");
-    }
-
-    function getQueryParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return String(params.get(name) || "").trim();
-    }
-
-    function getCoinUrl() {
-      const slug = getQueryParam("slug");
-      const id = getQueryParam("id");
-      if (slug) return GAS_URL + "?action=getCoin&slug=" + encodeURIComponent(slug) + "&_ts=" + Date.now();
-      if (id) return GAS_URL + "?action=getCoin&id=" + encodeURIComponent(id) + "&_ts=" + Date.now();
-      return "";
-    }
-
-    async function trackCoinView() {
-      try {
-        const slug = getQueryParam("slug");
-        const id = getQueryParam("id");
-
-        if (!slug && !id) return;
-
-        let url = GAS_URL + "?action=trackCoinView&_ts=" + Date.now();
-        if (slug) url += "&slug=" + encodeURIComponent(slug);
-        if (id) url += "&id=" + encodeURIComponent(id);
-
-        await fetch(url, {
-          method: "GET",
-          cache: "no-store"
-        });
-      } catch (err) {
-      }
-    }
-
-    function getCart() {
-      try {
-        const raw = localStorage.getItem(CART_KEY);
-        const parsed = JSON.parse(raw || "[]");
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (err) {
-        return [];
-      }
-    }
-
-    function saveCart(cart) {
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    }
-
-    function updateCartBadge() {
-      const cart = getCart();
-      const totalQty = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-      cartCountBadge.textContent = String(totalQty);
-    }
-
-    function isSold(item) {
-      return Number(item.Quantity || 0) <= 0;
+    if (!data.success || !data.item) {
+      throw new Error("Монету не знайдено");
     }
-
-    function collectGallery(item) {
-      const result = [];
-      [
-        item.PhotoMainURL,
-        item.PhotoExtra1URL,
-        item.PhotoExtra2URL,
-        item.PhotoExtra3URL
-      ].forEach(url => {
-        const clean = String(url || "").trim();
-        if (clean && !result.includes(clean)) result.push(clean);
-      });
-      return result;
-    }
-
-    function setMainPhoto(index) {
-      if (!gallery.length) {
-        mainPhoto.classList.add("hidden");
-        mainPhotoFallback.classList.remove("hidden");
-        mainPhoto.removeAttribute("src");
-        return;
-      }
-
-      currentPhotoIndex = index;
-      mainPhoto.src = gallery[index];
-      mainPhoto.classList.remove("hidden");
-      mainPhotoFallback.classList.add("hidden");
-
-      document.querySelectorAll(".thumb-btn").forEach((btn, i) => {
-        btn.classList.toggle("active", i === index);
-      });
-
-      updateLightboxUi();
-    }
-
-    function renderThumbs() {
-      if (gallery.length <= 1) {
-        thumbs.classList.add("hidden");
-        thumbs.innerHTML = "";
-        return;
-      }
-
-      thumbs.innerHTML = gallery.map((url, index) => `
-        <button class="thumb-btn ${index === currentPhotoIndex ? "active" : ""}" type="button" data-index="${index}">
-          <img src="${url}" alt="Прев’ю ${index + 1}" loading="lazy"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-          <div class="thumb-no-photo" style="display:none;">Немає фото</div>
-        </button>
-      `).join("");
-
-      thumbs.classList.remove("hidden");
-
-      thumbs.querySelectorAll(".thumb-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const index = Number(btn.dataset.index || 0);
-          setMainPhoto(index);
-        });
-      });
-    }
-
-    function addCurrentCoinToCart() {
-      if (!currentCoin || isSold(currentCoin)) return;
-
-      const cart = getCart();
-      const slug = String(currentCoin.Slug || "").trim();
-      const id = String(currentCoin.ID || "").trim();
-      const stockQty = Number(currentCoin.Quantity || 0);
-
-      const existing = cart.find(item =>
-        (slug && item.slug === slug) || (!slug && id && item.id === id)
-      );
-
-      if (existing) {
-        const nextQty = Number(existing.qty || 0) + 1;
-        if (nextQty > stockQty) {
-          addToCartBtn.textContent = "Максимум у кошику";
-          setTimeout(() => {
-            if (!isSold(currentCoin)) addToCartBtn.textContent = "Додати в кошик";
-          }, 1200);
-          return;
-        }
-        existing.qty = nextQty;
-      } else {
-        cart.push({
-          id: id,
-          slug: slug,
-          qty: 1,
-          title: currentCoin.TitleUA || currentCoin.TitleEN || "",
-          priceUAH: Number(currentCoin.PriceUAH || 0),
-          photo: String(currentCoin.PhotoMainURL || "").trim()
-        });
-      }
-
-      saveCart(cart);
-      updateCartBadge();
-      addToCartBtn.textContent = "Додано в кошик";
-      setTimeout(() => {
-        if (!isSold(currentCoin)) addToCartBtn.textContent = "Додати в кошик";
-      }, 1200);
-    }
-
-    function renderCoin(item) {
-      currentCoin = item;
-      gallery = collectGallery(item);
-      currentPhotoIndex = 0;
-
-      const sold = isSold(item);
-      const title = item.TitleUA || item.TitleEN || "Без назви";
-      const price = Number(item.PriceUAH || 0);
-      const qty = Number(item.Quantity || 0);
-
-      document.title = title + " — Монети Світу";
-
-      if (item.ID) {
-        coinIdTop.textContent = "ID: " + item.ID;
-        coinIdTop.classList.remove("hidden");
-      } else {
-        coinIdTop.classList.add("hidden");
-      }
-
-      coinTitle.textContent = title;
-      coinPrice.textContent = price + " грн";
-
-      stockText.textContent = sold ? "Немає в наявності" : "В наявності";
-      stockText.className = "stock-text " + (sold ? "sold" : "in-stock");
-      stockQty.textContent = sold ? "Кількість: 0 шт" : "Кількість: " + qty + " шт";
-
-      statusBadge.classList.toggle("hidden", !sold);
-
-      detailContinent.textContent = item.Continent || "—";
-      detailCountry.textContent = item.Country || "—";
-      detailType.textContent = item.Type || "—";
-      detailNominalPeriod.textContent = item.NominalPeriod || "—";
-      detailKM.textContent = item.KrauseNumber || "—";
-      detailMetal.textContent = item.Metal || "—";
-      detailCondition.textContent = item.Condition || "—";
-      detailTheme.textContent = item.Theme || "—";
-
-      if (item.DescriptionUA) {
-        descriptionText.textContent = item.DescriptionUA;
-        descriptionBlock.classList.remove("hidden");
-      } else {
-        descriptionBlock.classList.add("hidden");
-      }
-
-      if (sold) {
-        addToCartBtn.textContent = "Немає в наявності";
-        addToCartBtn.className = "btn btn-disabled";
-        addToCartBtn.disabled = true;
-      } else {
-        addToCartBtn.textContent = "Додати в кошик";
-        addToCartBtn.className = "btn";
-        addToCartBtn.disabled = false;
-      }
-
-      renderThumbs();
-      setMainPhoto(0);
-
-      messageBox.classList.add("hidden");
-      coinPage.classList.remove("hidden");
-    }
-
-    async function loadCoin() {
-      try {
-        const url = getCoinUrl();
-        if (!url) throw new Error("Не передано slug або id");
-
-        messageBox.classList.remove("hidden");
-        messageBox.textContent = "Завантаження монети...";
-        coinPage.classList.add("hidden");
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: { "Accept": "application/json" },
-          cache: "no-store"
-        });
-
-        const text = await response.text();
-        let data;
-
-        try {
-          data = JSON.parse(text);
-        } catch (err) {
-          throw new Error("Сервер повернув не JSON");
-        }
-
-        if (!data || !data.success || !data.item) {
-          throw new Error((data && data.error) || "Монету не знайдено");
-        }
-
-        renderCoin(data.item);
-        trackCoinView();
-      } catch (err) {
-        coinPage.classList.add("hidden");
-        messageBox.classList.remove("hidden");
-        messageBox.textContent = "Помилка завантаження монети. " + String(err.message || err);
-      }
-    }
-
-    function updateLightboxUi() {
-      const hasMany = gallery.length > 1;
-
-      lightboxPrev.classList.toggle("hidden", !hasMany);
-      lightboxNext.classList.toggle("hidden", !hasMany);
-      lightboxCounter.classList.toggle("hidden", !gallery.length);
-
-      if (gallery.length) {
-        lightboxCounter.textContent = (currentPhotoIndex + 1) + " / " + gallery.length;
-      } else {
-        lightboxCounter.textContent = "";
-      }
-
-      if (lightbox.classList.contains("open") && gallery[currentPhotoIndex]) {
-        lightboxImg.src = gallery[currentPhotoIndex];
-      }
-    }
-
-    function openLightbox(index = currentPhotoIndex) {
-      if (!gallery.length || !gallery[index]) return;
-      currentPhotoIndex = index;
-      lightbox.classList.add("open");
-      updateLightboxUi();
-    }
-
-    function closeLightbox() {
-      lightbox.classList.remove("open");
-      lightboxImg.removeAttribute("src");
-    }
-
-    function showPrevPhoto() {
-      if (gallery.length <= 1) return;
-      currentPhotoIndex = (currentPhotoIndex - 1 + gallery.length) % gallery.length;
-      setMainPhoto(currentPhotoIndex);
-      if (lightbox.classList.contains("open")) updateLightboxUi();
-    }
-
-    function showNextPhoto() {
-      if (gallery.length <= 1) return;
-      currentPhotoIndex = (currentPhotoIndex + 1) % gallery.length;
-      setMainPhoto(currentPhotoIndex);
-      if (lightbox.classList.contains("open")) updateLightboxUi();
-    }
-
-    mainPhotoWrap.addEventListener("click", () => {
-      openLightbox(currentPhotoIndex);
-    });
-
-    lightboxClose.addEventListener("click", closeLightbox);
-    lightboxPrev.addEventListener("click", showPrevPhoto);
-    lightboxNext.addEventListener("click", showNextPhoto);
-
-    lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) {
-        closeLightbox();
-      }
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeLightbox();
-      }
-
-      if (!lightbox.classList.contains("open")) return;
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        showPrevPhoto();
-      }
-
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        showNextPhoto();
-      }
-    });
 
-    addToCartBtn.addEventListener("click", addCurrentCoinToCart);
-    themeToggle.addEventListener("click", toggleTheme);
+    renderCoin(data.item);
+  } catch (e) {
+    messageBox.textContent = "Помилка завантаження";
+  }
+}
 
-    initTheme();
-    updateCartBadge();
-    loadCoin();
-  </script>
-</body>
-</html>
+loadCoin();
+</script>
