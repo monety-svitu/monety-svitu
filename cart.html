@@ -1265,14 +1265,11 @@ return `<li>${coinId ? "ID: " + esc(coinId) + " — " : ""}${esc(title)} — ${q
     }
 
     async function submitOrder() {
-      hideError();
-      hideSuccess();
+hideError();
+hideSuccess();
 
-      await syncCartWithStock();
-      renderCart();
-
-      const cart = getCart();
-      const activeItems = cart.filter(item => Number(item.availableQty || 0) > 0);
+const cart = getCart();
+const activeItems = cart.filter(item => Number(item.qty || 0) > 0);
 
       if (!activeItems.length) {
         showError("У кошику немає монет, доступних для замовлення.");
