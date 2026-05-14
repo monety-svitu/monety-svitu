@@ -1072,14 +1072,16 @@ return `<li>${coinId ? "ID: " + esc(coinId) + " — " : ""}${esc(title)} — ${q
           serverItem = null;
         }
 
-        if (!serverItem) {
-          synced.push({
-            ...item,
-            availableQty: 0,
-            stockWarning: "Монету не вдалося перевірити або її вже немає в каталозі."
-          });
-          continue;
-        }
+      if (!serverItem) {
+  const fallbackQty = Math.max(1, Number(item.qty || 1));
+
+  synced.push({
+    ...item,
+    availableQty: Number(item.availableQty || fallbackQty),
+    stockWarning: "Не вдалося швидко перевірити залишок. Замовлення буде перевірене при оформленні."
+  });
+  continue;
+}
 
         const availableQty = Number(serverItem.Quantity || 0);
         const currentQty = Math.max(1, Number(item.qty || 1));
