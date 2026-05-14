@@ -1022,7 +1022,6 @@
         const title = item.title || "Без назви";
         const coinId = String(item.id || "").trim();
         const qty = Number(item.qty || 1);
-        const coinId = String(item.id || "").trim();
 return `<li>${coinId ? "ID: " + esc(coinId) + " — " : ""}${esc(title)} — ${qty} шт.</li>`;
       }).join("");
 
