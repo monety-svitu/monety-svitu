@@ -1020,6 +1020,7 @@
 
       orderPreviewList.innerHTML = activeItems.map(item => {
         const title = item.title || "Без назви";
+        const coinId = String(item.id || "").trim();
         const qty = Number(item.qty || 1);
         return `<li>${esc(title)} — ${qty} шт.</li>`;
       }).join("");
@@ -1157,7 +1158,7 @@
 
             <div class="cart-item-body">
               <a class="cart-item-title" href="${esc(link)}">${esc(title)}</a>
-              <div class="cart-item-meta">Ціна за 1 шт: ${esc(formatPrice(price))}</div>
+             <div class="cart-item-meta">Ціна за 1 шт: ${esc(formatPrice(price))}</div>
               <div class="cart-item-stock ${soldOut ? "sold" : ""}">
                 ${soldOut ? "Немає в наявності" : "Доступно: " + availableQty + " шт"}
               </div>
