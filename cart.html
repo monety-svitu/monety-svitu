@@ -1132,6 +1132,7 @@ return `<li>${coinId ? "ID: " + esc(coinId) + " — " : ""}${esc(title)} — ${q
 
       const html = cart.map((item, index) => {
         const title = item.title || "Без назви";
+        const coinId = String(item.id || "").trim();
         const photo = String(item.photo || "").trim();
         const qty = Number(item.qty || 1);
         const price = Number(item.priceUAH || 0);
