@@ -1275,14 +1275,7 @@ const activeItems = cart.filter(item => Number(item.qty || 0) > 0);
         showError("У кошику немає монет, доступних для замовлення.");
         return;
       }
-
-      const hasUnavailable = cart.some(item => Number(item.availableQty || 0) <= 0);
-      if (hasUnavailable) {
-        showError("У кошику є недоступні монети. Видаліть їх перед оформленням.");
-        return;
-      }
-
-      const validationError = validateForm(activeItems);
+ const validationError = validateForm(activeItems);
       if (validationError) {
         showError(validationError);
         return;
