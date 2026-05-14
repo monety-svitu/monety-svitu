@@ -1359,13 +1359,22 @@ return `<li>${coinId ? "ID: " + esc(coinId) + " — " : ""}${esc(title)} — ${q
     submitOrderBtn.addEventListener("click", submitOrder);
     themeToggle.addEventListener("click", toggleTheme);
 
-    (async function initCartPage() {
-      initTheme();
-      applyPhoneMask();
-      updateCartBadge();
-      await syncCartWithStock();
-      renderCart();
-    })();
+   (async function initCartPage() {
+  initTheme();
+  applyPhoneMask();
+  updateCartBadge();
+
+  // 1. Одразу показуємо кошик з localStorage
+  renderCart();
+
+  // 2. Перевірку залишків запускаємо в фоні
+  try {
+    await syncCartWithStock();
+    renderCart();
+  } catch (err) {
+    console.warn("Не вдалося швидко перевірити залишки:", err);
+  }
+})();
   </script>
 </body>
 </html>
