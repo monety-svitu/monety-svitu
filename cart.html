@@ -1366,21 +1366,27 @@ const activeItems = cart.filter(item => Number(item.qty || 0) > 0);
     submitOrderBtn.addEventListener("click", submitOrder);
     themeToggle.addEventListener("click", toggleTheme);
 
-   (async function initCartPage() {
+(function initCartPage() {
   initTheme();
   applyPhoneMask();
   updateCartBadge();
 
-  // 1. Одразу показуємо кошик з localStorage
+  // Швидкий режим: показуємо кошик одразу з localStorage.
+  // Остаточну перевірку наявності робить GAS при оформленні замовлення.
   renderCart();
 
-  // 2. Перевірку залишків запускаємо в фоні
-  try {
-    await syncCartWithStock();
-    renderCart();
-  } catch (err) {
-    console.warn("Не вдалося швидко перевірити залишки:", err);
-  }
+  /*
+  // Старий повільний режим перевірки кожної монети окремо.
+  // Залишено про запас.
+  (async function () {
+    try {
+      await syncCartWithStock();
+      renderCart();
+    } catch (err) {
+      console.warn("Не вдалося швидко перевірити залишки:", err);
+    }
+  })();
+  */
 })();
   </script>
 </body>
