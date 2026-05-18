@@ -1008,23 +1008,22 @@ main {
       successBox.textContent = "";
     }
 
-    function getTotals(cart) {
-      let count = 0;
-      let total = 0;
+function getTotals(cart) {
+  let count = 0;
+  let total = 0;
 
-      cart.forEach(item => {
-        const qty = Number(item.qty || 0);
-        const price = Number(item.priceUAH || 0);
-        const availableQty = Number(item.availableQty || 0);
+  cart.forEach(item => {
+    const qty = Number(item.qty || 0);
+    const price = Number(item.priceUAH || 0);
 
-        if (availableQty > 0) {
-          count += qty;
-          total += qty * price;
-        }
-      });
-
-      return { count, total };
+    if (qty > 0) {
+      count += qty;
+      total += qty * price;
     }
+  });
+
+  return { count, total };
+}
 
     function renderOrderPreview(cart) {
       const activeItems = cart.filter(item => Number(item.availableQty || 0) > 0);
