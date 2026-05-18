@@ -717,6 +717,21 @@
         justify-content: flex-end;
       }
     }
+    html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--bg);
+}
+
+body {
+  min-height: 100vh;
+}
+
+main {
+  min-height: calc(100vh - 140px);
+  background: var(--bg);
+}
   </style>
 </head>
 <body>
