@@ -1154,8 +1154,14 @@ checkoutBlock.classList.toggle("hidden", !activeItems.length);
         const photo = String(item.photo || "").trim();
         const qty = Number(item.qty || 1);
         const price = Number(item.priceUAH || 0);
-       const availableQty = Number(item.availableQty || 0);
-const soldOut = false;
+       const hasKnownStock =
+  item.availableQty !== undefined &&
+  item.availableQty !== null &&
+  String(item.availableQty).trim() !== "";
+
+const availableQty = hasKnownStock ? Number(item.availableQty || 0) : 0;
+const soldOut = hasKnownStock && availableQty <= 0;
+const maxReached = hasKnownStock && availableQty > 0 && qty >= availableQty;
 const lineTotal = qty * price;
         const link = buildCoinLink(item);
 
@@ -1179,16 +1185,16 @@ const lineTotal = qty * price;
               <a class="cart-item-title" href="${esc(link)}">${esc(title)}</a>
              <div class="cart-item-meta">ID: ${esc(coinId || "—")}</div>
 <div class="cart-item-meta">Ціна за 1 шт: ${esc(formatPrice(price))}</div>
-              <div class="cart-item-stock ${soldOut ? "sold" : ""}">
-                Наявність перевіриться при оформленні
-              </div>
+             <div class="cart-item-stock ${soldOut ? "sold" : ""}">
+  Наявність перевіриться при оформленні
+</div>
               ${item.stockWarning ? `<div class="cart-item-warning">${esc(item.stockWarning)}</div>` : ""}
 
               <div class="cart-item-bottom">
                 <div class="qty-controls">
                   <button class="qty-btn" type="button" data-action="minus" data-index="${index}" ${soldOut || qty <= 1 ? "disabled" : ""}>−</button>
                   <div class="qty-value">${qty}</div>
-                  <button class="qty-btn" type="button" data-action="plus" data-index="${index}" ${soldOut ? "disabled" : ""}>+</button>
+                  <button class="qty-btn" type="button" data-action="plus" data-index="${index}" ${soldOut || maxReached ? "disabled" : ""}>+</button>
                 </div>
 
                 <div class="cart-item-price">${lineTotal} грн</div>
@@ -1222,12 +1228,23 @@ function handleCartAction(action, index) {
 
   const currentQty = Number(cart[index].qty || 1);
 
+  const hasKnownStock =
+    cart[index].availableQty !== undefined &&
+    cart[index].availableQty !== null &&
+    String(cart[index].availableQty).trim() !== "";
+
+  const availableQty = hasKnownStock ? Number(cart[index].availableQty || 0) : 0;
+
   if (action === "minus") {
     cart[index].qty = Math.max(1, currentQty - 1);
   }
 
   if (action === "plus") {
-    cart[index].qty = currentQty + 1;
+    if (hasKnownStock && availableQty > 0) {
+      cart[index].qty = Math.min(currentQty + 1, availableQty);
+    } else if (!hasKnownStock) {
+      cart[index].qty = currentQty + 1;
+    }
   }
 
   if (action === "remove") {
