@@ -1154,9 +1154,9 @@ checkoutBlock.classList.toggle("hidden", !activeItems.length);
         const photo = String(item.photo || "").trim();
         const qty = Number(item.qty || 1);
         const price = Number(item.priceUAH || 0);
-        const availableQty = Number(item.availableQty || 0);
-        const soldOut = availableQty <= 0;
-        const lineTotal = soldOut ? 0 : qty * price;
+       const availableQty = Number(item.availableQty || 0);
+const soldOut = false;
+const lineTotal = qty * price;
         const link = buildCoinLink(item);
 
         const photoBlock = photo
@@ -1180,7 +1180,7 @@ checkoutBlock.classList.toggle("hidden", !activeItems.length);
              <div class="cart-item-meta">ID: ${esc(coinId || "—")}</div>
 <div class="cart-item-meta">Ціна за 1 шт: ${esc(formatPrice(price))}</div>
               <div class="cart-item-stock ${soldOut ? "sold" : ""}">
-                ${soldOut ? "Немає в наявності" : "Доступно: " + availableQty + " шт"}
+                Наявність перевіриться при оформленні
               </div>
               ${item.stockWarning ? `<div class="cart-item-warning">${esc(item.stockWarning)}</div>` : ""}
 
