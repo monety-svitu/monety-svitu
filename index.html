@@ -1243,37 +1243,47 @@
       return photos;
     }
 
-    function addToCart(item) {
-      if (!item || isSold(item)) return;
+   function addToCart(item) {
+  if (!item || isSold(item)) return;
 
-      const cart = getCart();
-      const slug = String(item.Slug || "").trim();
-      const id = String(item.ID || "").trim();
+  const cart = getCart();
+  const slug = String(item.Slug || "").trim();
+  const id = String(item.ID || "").trim();
+  const stockQty = Number(item.Quantity || 0);
 
-      const existing = cart.find(cartItem =>
-        (slug && cartItem.slug === slug) || (!slug && id && cartItem.id === id)
-      );
+  if (stockQty <= 0) return;
 
-      const stockQty = Number(item.Quantity || 0);
+  const existing = cart.find(cartItem =>
+    (slug && cartItem.slug === slug) || (!slug && id && cartItem.id === id)
+  );
 
-      if (existing) {
-        const nextQty = Number(existing.qty || 0) + 1;
-        if (nextQty > stockQty) return;
-        existing.qty = nextQty;
-      } else {
-        cart.push({
-          id: id,
-          slug: slug,
-          qty: 1,
-          title: item.TitleUA || item.TitleEN || "",
-          priceUAH: Number(item.PriceUAH || 0),
-          photo: String(item.PhotoMainURL || "").trim()
-        });
-      }
+  if (existing) {
+    const currentQty = Number(existing.qty || 0);
+    const nextQty = currentQty + 1;
 
-      saveCart(cart);
-      updateCartBadge();
-    }
+    existing.availableQty = stockQty;
+
+    if (nextQty > stockQty) return;
+
+    existing.qty = nextQty;
+    existing.title = item.TitleUA || item.TitleEN || existing.title || "";
+    existing.priceUAH = Number(item.PriceUAH || existing.priceUAH || 0);
+    existing.photo = String(item.PhotoMainURL || existing.photo || "").trim();
+  } else {
+    cart.push({
+      id: id,
+      slug: slug,
+      qty: 1,
+      availableQty: stockQty,
+      title: item.TitleUA || item.TitleEN || "",
+      priceUAH: Number(item.PriceUAH || 0),
+      photo: String(item.PhotoMainURL || "").trim()
+    });
+  }
+
+  saveCart(cart);
+  updateCartBadge();
+}
 
     function repopulateLinkedFilters() {
       const continentValue = String(continentSelect.value || "").trim();
