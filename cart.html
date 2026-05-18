@@ -1266,9 +1266,9 @@ function handleCartAction(action, index) {
         total += Number(item.priceUAH || 0) * Number(item.qty || 0);
       });
 
-      if (total < MIN_ORDER_TOTAL_UAH) {
-        return "Мінімальна сума замовлення — " + MIN_ORDER_TOTAL_UAH + " грн. Додайте ще монети до кошика.";
-      }
+      if (MIN_ORDER_TOTAL_UAH > 0 && total < MIN_ORDER_TOTAL_UAH) {
+  return "Мінімальна сума замовлення — " + MIN_ORDER_TOTAL_UAH + " грн. Додайте ще монети до кошика.";
+}
 
       return "";
     }
