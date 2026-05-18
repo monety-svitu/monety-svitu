@@ -1145,8 +1145,8 @@ return `<li>${coinId ? "ID: " + esc(coinId) + " — " : ""}${esc(title)} — ${q
 
       emptyBox.classList.add("hidden");
 
-      const activeItems = cart.filter(item => Number(item.availableQty || 0) > 0);
-      checkoutBlock.classList.toggle("hidden", !activeItems.length);
+const activeItems = cart.filter(item => Number(item.qty || 0) > 0);
+checkoutBlock.classList.toggle("hidden", !activeItems.length);
 
       const html = cart.map((item, index) => {
         const title = item.title || "Без назви";
