@@ -1188,7 +1188,7 @@ const lineTotal = qty * price;
                 <div class="qty-controls">
                   <button class="qty-btn" type="button" data-action="minus" data-index="${index}" ${soldOut || qty <= 1 ? "disabled" : ""}>−</button>
                   <div class="qty-value">${qty}</div>
-                  <button class="qty-btn" type="button" data-action="plus" data-index="${index}" ${soldOut || qty >= availableQty ? "disabled" : ""}>+</button>
+                  <button class="qty-btn" type="button" data-action="plus" data-index="${index}" ${soldOut ? "disabled" : ""}>+</button>
                 </div>
 
                 <div class="cart-item-price">${lineTotal} грн</div>
@@ -1216,31 +1216,28 @@ const lineTotal = qty * price;
       });
     }
 
-    function handleCartAction(action, index) {
-      const cart = getCart();
-      if (!cart[index]) return;
+function handleCartAction(action, index) {
+  const cart = getCart();
+  if (!cart[index]) return;
 
-      const availableQty = Number(cart[index].availableQty || 0);
-      const currentQty = Number(cart[index].qty || 1);
+  const currentQty = Number(cart[index].qty || 1);
 
-      if (action === "minus") {
-        cart[index].qty = Math.max(1, currentQty - 1);
-      }
+  if (action === "minus") {
+    cart[index].qty = Math.max(1, currentQty - 1);
+  }
 
-      if (action === "plus") {
-        if (availableQty > 0) {
-          cart[index].qty = Math.min(currentQty + 1, availableQty);
-        }
-      }
+  if (action === "plus") {
+    cart[index].qty = currentQty + 1;
+  }
 
-      if (action === "remove") {
-        cart.splice(index, 1);
-      }
+  if (action === "remove") {
+    cart.splice(index, 1);
+  }
 
-      saveCart(cart);
-      renderCart();
-      updateCartBadge();
-    }
+  saveCart(cart);
+  renderCart();
+  updateCartBadge();
+}
 
     function clearCart() {
       const cart = getCart();
