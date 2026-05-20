@@ -1476,7 +1476,7 @@
 
       coinsGrid.innerHTML = pageItems.map(item => {
         const title = item.TitleUA || item.TitleEN || "Без назви";
-        const typeLabel = item.Type === "Монета за типом" ? "Монета за типом" : "Монета";
+        const typeLabel = String(item.Type || "").trim() || "Монета";
         const nominal = item.NominalPeriod || "";
         const periodRow = nominal
   ? `<div class="coin-meta-row">
