@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Числа 00–99 — асоціації</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 8px 0 6px;
+    }
+
+    .note {
+      color: #4b5563;
+      line-height: 1.45;
+      margin: 0 0 14px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    .main {
+      display: grid;
+      gap: 14px;
+    }
+
+    @media (min-width: 720px) {
+      .main {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .number {
+      min-height: 150px;
+      border-radius: 16px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 76px;
+      font-weight: 800;
+      letter-spacing: 3px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin: 10px 0 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #cbd5e1;
+      font-size: 17px;
+      background: white;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 13px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button.blue {
+      background: #2563eb;
+      color: white;
+    }
+
+    button.green {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    button.red {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      line-height: 1.4;
+    }
+
+    .ok {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .warn {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+
+    .small {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    @media (min-width: 520px) {
+      .grid { grid-template-columns: repeat(5, 1fr); }
+    }
+
+    @media (min-width: 820px) {
+      .grid { grid-template-columns: repeat(10, 1fr); }
+    }
+
+    .cell {
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 8px;
+      min-height: 64px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .cell:hover {
+      border-color: #2563eb;
+    }
+
+    .cell-number {
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .cell-word {
+      margin-top: 4px;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .own { color: #15803d; font-weight: 700; }
+    .standard { color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Тренажер асоціацій чисел 00–99</h1>
+    <p class="note">
+      Етап 1: створення бази образів. Вписуєш свою асоціацію. Якщо залишиш поле порожнім і натиснеш “Зберегти” — програма поставить стандартну.
+    </p>
+
+    <div class="card">
+      <div id="startStatus" class="status warn">
+        Якщо це повідомлення не змінилось на “Програма запущена” — файл відкритий не в браузері або JavaScript заблокований.
+      </div>
+    </div>
+
+    <div class="card main">
+      <div>
+        <div id="bigNumber" class="number">00</div>
+
+        <div class="buttons">
+          <button id="randomBtn" class="blue" type="button">Випадкове</button>
+          <button id="prevBtn" type="button">← Попереднє</button>
+          <button id="nextBtn" type="button">Наступне →</button>
+        </div>
+
+        <p class="small">
+          На компʼютері можна користуватись клавішами: Enter — зберегти, ← / → — перемикати числа.
+        </p>
+      </div>
+
+      <div>
+        <label for="numberSelect">Число</label>
+        <select id="numberSelect"></select>
+
+        <label for="assocInput">Моя асоціація</label>
+        <input id="assocInput" type="text" placeholder="Наприклад: ракета">
+
+        <div id="standardHint" class="small"></div>
+
+        <div class="buttons">
+          <button id="saveBtn" class="green" type="button">Зберегти</button>
+          <button id="defaultBtn" type="button">Взяти стандартну</button>
+          <button id="clearBtn" class="red" type="button">Очистити мою</button>
+        </div>
+
+        <div id="status" class="status"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="searchInput">Пошук</label>
+      <input id="searchInput" type="text" placeholder="Наприклад: 47 або ракета">
+      <p class="small">Зелене — твої асоціації. Сіре — стандартні.</p>
+      <div id="grid" class="grid"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var STORAGE_KEY = "number_memory_associations_v2";
+
+      var defaults = {
+        "00":"яйце", "01":"свічка", "02":"лебідь", "03":"вуса", "04":"стілець",
+        "05":"гак", "06":"равлик", "07":"коса", "08":"окуляри", "09":"кулька",
+
+        "10":"молоток", "11":"рейки", "12":"годинник", "13":"кіт", "14":"прапор",
+        "15":"рука", "16":"замок", "17":"блискавка", "18":"сніговик", "19":"банан",
+
+        "20":"велосипед", "21":"качка", "22":"лебеді", "23":"серце", "24":"двері",
+        "25":"палець", "26":"мішок", "27":"сокира", "28":"павук", "29":"парасолька",
+
+        "30":"тризуб", "31":"дерево", "32":"змія", "33":"метелик", "34":"шафа",
+        "35":"рукавиця", "36":"чайник", "37":"пірат", "38":"гантеля", "39":"рибалка",
+
+        "40":"вікно", "41":"ніж", "42":"чобіт", "43":"корона", "44":"ворота",
+        "45":"ложка", "46":"ключ", "47":"ракета", "48":"черепаха", "49":"літак",
+
+        "50":"зірка", "51":"олівець", "52":"кінь", "53":"мавпа", "54":"стіл",
+        "55":"руки", "56":"слон", "57":"шабля", "58":"наручники", "59":"рибка",
+
+        "60":"бублик", "61":"сірник", "62":"равлик", "63":"гриб", "64":"сейф",
+        "65":"долоня", "66":"замки", "67":"вудка", "68":"сніговик", "69":"інь-янь",
+
+        "70":"коса", "71":"сходи", "72":"лебідь з косою", "73":"сокира", "74":"стілець з косою",
+        "75":"гачок", "76":"серп", "77":"блискавки", "78":"павук з косою", "79":"парасолька з косою",
+
+        "80":"сніговик", "81":"окуляри на палці", "82":"окуляри і лебідь", "83":"муха", "84":"вісімка на стільці",
+        "85":"наручники", "86":"куля", "87":"велосипедист", "88":"окуляри", "89":"ведмідь",
+
+        "90":"повітряна куля", "91":"кулька на палці", "92":"лебідь з кулькою", "93":"равлик", "94":"прапор на кульці",
+        "95":"рука з кулькою", "96":"замок з кулькою", "97":"коса з кулькою", "98":"окуляри з кулькою", "99":"кульки"
+      };
+
+      var own = {};
+      var current = 0;
+
+      var bigNumber = document.getElementById("bigNumber");
+      var numberSelect = document.getElementById("numberSelect");
+      var assocInput = document.getElementById("assocInput");
+      var standardHint = document.getElementById("standardHint");
+      var statusBox = document.getElementById("status");
+      var grid = document.getElementById("grid");
+      var searchInput = document.getElementById("searchInput");
+      var startStatus = document.getElementById("startStatus");
+
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function load() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          own = raw ? JSON.parse(raw) : {};
+        } catch (e) {
+          own = {};
+          statusBox.className = "status warn";
+          statusBox.textContent = "Увага: браузер не дозволив збереження. До перезавантаження працюватиме, але може не запамʼятати дані.";
+        }
+      }
+
+      function save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(own));
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function getWord(key) {
+        return own[key] || defaults[key] || "";
+      }
+
+      function setNumber(n) {
+        current = Math.max(0, Math.min(99, Number(n) || 0));
+        var key = pad(current);
+
+        bigNumber.textContent = key;
+        numberSelect.value = String(current);
+        assocInput.value = own[key] || "";
+        standardHint.textContent = "Стандартна асоціація: " + defaults[key];
+
+        if (own[key]) {
+          statusBox.className = "status ok";
+          statusBox.textContent = key + " — твоя асоціація: " + own[key];
+        } else {
+          statusBox.className = "status warn";
+          statusBox.textContent = key + " — твоєї асоціації ще нема. Можна залишити поле порожнім і натиснути “Зберегти”.";
+        }
+      }
+
+      function saveAssociation() {
+        var key = pad(current);
+        var value = assocInput.value.trim();
+
+        if (!value) {
+          value = defaults[key];
+          assocInput.value = value;
+        }
+
+        own[key] = value;
+
+        var saved = save();
+        statusBox.className = saved ? "status ok" : "status warn";
+        statusBox.textContent = saved
+          ? "Збережено: " + key + " = " + value
+          : "Записано тимчасово: " + key + " = " + value + ". Але браузер не дозволив постійне збереження.";
+
+        renderGrid();
+      }
+
+      function useDefault() {
+        var key = pad(current);
+        assocInput.value = defaults[key];
+        saveAssociation();
+      }
+
+      function clearOwn() {
+        var key = pad(current);
+        delete own[key];
+        save();
+        setNumber(current);
+        renderGrid();
+      }
+
+      function randomNumber() {
+        setNumber(Math.floor(Math.random() * 100));
+      }
+
+      function nextNumber() {
+        setNumber(current === 99 ? 0 : current + 1);
+      }
+
+      function prevNumber() {
+        setNumber(current === 0 ? 99 : current - 1);
+      }
+
+      function renderGrid() {
+        var q = searchInput.value.trim().toLowerCase();
+        grid.innerHTML = "";
+
+        for (var i = 0; i <= 99; i++) {
+          var key = pad(i);
+          var word = getWord(key);
+          var text = (key + " " + word).toLowerCase();
+
+          if (q && text.indexOf(q) === -1) continue;
+
+          var cell = document.createElement("div");
+          cell.className = "cell";
+          cell.setAttribute("data-num", String(i));
+
+          var n = document.createElement("div");
+          n.className = "cell-number";
+          n.textContent = key;
+
+          var w = document.createElement("div");
+          w.className = "cell-word " + (own[key] ? "own" : "standard");
+          w.textContent = word;
+
+          cell.appendChild(n);
+          cell.appendChild(w);
+          grid.appendChild(cell);
+        }
+      }
+
+      function initSelect() {
+        for (var i = 0; i <= 99; i++) {
+          var opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = pad(i);
+          numberSelect.appendChild(opt);
+        }
+      }
+
+      document.getElementById("randomBtn").addEventListener("click", randomNumber);
+      document.getElementById("prevBtn").addEventListener("click", prevNumber);
+      document.getElementById("nextBtn").addEventListener("click", nextNumber);
+      document.getElementById("saveBtn").addEventListener("click", saveAssociation);
+      document.getElementById("defaultBtn").addEventListener("click", useDefault);
+      document.getElementById("clearBtn").addEventListener("click", clearOwn);
+
+      numberSelect.addEventListener("change", function () {
+        setNumber(this.value);
+      });
+
+      searchInput.addEventListener("input", renderGrid);
+
+      grid.addEventListener("click", function (e) {
+        var cell = e.target.closest(".cell");
+        if (cell) setNumber(cell.getAttribute("data-num"));
+      });
+
+      document.addEventListener("keydown", function (e) {
+        var tag = document.activeElement ? document.activeElement.tagName : "";
+        var inTextField = tag === "INPUT" || tag === "SELECT";
+
+        if (e.key === "Enter") {
+          saveAssociation();
+        }
+
+        if (!inTextField && e.key === "ArrowRight") {
+          nextNumber();
+        }
+
+        if (!inTextField && e.key === "ArrowLeft") {
+          prevNumber();
+        }
+      });
+
+      load();
+      initSelect();
+      setNumber(0);
+      renderGrid();
+
+      startStatus.className = "status ok";
+      startStatus.textContent = "Програма запущена. Якщо асоціації зберігаються після закриття і повторного відкриття — все працює правильно.";
+    })();
+  </script>
+</body>
+</html>
