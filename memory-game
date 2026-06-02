@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Numizmat Memory v2</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f3f3f3;max-width:900px;margin:auto;padding:10px}
+.card{background:white;border-radius:12px;padding:15px;margin:10px 0}
+.big{font-size:72px;text-align:center;font-weight:bold}
+.emoji{font-size:96px;text-align:center}
+button{padding:12px;font-size:18px;margin:4px;width:100%}
+input{padding:12px;font-size:18px;width:100%;box-sizing:border-box}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<h1>🧠 Numizmat Memory v2</h1>
+
+<div class="card">
+XP: <span id="xp">0</span> |
+Серія: <span id="streak">0</span>
+</div>
+
+<div class="card">
+<h2>Число → образ</h2>
+<div id="num" class="big"></div>
+<button onclick="showImage()">Показати образ</button>
+<div id="imageArea"></div>
+<button onclick="nextNumber()">Наступне число</button>
+</div>
+
+<div class="card">
+<h2>Образ → число</h2>
+<div id="quizEmoji" class="emoji"></div>
+<div id="quizName" style="text-align:center;font-size:30px"></div>
+<input id="answer" placeholder="Введіть число">
+<button onclick="checkQuiz()">Перевірити</button>
+<div id="result"></div>
+</div>
+
+<div class="card">
+<h2>Редагування образу</h2>
+<input id="editNum" placeholder="Напр. 47">
+<input id="editEmoji" placeholder="Емодзі">
+<input id="editName" placeholder="Назва">
+<button onclick="saveImage()">Зберегти образ</button>
+</div>
+
+<script>
+const defaults={
+"00":["🥚","Яйце"],"01":["🕯️","Свічка"],"02":["🦢","Лебідь"],"03":["👨","Вуса"],
+"04":["🪑","Стілець"],"05":["🪝","Гак"],"06":["🐌","Равлик"],"07":["🌾","Коса"],
+"08":["👓","Окуляри"],"09":["🎈","Куля"],"10":["🛡️","Лицар"],"11":["🚪","Ворота"],
+"12":["⏰","Годинник"],"13":["🐈","Кіт"],"14":["⚓","Моряк"],"15":["🤖","Робот"],
+"16":["🐘","Слон"],"17":["⚔️","Меч"],"18":["🏴‍☠️","Пірат"],"19":["🍌","Банан"],
+"20":["🐎","Кінь"],"21":["🐅","Тигр"],"22":["🦆","Качка"],"23":["🐉","Дракон"],
+"24":["🐬","Дельфін"],"25":["🦫","Бобер"],"26":["🦚","Павич"],"27":["🦋","Метелик"],
+"28":["🕷️","Павук"],"29":["🌵","Кактус"]
+};
+
+let data=JSON.parse(localStorage.getItem("memory_images")||"null")||defaults;
+let xp=+localStorage.getItem("xp")||0;
+let streak=+localStorage.getItem("streak")||0;
+
+function saveStats(){
+localStorage.setItem("xp",xp);
+localStorage.setItem("streak",streak);
+document.getElementById("xp").textContent=xp;
+document.getElementById("streak").textContent=streak;
+}
+
+const keys=Object.keys(data);
+let current="";
+
+function nextNumber(){
+current=keys[Math.floor(Math.random()*keys.length)];
+document.getElementById("num").textContent=current;
+document.getElementById("imageArea").innerHTML="";
+}
+function showImage(){
+let d=data[current];
+document.getElementById("imageArea").innerHTML=
+'<div class="emoji">'+d[0]+'</div><div style="text-align:center;font-size:28px">'+d[1]+'</div>';
+}
+
+let quiz="";
+function newQuiz(){
+quiz=keys[Math.floor(Math.random()*keys.length)];
+document.getElementById("quizEmoji").textContent=data[quiz][0];
+document.getElementById("quizName").textContent=data[quiz][1];
+document.getElementById("answer").value="";
+}
+
+function checkQuiz(){
+if(document.getElementById("answer").value.trim()===quiz){
+xp+=10; streak++;
+document.getElementById("result").innerHTML="✅ Правильно";
+}else{
+streak=0;
+document.getElementById("result").innerHTML="❌ Було "+quiz;
+}
+saveStats();
+newQuiz();
+}
+
+function saveImage(){
+let n=document.getElementById("editNum").value.trim();
+let e=document.getElementById("editEmoji").value.trim();
+let name=document.getElementById("editName").value.trim();
+if(!n||!e||!name) return;
+data[n]=[e,name];
+localStorage.setItem("memory_images",JSON.stringify(data));
+alert("Збережено");
+}
+
+saveStats();
+nextNumber();
+newQuiz();
+</script>
+</body>
+</html>
